@@ -284,10 +284,19 @@ export default function App() {
             onReconcile={() => setReconcileOpen(true)}
           />
         );
-      case 'report-view':
-        return <ReportsMath reportType={query.report || 'balance-sheet'} />;
+      // The case label must match the route id in routes.js exactly. It read
+      // 'report-view' against an id of 'report_view', so this branch was dead.
+      case 'report_view':
+        return (
+          <div className="p-6 max-w-5xl mx-auto">
+            <ReportsMath
+              reportType={query.report || 'balance-sheet'}
+              onBack={() => navigate('standard_reports')}
+            />
+          </div>
+        );
       case 'feed':
-        return <BusinessFeedView />;
+        return <BusinessFeedView onNavigate={(v) => navigate(v)} />;
       case 'mileage':
         return <MileageView />;
       case 'time_entries':

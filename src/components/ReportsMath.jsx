@@ -1,7 +1,36 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, Sparkles, Printer } from 'lucide-react';
+import { ChevronDown, ChevronRight, Sparkles, Printer, ChevronLeft } from 'lucide-react';
 import { useStore } from '../store';
 import { formatMoney } from '../money';
+
+/**
+ * The breadcrumb every report sits under.
+ *
+ * Reports previously had no way back except the browser Back button, and no
+ * indication of which of the three statements you were reading. Transcript frame
+ * 656 shows the real thing: a blue "← Back to standard reports" link at the top
+ * left of the report body.
+ */
+function ReportTrail({ reportType, onBack }) {
+  const names = {
+    'balance-sheet': 'Balance Sheet',
+    pnl: 'Profit & Loss',
+    'cash-flow': 'Cash Flow Statement',
+  };
+  return (
+    <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1 text-[#0077c5] hover:underline font-semibold"
+      >
+        <ChevronLeft size={14} />
+        Back to standard reports
+      </button>
+      <ChevronRight size={12} className="text-gray-400" />
+      <span className="text-gray-500">{names[reportType] || 'Report'}</span>
+    </nav>
+  );
+}
 
 /**
  * Financial reports with real math.
@@ -217,9 +246,35 @@ function ReportSection({ title, accounts, total }) {
   );
 }
 
-export default function ReportsMath({ reportType }) {
-  if (reportType === 'balance-sheet') return <BalanceSheet />;
-  if (reportType === 'pnl') return <ProfitLoss />;
-  if (reportType === 'cash-flow') return <CashFlow />;
-  return null;
+export default function ReportsMath({ reportType, onBack }) {
+  if (reportType === 'balance-sheet') {
+    return (
+      <>
+        <ReportTrail reportType={reportType} onBack={onBack} />
+        <BalanceSheet />
+      </>
+    );
+  }
+  if (reportType === 'pnl') {
+    return (
+      <>
+        <ReportTrail reportType={reportType} onBack={onBack} />
+        <ProfitLoss />
+      </>
+    );
+  }
+  if (reportType === 'cash-flow') {
+    return (
+      <>
+        <ReportTrail reportType={reportType} onBack={onBack} />
+        <CashFlow />
+      </>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <ReportTrail reportType={reportType} onBack={onBack} />
+      <p className="text-sm text-gray-600">That report has not been built yet.</p>
+    </div>
+  );
 }
