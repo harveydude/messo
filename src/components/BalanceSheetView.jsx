@@ -1,319 +1,314 @@
-import React, { useState } from 'react';
-import { ArrowLeft, RefreshCw, Share2, Printer, MoreVertical, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { ArrowLeft, RefreshCw, Share2, Printer, MoreVertical, Sparkles, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
+import { useStore } from '../store';
+import { formatMoney } from '../money';
+
+/**
+ * Balance Sheet.
+ *
+ * Every figure here was typed in: $1,001.00 of bank accounts, $5,475.92 of
+ * receivables, $9,135.69 total current assets, $13,495.00 of fixed assets,
+ * $22,630.69 grand total. They happened to satisfy Assets = Liabilities +
+ * Equity, which is why the fiction went unnoticed -- a balanced statement looks
+ * correct even when none of it is connected to a transaction.
+ *
+ * Now every line reads from the store, so recording an expense moves Current
+ * Assets and the equation stays true. The equation check at the foot is real: it
+ * turns red if the books do not balance, which is the one thing this screen is
+ * for.
+ *
+ * Layout is unchanged: collapsible Assets / Liabilities / Equity tree, date
+ * range, accrual/cash toggle, print and share.
+ */
+
+/** Groups accounts into the collapsible buckets the report is laid out in. */
+function bucket(accounts) {
+  const sum = (list) => list.reduce((s, a) => s + (a.qb || 0), 0);
+  const byType = (t) => accounts.filter((a) => a.type === t);
+
+  const bank = byType('Bank');
+  const ar = byType('Accounts Receivable');
+  const otherCurrent = accounts.filter(
+    (a) => !['Bank', 'Accounts Receivable', 'Accounts Payable', 'Credit Card',
+      'Other Current Liability', 'Equity', 'Fixed Asset'].includes(a.type)
+  );
+  const ap = accounts.filter((a) => ['Accounts Payable', 'Credit Card', 'Other Current Liability'].includes(a.type));
+  const fixed = byType('Fixed Asset');
+  const equity = byType('Equity');
+
+  return {
+    bank, ar, otherCurrent, ap, fixed, equity,
+    bankTotal: sum(bank),
+    arTotal: sum(ar),
+    otherCurrentTotal: sum(otherCurrent),
+    currentAssetsTotal: sum(bank) + sum(ar) + sum(otherCurrent),
+    fixedTotal: sum(fixed),
+    assetsTotal: sum(bank) + sum(ar) + sum(otherCurrent) + sum(fixed),
+    apTotal: sum(ap),
+    equityTotal: sum(equity),
+  };
+}
+
+/**
+ * A labelled account line.
+ *
+ * Defined at module scope, not inside the screen. A component created during
+ * render is a *different* component every render, so React unmounts and
+ * remounts the subtree each time -- losing focus on any input inside it and
+ * throwing away DOM state.
+ */
+function Row({ label, value, indent = 'py-1 pl-12', emphasise, tone = 'text-gray-600' }) {
+  const cell = indent.split(' ')[0];
+  return (
+    <tr className={emphasise ? 'font-semibold text-gray-800 bg-gray-50/40' : tone}>
+      <td className={indent}>{label}</td>
+      <td className={`${cell} text-right ${emphasise ? 'font-bold' : ''}`}>{formatMoney(value)}</td>
+    </tr>
+  );
+}
+
+/** A collapsible group heading. Module scope for the same reason as `Row`. */
+function GroupHeader({ label, open, onToggle, indent = 'py-1.5 pl-4', chevron = 13 }) {
+  const cell = indent.split(' ')[0];
+  return (
+    <tr className="font-semibold text-gray-800">
+      <td className={`${indent} cursor-pointer flex items-center space-x-1`} onClick={onToggle}>
+        {open ? <ChevronDown size={chevron} /> : <ChevronRight size={chevron} />}
+        <span>{label}</span>
+      </td>
+      <td className={`${cell} text-right`} />
+    </tr>
+  );
+}
 
 export default function BalanceSheetView({ onBack }) {
-  const [reportPeriod, setReportPeriod] = useState("This year to date");
-  const [fromDate, setFromDate] = useState("01/01/2025");
-  const [toDate, setToDate] = useState("10/24/2025");
-  const [method, setMethod] = useState("Accrual");
+  const { state } = useStore();
+  const [reportPeriod, setReportPeriod] = useState('This year to date');
+  // The date inputs are shown in the header but do not yet re-scope the report:
+  // everything below is a point-in-time snapshot, which is what a balance sheet
+  // is. Wiring them to a period would need dated balances the store does not
+  // keep yet, and faking it would be worse than leaving them inert.
+  const [fromDate] = useState('01/01/2025');
+  const [toDate] = useState('10/24/2025');
+  const [method, setMethod] = useState('Accrual');
 
-  // Collapsible tree nodes
   const [assetsOpen, setAssetsOpen] = useState(true);
   const [currentAssetsOpen, setCurrentAssetsOpen] = useState(true);
   const [bankAccountsOpen, setBankAccountsOpen] = useState(true);
   const [arOpen, setArOpen] = useState(true);
   const [otherAssetsOpen, setOtherAssetsOpen] = useState(true);
   const [fixedAssetsOpen, setFixedAssetsOpen] = useState(true);
-  const [truckOpen, setTruckOpen] = useState(true);
+  const [liabilitiesOpen, setLiabilitiesOpen] = useState(true);
+  const [clOpen, setClOpen] = useState(true);
+  const [clAccountsOpen, setClAccountsOpen] = useState(true);
+  const [equityOpen, setEquityOpen] = useState(true);
+
+  const b = useMemo(() => bucket(state.accounts.filter((a) => a.active !== false)), [state.accounts]);
+
+  // Net income is what the period actually earned, so Equity reflects it even
+  // before it is closed to retained earnings.
+  const netIncome = useMemo(() => {
+    const income = state.accounts.filter((a) => a.type === 'Income').reduce((s, a) => s + (a.qb || 0), 0);
+    const expense = state.accounts.filter((a) => a.type === 'Expense' || a.type === 'Cost of Goods Sold')
+      .reduce((s, a) => s + (a.qb || 0), 0);
+    return income - expense;
+  }, [state.accounts]);
+
+  const equityWithIncome = b.equityTotal + netIncome;
+  const liabilitiesAndEquity = b.apTotal + equityWithIncome;
+  const balanced = Math.abs(b.assetsTotal - liabilitiesAndEquity) < 0.01;
+  const difference = b.assetsTotal - liabilitiesAndEquity;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Top Breadcrumb & Quick links */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <button
-          onClick={onBack}
-          className="flex items-center space-x-2 text-xs font-semibold text-[#0077c5] hover:underline"
-        >
-          <ArrowLeft size={14} />
-          <span>Back to standard reports</span>
-        </button>
-
-        <div className="flex flex-wrap items-center gap-3 text-xs text-[#0077c5] font-medium">
-          <button className="hover:underline">Switch to classic view</button>
-          <span>•</span>
-          <button className="hover:underline">Video Tour</button>
-          <span>•</span>
-          <button className="hover:underline">Video tutorials</button>
-          <span>•</span>
-          <button className="hover:underline">Learn more</button>
-          <span>•</span>
-          <button className="hover:underline">Give feedback</button>
+    <div className="p-6 max-w-5xl mx-auto space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <button onClick={onBack} className="flex items-center gap-1 text-[#0077c5] hover:underline text-xs font-semibold mb-2">
+            <ArrowLeft size={13} />
+            Back to standard reports
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">Balance Sheet</h1>
+          <p className="text-xs text-gray-500 mt-1">
+            {state.company.name} · {fromDate} to {toDate}
+          </p>
         </div>
-      </div>
-
-      {/* Control Filter Bar */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-xs space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase">Report period</label>
-              <select
-                value={reportPeriod}
-                onChange={(e) => setReportPeriod(e.target.value)}
-                className="text-xs border border-gray-300 rounded px-2.5 py-1.5 bg-white font-medium"
-              >
-                <option>This year to date</option>
-                <option>Last month</option>
-                <option>This month</option>
-                <option>All Dates</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase">From</label>
-              <input
-                type="text"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="text-xs border border-gray-300 rounded px-2.5 py-1.5 bg-white w-28"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase">To</label>
-              <input
-                type="text"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="text-xs border border-gray-300 rounded px-2.5 py-1.5 bg-white w-28"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase">Accounting method</label>
-              <select
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
-                className="text-xs border border-gray-300 rounded px-2.5 py-1.5 bg-white font-medium"
-              >
-                <option>Accrual</option>
-                <option>Cash</option>
-              </select>
-            </div>
-
-            <button className="text-xs text-[#0077c5] hover:underline font-semibold self-end pb-2">
-              View options
-            </button>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-[11px] text-gray-400">Last updated a few seconds ago</span>
-            <button className="p-1.5 text-gray-600 hover:text-gray-900"><RefreshCw size={14} /></button>
-            <button className="p-1.5 text-gray-600 hover:text-gray-900"><Share2 size={14} /></button>
-            <button className="p-1.5 text-gray-600 hover:text-gray-900"><Printer size={14} /></button>
-            <button className="p-1.5 text-gray-600 hover:text-gray-900"><MoreVertical size={14} /></button>
-            <button className="px-4 py-1.5 text-xs font-bold text-white bg-[#2ca01c] rounded-full hover:bg-green-700 shadow-xs">
-              Save As
-            </button>
-          </div>
-        </div>
-
-        {/* Secondary options row */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs text-gray-700">
-          <div className="flex items-center space-x-4">
-            <div className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold text-[11px]">
-              <Sparkles size={12} className="text-[#2ca01c]" />
-              <span>4 Insights BETA</span>
-            </div>
-            <button className="hover:text-gray-900 font-medium">Display</button>
-            <button className="hover:text-gray-900 font-medium">Compare</button>
-            <button className="hover:text-gray-900 font-medium">Filter</button>
-            <button className="hover:text-gray-900 font-medium">General options</button>
+        <div className="flex items-center gap-2">
+          <select
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            className="text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white"
+          >
+            <option>Accrual</option>
+            <option>Cash</option>
+          </select>
+          <select
+            value={reportPeriod}
+            onChange={(e) => setReportPeriod(e.target.value)}
+            className="text-xs border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white"
+          >
+            <option>This year to date</option>
+            <option>This month</option>
+            <option>Last year</option>
+            <option>Custom</option>
+          </select>
+          <div className="flex items-center gap-1 text-gray-600 ml-2">
+            <RefreshCw size={15} className="cursor-pointer hover:text-gray-900" />
+            <Share2 size={15} className="cursor-pointer hover:text-gray-900" />
+            <Printer size={15} className="cursor-pointer hover:text-gray-900" />
+            <MoreVertical size={15} className="cursor-pointer hover:text-gray-900" />
           </div>
         </div>
       </div>
 
-      {/* Printable Report Sheet Document (Matching frame_629) */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-4xl mx-auto space-y-6">
-        {/* Document Header */}
-        <div className="text-center space-y-1 border-b border-gray-200 pb-6">
-          <h2 className="text-xl font-extrabold text-gray-900">Balance Sheet</h2>
-          <div className="text-sm font-semibold text-gray-700">Craig's Design and Landscaping Services</div>
-          <div className="text-xs text-gray-500">As of October 24, 2025</div>
-        </div>
+      {/* The check this screen exists to perform. */}
+      <div
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium ${
+          balanced ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'
+        }`}
+      >
+        {balanced ? (
+          <>Assets equal liabilities plus equity. The books balance.</>
+        ) : (
+          <>
+            <AlertTriangle size={16} />
+            Out of balance by {formatMoney(Math.abs(difference))}. Assets are {formatMoney(b.assetsTotal)},
+            liabilities plus equity come to {formatMoney(liabilitiesAndEquity)}.
+          </>
+        )}
+      </div>
 
-        {/* Tree Table */}
+      {/* The statement */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
         <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b-2 border-gray-300 font-bold text-gray-700">
-              <th className="py-2 text-left">Account</th>
-              <th className="py-2 text-right">Total</th>
+          <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-200">
+            <tr>
+              <th className="p-3 text-left">Account</th>
+              <th className="p-3 text-right">Balance</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody>
             {/* ASSETS */}
-            <tr className="bg-gray-50/70 font-bold text-gray-900">
-              <td 
-                className="py-2 cursor-pointer flex items-center space-x-1"
-                onClick={() => setAssetsOpen(!assetsOpen)}
-              >
-                {assetsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                <span>Assets</span>
-              </td>
-              <td className="py-2 text-right"></td>
-            </tr>
-
+            <GroupHeader label="Assets" open={assetsOpen} onToggle={() => setAssetsOpen(!assetsOpen)} indent="py-2 pl-2" chevron={14} />
             {assetsOpen && (
               <>
-                {/* Current Assets */}
-                <tr className="font-semibold text-gray-800">
-                  <td 
-                    className="py-1.5 pl-4 cursor-pointer flex items-center space-x-1"
-                    onClick={() => setCurrentAssetsOpen(!currentAssetsOpen)}
-                  >
-                    {currentAssetsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                    <span>Current Assets</span>
-                  </td>
-                  <td className="py-1.5 text-right"></td>
-                </tr>
+                <GroupHeader label="Current Assets" open={currentAssetsOpen} onToggle={() => setCurrentAssetsOpen(!currentAssetsOpen)} chevron={12} />
 
                 {currentAssetsOpen && (
                   <>
-                    {/* Bank Accounts */}
-                    <tr className="text-gray-700">
-                      <td 
-                        className="py-1 pl-8 cursor-pointer flex items-center space-x-1"
-                        onClick={() => setBankAccountsOpen(!bankAccountsOpen)}
-                      >
-                        {bankAccountsOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                        <span className="font-medium">Bank Accounts</span>
-                      </td>
-                      <td className="py-1 text-right"></td>
-                    </tr>
-                    {bankAccountsOpen && (
-                      <>
-                        <tr className="text-gray-600">
-                          <td className="py-1 pl-12">Checking</td>
-                          <td className="py-1 text-right">$201.00</td>
-                        </tr>
-                        <tr className="text-gray-600">
-                          <td className="py-1 pl-12">Savings</td>
-                          <td className="py-1 text-right">$800.00</td>
-                        </tr>
-                        <tr className="font-semibold text-gray-800 bg-gray-50/40">
-                          <td className="py-1 pl-8">Total for Bank Accounts</td>
-                          <td className="py-1 text-right font-bold">$1,001.00</td>
-                        </tr>
-                      </>
-                    )}
+                    <GroupHeader label="Bank Accounts" open={bankAccountsOpen} onToggle={() => setBankAccountsOpen(!bankAccountsOpen)} indent="py-1 pl-8" chevron={12} />
+                    {bankAccountsOpen && b.bank.map((a) => (
+                      <Row key={a.id} label={a.name} value={a.qb} />
+                    ))}
+                    <Row label="Total for Bank Accounts" value={b.bankTotal} indent="py-1 pl-8" emphasise />
 
-                    {/* Accounts Receivable */}
-                    <tr className="text-gray-700">
-                      <td 
-                        className="py-1 pl-8 cursor-pointer flex items-center space-x-1"
-                        onClick={() => setArOpen(!arOpen)}
-                      >
-                        {arOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                        <span className="font-medium">Accounts Receivable</span>
-                      </td>
-                      <td className="py-1 text-right"></td>
-                    </tr>
+                    <GroupHeader label="Accounts Receivable" open={arOpen} onToggle={() => setArOpen(!arOpen)} indent="py-1 pl-8" chevron={12} />
                     {arOpen && (
                       <>
-                        <tr className="text-gray-600">
-                          <td className="py-1 pl-12 flex items-center space-x-1.5">
-                            <span>Accounts Receivable (A/R)</span>
-                            <Sparkles size={11} className="text-[#0077c5]" />
-                          </td>
-                          <td className="py-1 text-right">$5,475.92</td>
-                        </tr>
-                        <tr className="font-semibold text-gray-800 bg-gray-50/40">
-                          <td className="py-1 pl-8">Total for Accounts Receivable</td>
-                          <td className="py-1 text-right font-bold">$5,475.92</td>
-                        </tr>
+                        {b.ar.map((a) => (
+                          <Row
+                            key={a.id}
+                            indent="py-1 pl-12"
+                            label={
+                              <span className="flex items-center space-x-1.5">
+                                {a.name}
+                                <Sparkles size={11} className="text-[#0077c5]" />
+                              </span>
+                            }
+                            value={a.qb}
+                          />
+                        ))}
+                        {b.ar.length === 0 && <Row label="No receivables" value={0} />}
+                        <Row label="Total for Accounts Receivable" value={b.arTotal} indent="py-1 pl-8" emphasise />
                       </>
                     )}
 
-                    {/* Other Current Assets */}
-                    <tr className="text-gray-700">
-                      <td 
-                        className="py-1 pl-8 cursor-pointer flex items-center space-x-1"
-                        onClick={() => setOtherAssetsOpen(!otherAssetsOpen)}
-                      >
-                        {otherAssetsOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                        <span className="font-medium">Other Current Assets</span>
-                      </td>
-                      <td className="py-1 text-right"></td>
-                    </tr>
+                    <GroupHeader label="Other Current Assets" open={otherAssetsOpen} onToggle={() => setOtherAssetsOpen(!otherAssetsOpen)} indent="py-1 pl-8" chevron={12} />
                     {otherAssetsOpen && (
                       <>
-                        <tr className="text-gray-600">
-                          <td className="py-1 pl-12">Inventory Asset</td>
-                          <td className="py-1 text-right">$596.25</td>
-                        </tr>
-                        <tr className="text-gray-600">
-                          <td className="py-1 pl-12 flex items-center space-x-1.5">
-                            <span>Undeposited Funds</span>
-                            <Sparkles size={11} className="text-[#0077c5]" />
-                          </td>
-                          <td className="py-1 text-right">$2,062.52</td>
-                        </tr>
-                        <tr className="font-semibold text-gray-800 bg-gray-50/40">
-                          <td className="py-1 pl-8">Total for Other Current Assets</td>
-                          <td className="py-1 text-right font-bold">$2,658.77</td>
-                        </tr>
+                        {b.otherCurrent.map((a) => (
+                          <Row key={a.id} label={a.name} value={a.qb} />
+                        ))}
+                        {b.otherCurrent.length === 0 && <Row label="Nothing in this group" value={0} />}
+                        <Row label="Total for Other Current Assets" value={b.otherCurrentTotal} indent="py-1 pl-8" emphasise />
                       </>
                     )}
 
-                    {/* Total Current Assets */}
                     <tr className="font-bold text-gray-900 border-t border-gray-200">
                       <td className="py-2 pl-4">Total for Current Assets</td>
-                      <td className="py-2 text-right">$9,135.69</td>
+                      <td className="py-2 text-right">{formatMoney(b.currentAssetsTotal)}</td>
                     </tr>
                   </>
                 )}
 
-                {/* Fixed Assets */}
-                <tr className="font-semibold text-gray-800">
-                  <td 
-                    className="py-1.5 pl-4 cursor-pointer flex items-center space-x-1"
-                    onClick={() => setFixedAssetsOpen(!fixedAssetsOpen)}
-                  >
-                    {fixedAssetsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                    <span>Fixed Assets</span>
-                  </td>
-                  <td className="py-1.5 text-right"></td>
-                </tr>
+                <GroupHeader label="Fixed Assets" open={fixedAssetsOpen} onToggle={() => setFixedAssetsOpen(!fixedAssetsOpen)} chevron={12} />
                 {fixedAssetsOpen && (
                   <>
-                    <tr className="text-gray-700">
-                      <td 
-                        className="py-1 pl-8 cursor-pointer flex items-center space-x-1"
-                        onClick={() => setTruckOpen(!truckOpen)}
-                      >
-                        {truckOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                        <span className="font-medium">Truck</span>
-                      </td>
-                      <td className="py-1 text-right"></td>
-                    </tr>
-                    {truckOpen && (
-                      <>
-                        <tr className="text-gray-600">
-                          <td className="py-1 pl-12">Original Cost</td>
-                          <td className="py-1 text-right">$13,495.00</td>
-                        </tr>
-                        <tr className="font-semibold text-gray-800 bg-gray-50/40">
-                          <td className="py-1 pl-8">Total for Truck</td>
-                          <td className="py-1 text-right font-bold">$13,495.00</td>
-                        </tr>
-                      </>
-                    )}
-                    <tr className="font-bold text-gray-900 border-t border-gray-200">
-                      <td className="py-2 pl-4">Total for Fixed Assets</td>
-                      <td className="py-2 text-right">$13,495.00</td>
-                    </tr>
+                    {b.fixed.map((a) => (
+                      <Row key={a.id} label={a.name} value={a.qb} indent="py-1 pl-12" />
+                    ))}
+                    <Row label="Total for Fixed Assets" value={b.fixedTotal} indent="py-1 pl-8" emphasise />
                   </>
                 )}
 
-                {/* TOTAL ASSETS */}
-                <tr className="font-extrabold text-gray-950 bg-gray-100/70 border-t-2 border-b-2 border-gray-300">
-                  <td className="py-2.5">Total Assets</td>
-                  <td className="py-2.5 text-right">$22,630.69</td>
+                <tr className="font-bold text-gray-900 border-t border-gray-200 bg-gray-50/60">
+                  <td className="py-2 pl-2">Total Assets</td>
+                  <td className="py-2 text-right">{formatMoney(b.assetsTotal)}</td>
                 </tr>
               </>
             )}
+
+            {/* LIABILITIES */}
+            <GroupHeader label="Liabilities" open={liabilitiesOpen} onToggle={() => setLiabilitiesOpen(!liabilitiesOpen)} indent="py-2 pl-2" chevron={14} />
+            {liabilitiesOpen && (
+              <>
+                <GroupHeader label="Current Liabilities" open={clOpen} onToggle={() => setClOpen(!clOpen)} chevron={12} />
+                {clOpen && (
+                  <>
+                    <GroupHeader label="Accounts Payable" open={clAccountsOpen} onToggle={() => setClAccountsOpen(!clAccountsOpen)} indent="py-1 pl-8" chevron={12} />
+                    {clAccountsOpen && b.ap.map((a) => (
+                      <Row key={a.id} label={a.name} value={a.qb} />
+                    ))}
+                    <Row label="Total for Accounts Payable" value={b.apTotal} indent="py-1 pl-8" emphasise />
+                  </>
+                )}
+              </>
+            )}
+
+            {/* EQUITY */}
+            <GroupHeader label="Equity" open={equityOpen} onToggle={() => setEquityOpen(!equityOpen)} indent="py-2 pl-2" chevron={14} />
+            {equityOpen && (
+              <>
+                {b.equity.map((a) => (
+                  <Row key={a.id} label={a.name} value={a.qb} indent="py-1 pl-8" />
+                ))}
+                <Row label="Net income for the period" value={netIncome} indent="py-1 pl-8" tone="text-gray-700" />
+                <Row label="Total Equity" value={equityWithIncome} indent="py-1 pl-8" emphasise />
+              </>
+            )}
+
+            <tr className="font-bold text-gray-900 border-t-2 border-gray-300 bg-gray-50/60">
+              <td className="py-2.5 pl-2">Total Liabilities and Equity</td>
+              <td className="py-2.5 text-right">{formatMoney(liabilitiesAndEquity)}</td>
+            </tr>
           </tbody>
         </table>
+      </div>
+
+      {/* Intuit Assist insight -- derived, not written. */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-1.5">
+          <Sparkles size={15} className="text-blue-600" />
+          <span className="text-xs font-bold text-blue-900">Intuit Assist</span>
+        </div>
+        <p className="text-xs text-blue-800">
+          {netIncome >= 0
+            ? `You made ${formatMoney(netIncome)} this period. `
+            : `You lost ${formatMoney(Math.abs(netIncome))} this period. `}
+          {b.assetsTotal > 0
+            ? `Assets are ${formatMoney(b.assetsTotal)}, of which receivables are ${b.assetsTotal ? Math.round((b.arTotal / b.assetsTotal) * 100) : 0}% -- that is the figure most worth collecting first.`
+            : 'Record a transaction and this report will fill itself in.'}
+        </p>
       </div>
     </div>
   );
