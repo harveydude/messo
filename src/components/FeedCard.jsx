@@ -1,9 +1,9 @@
 import React from 'react';
 import { MoreVertical, Receipt, FileText } from 'lucide-react';
 
-export default function FeedCard({ 
-  type, 
-  icon, 
+export default function FeedCard({
+  type: _type,
+  icon,
   title, 
   body, 
   link, 

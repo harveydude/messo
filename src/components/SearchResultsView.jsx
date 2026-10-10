@@ -1,16 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  Printer, 
-  Share2, 
-  Sliders, 
-  X, 
-  Filter, 
-  Calendar,
-  ChevronDown,
-  Info,
-  HelpCircle,
-  ArrowDown
-} from 'lucide-react';
+import { Printer, Share2, Sliders, X, Filter, Calendar, ChevronDown, HelpCircle, ArrowDown } from 'lucide-react';
 import dashboardData from '../data/dashboard.json';
 
 export default function SearchResultsView({ 

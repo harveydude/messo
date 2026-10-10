@@ -1,19 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  ChevronRight, 
-  BookOpen, 
-  Repeat, 
-  Package, 
-  Sliders, 
-  FileText, 
-  CreditCard, 
-  Calendar, 
-  Paperclip, 
-  Tag, 
-  FolderTree,
-  ChevronLeft
-} from 'lucide-react';
+import { Search, ChevronRight, BookOpen, Repeat, Package, Sliders, FileText, CreditCard, Calendar, Paperclip, Tag, FolderTree } from 'lucide-react';
 
 export default function AllListsView({ onNavigate }) {
   const [searchTerm, setSearchTerm] = useState('');

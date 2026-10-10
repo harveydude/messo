@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight, 
-  MessageSquare, 
-  Star, 
-  User, 
-  Check 
-} from 'lucide-react';
+import { Search, ChevronDown, ChevronLeft, ChevronRight, MessageSquare, Star, User } from 'lucide-react';
 import dashboardData from '../data/dashboard.json';
 
 // Teal Star Rating Component

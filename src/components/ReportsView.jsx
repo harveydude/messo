@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  Star, 
-  MoreVertical, 
-  ChevronDown, 
-  ChevronRight, 
-  FileText 
-} from 'lucide-react';
+import { Star, MoreVertical, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 
 export default function ReportsView({ onOpenBalanceSheet }) {
   const [favoritesOpen, setFavoritesOpen] = useState(true);

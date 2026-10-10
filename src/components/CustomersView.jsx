@@ -1,18 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  Printer, 
-  Share2, 
-  Settings, 
-  ChevronDown, 
-  ArrowUpDown,
-  Plus
-} from 'lucide-react';
+import { Search, Printer, Share2, Settings, ChevronDown } from 'lucide-react';
 import { INITIAL_CUSTOMERS } from '../data/qbData';
 
-export default function CustomersView({ onOpenNewCustomer, onOpenCreateInvoice }) {
+export default function CustomersView({ onOpenNewCustomer, onOpenCreateInvoice: _onOpenCreateInvoice }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
+  const [customers] = useState(INITIAL_CUSTOMERS);
 
   const filteredCustomers = customers.filter(c => 
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

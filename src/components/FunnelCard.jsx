@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function FunnelCard({ 
   funnelData, 
   privacyEnabled = false,
   onRequestPayment 
 }) {
-  const [period, setPeriod] = useState(funnelData?.period || "Last 30 days");
+  const [period] = useState(funnelData?.period || "Last 30 days");
 
   const formatAmount = (val) => {
     if (privacyEnabled) return "••••••";

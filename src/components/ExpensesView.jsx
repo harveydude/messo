@@ -1,17 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  ChevronDown, 
-  Printer, 
-  Share2, 
-  Settings, 
-  Filter, 
-  Check, 
-  Plus
-} from 'lucide-react';
+import { ChevronDown, Printer, Share2, Settings, Filter } from 'lucide-react';
 import { INITIAL_EXPENSES } from '../data/qbData';
 
 export default function ExpensesView({ onOpenExpenseModal }) {
-  const [expenses, setExpenses] = useState(INITIAL_EXPENSES);
+  const [expenses] = useState(INITIAL_EXPENSES);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">

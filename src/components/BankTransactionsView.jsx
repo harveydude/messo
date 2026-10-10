@@ -1,20 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  RefreshCw, 
-  ChevronDown, 
-  ExternalLink, 
-  Search, 
-  Printer, 
-  Share2, 
-  Settings, 
-  Paperclip, 
-  Check, 
-  X,
-  FileText,
-  Building,
-  CreditCard,
-  Plus
-} from 'lucide-react';
+import { RefreshCw, ChevronDown, Printer, Share2, Settings, Paperclip, Check, X, Building, CreditCard } from 'lucide-react';
 import { INITIAL_BANK_TRANSACTIONS } from '../data/qbData';
 
 export default function BankTransactionsView({ onNavigate }) {

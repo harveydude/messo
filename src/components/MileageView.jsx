@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Car, Plus, Info } from 'lucide-react';
+import { ChevronDown, Car } from 'lucide-react';
 
 export default function MileageView() {
   const [taxYear, setTaxYear] = useState("2025");

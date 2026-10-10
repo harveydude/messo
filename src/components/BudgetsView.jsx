@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlayCircle, CheckCircle2, TrendingUp } from 'lucide-react';
+import { PlayCircle, TrendingUp } from 'lucide-react';
 
 export default function BudgetsView({ onOpenBudgetModal }) {
   return (

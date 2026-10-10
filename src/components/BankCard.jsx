@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  Building, 
-  CreditCard, 
-  Info, 
-  ChevronDown, 
-  Settings, 
-  MoreVertical 
-} from 'lucide-react';
+import { CreditCard, ChevronDown, Settings, MoreVertical } from 'lucide-react';
 
 export default function BankCard({ 
   bankData, 

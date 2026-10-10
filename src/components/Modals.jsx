@@ -1,26 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  X, 
-  HelpCircle, 
-  Check, 
-  Copy, 
-  GripVertical, 
-  Pin, 
-  Plus, 
-  Trash2, 
-  ExternalLink, 
-  History, 
-  Settings as SettingsIcon, 
-  Calendar,
-  Paperclip,
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  PlayCircle,
-  Store,
-  Pencil,
-  Info
-} from 'lucide-react';
+import { X, HelpCircle, Check, Copy, GripVertical, Pin, Trash2, ExternalLink, History, Settings as SettingsIcon, Calendar, Paperclip, CheckCircle2, ChevronDown, ChevronRight, PlayCircle, Store, Pencil } from 'lucide-react';
 import UsageMeter from './UsageMeter';
 import dashboardData from '../data/dashboard.json';
 
@@ -381,8 +360,11 @@ function SettingsSection({
 }
 
 export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName }) {
-  if (!isOpen) return null;
-
+  // NOTE: the closed-check moved BELOW the hooks. React requires every hook to
+  // run in the same order on every render; returning early before them made all
+  // 18 useStates conditional. It happened to survive because React remounts the
+  // modal each time -- one ordinary line added above the check would have turned
+  // opening this dialog into a blank white screen.
   const [activeTab, setActiveTab] = useState("Company");
   const [hasUploadedLogo, setHasUploadedLogo] = useState(false);
   const [companyNameState, setCompanyNameState] = useState(currentName || "Craig's Design and Landscaping Services");
@@ -437,8 +419,12 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
   const [multicurrencyEnabled, setMulticurrencyEnabled] = useState(false);
   const [tempMulticurrencyToggle, setTempMulticurrencyToggle] = useState(false);
   const [tempMulticurrencyChecked, setTempMulticurrencyChecked] = useState(false);
-  const [homeCurrency, setHomeCurrency] = useState("United States Dollar");
-  const [selectedHomeCurrency, setSelectedHomeCurrency] = useState("USD - United States ...");
+  const [homeCurrency] = useState("United States Dollar");
+  const [selectedHomeCurrency] = useState("USD - United States ...");
+
+  // Hooks above, render gate here. A side benefit: the dialog now keeps what you
+  // typed when you close and reopen it, instead of silently discarding it.
+  if (!isOpen) return null;
 
   const handleSaveName = () => {
     setCompanyNameState(nameValue);
@@ -1566,22 +1552,31 @@ export function AdditionalInfoModal({ isOpen, onClose }) {
    5. CUSTOMIZE APP MENUS MODAL
    Matching Screenshot 031713
 ========================================================= */
-export function CustomizeAppMenusModal({ isOpen, onClose }) {
-  if (!isOpen) return null;
+const DEFAULT_APPS = [
+  { name: "Accounting", pinned: true },
+  { name: "Expenses & Pay Bills", pinned: true },
+  { name: "Sales & Get Paid", pinned: true },
+  { name: "Customer Hub", pinned: false },
+  { name: "Team", pinned: false },
+  { name: "Time", pinned: false },
+  { name: "Project Management", pinned: false },
+  { name: "Inventory", pinned: false },
+  { name: "Sales Tax", pinned: false },
+  { name: "Business Tax", pinned: false },
+  { name: "Lending", pinned: false }
+];
 
-  const [apps, setApps] = useState([
-    { name: "Accounting", pinned: true },
-    { name: "Expenses & Pay Bills", pinned: true },
-    { name: "Sales & Get Paid", pinned: true },
-    { name: "Customer Hub", pinned: false },
-    { name: "Team", pinned: false },
-    { name: "Time", pinned: false },
-    { name: "Project Management", pinned: false },
-    { name: "Inventory", pinned: false },
-    { name: "Sales Tax", pinned: false },
-    { name: "Business Tax", pinned: false },
-    { name: "Lending", pinned: false }
-  ]);
+export function CustomizeAppMenusModal({ isOpen, onClose }) {
+  // Hooks run unconditionally; the closed-check sits below them. Previously the
+  // check came first, which made this useState conditional.
+  //
+  // The parent mounts this component only while it is open, so the list reseeds
+  // naturally on every open. That is why there is no "reset on open" effect:
+  // writing state inside an effect during mount is a cascade of extra renders,
+  // and a mount-when-open component gets the same behaviour for free.
+  const [apps, setApps] = useState(DEFAULT_APPS);
+
+  if (!isOpen) return null;
 
   const togglePin = (index) => {
     const updated = [...apps];
@@ -1651,10 +1646,11 @@ export function CustomizeAppMenusModal({ isOpen, onClose }) {
    Matching frame_567
 ========================================================= */
 export function JournalEntryModal({ isOpen, onClose }) {
-  if (!isOpen) return null;
-
+  // Hooks first, closed-check second. The early return used to sit above them,
+  // which made all three of these conditional.
   const [date, setDate] = useState("10/20/2025");
   const [journalNo, setJournalNo] = useState("1");
+  const [nextLineId, setNextLineId] = useState(9);
   const [rows, setRows] = useState([
     { id: 1, account: "", debit: 0, credit: 0, desc: "" },
     { id: 2, account: "", debit: 0, credit: 0, desc: "" },
@@ -1666,8 +1662,14 @@ export function JournalEntryModal({ isOpen, onClose }) {
     { id: 8, account: "", debit: 0, credit: 0, desc: "" },
   ]);
 
+  if (!isOpen) return null;
+
+  // Ids come from a monotonic counter rather than rows.length, so they can never
+  // collide after a line is cleared or removed. React keys built from array
+  // position make the wrong row keep a stale edit.
   const addLine = () => {
-    setRows([...rows, { id: rows.length + 1, account: "", debit: 0, credit: 0, desc: "" }]);
+    setRows([...rows, { id: nextLineId, account: "", debit: 0, credit: 0, desc: "" }]);
+    setNextLineId(nextLineId + 1);
   };
 
   const clearLines = () => {

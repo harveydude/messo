@@ -7,7 +7,7 @@ export default function CashFlowCard({
   onNavigate 
 }) {
   const [activeTab, setActiveTab] = useState('Cash balance');
-  const [period, setPeriod] = useState('12 months');
+  const [period] = useState('12 months');
 
   const formatAmount = (val) => {
     if (privacyEnabled) return "••••••";
@@ -56,7 +56,6 @@ export default function CashFlowCard({
   const xAug = getX(7);
   const xSep = getX(8);
   const xOct = getX(9);
-  const xNov = getX(10);
   const xDec = getX(11);
   const yNeg3422 = getY(-3422);
 

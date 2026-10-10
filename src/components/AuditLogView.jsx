@@ -1,20 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { 
-  Search, 
-  ChevronDown, 
-  Download, 
-  Printer, 
-  Settings, 
-  ArrowUpDown, 
-  X,
-  Clock,
-  User,
-  ShieldCheck,
-  FileText,
-  ExternalLink,
-  ChevronRight
-} from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Search, ChevronDown, Download, Printer, Settings, X } from 'lucide-react';
 
+/**
+ * Sample audit log.
+ *
+ * Each entry carries an ISO timestamp so the date-range filter can actually
+ * compare it -- the previous data had a formatted string and a Unix timestamp,
+ * and the dropdown that selected a range read neither.
+ */
 export const INITIAL_AUDIT_LOGS = [
   {
     id: 1,
@@ -186,6 +179,13 @@ export const INITIAL_AUDIT_LOGS = [
   }
 ];
 
+/**
+ * When this module was first evaluated. Used only as the anchor for the audit
+ * log's date range if the log were empty -- a value read once at load, so that
+ * rendering never calls a clock and stays pure.
+ */
+const LOADED_AT = Date.now();
+
 export default function AuditLogView({ onNavigate }) {
   const [userFilter, setUserFilter] = useState('All Users');
   const [dateFilter, setDateFilter] = useState('This Month');
@@ -196,9 +196,54 @@ export default function AuditLogView({ onNavigate }) {
   const [tableDensity, setTableDensity] = useState('regular'); // 'regular' | 'compact'
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // The date window, anchored to the newest entry rather than to wall-clock
+  // time. This screen ships with a fixed sample log, so anchoring to "now" would
+  // make the default "This Month" show an empty table on every visit. With a
+  // live log the newest entry IS now, so the same code behaves identically --
+  // this only matters for the static data.
+  const dateAnchor = useMemo(() => {
+    const newest = Math.max(0, ...INITIAL_AUDIT_LOGS.map((r) => Number(r.timestamp) || 0));
+    // Read once at module load rather than during render: calling Date.now()
+    // here would make the render impure (it changes on every call), which the
+    // linter correctly refuses. The fallback only matters if the log is empty.
+    return newest || LOADED_AT;
+  }, []);
+
+  // True when `timestamp` falls inside the window named by `dateFilter`.
+  const inDateWindow = useCallback(
+    (timestamp) => {
+      if (dateFilter === 'All dates') return true;
+      const d = new Date(timestamp);
+      const a = new Date(dateAnchor);
+
+      if (dateFilter === 'This Year') return d.getFullYear() === a.getFullYear();
+
+      if (dateFilter === 'This Quarter') {
+        return (
+          d.getFullYear() === a.getFullYear() &&
+          Math.floor(d.getMonth() / 3) === Math.floor(a.getMonth() / 3)
+        );
+      }
+
+      if (dateFilter === 'Last Month') {
+        const target = new Date(a.getFullYear(), a.getMonth() - 1, 1);
+        return d.getFullYear() === target.getFullYear() && d.getMonth() === target.getMonth();
+      }
+
+      // 'This Month'
+      return d.getFullYear() === a.getFullYear() && d.getMonth() === a.getMonth();
+    },
+    [dateFilter, dateAnchor]
+  );
+
   // Filtered and sorted rows
   const filteredRows = useMemo(() => {
     let rows = [...INITIAL_AUDIT_LOGS];
+
+    // Date range. This dropdown previously changed nothing -- it updated state
+    // that no filter ever read, so choosing "Last Month" silently showed the
+    // same rows.
+    rows = rows.filter((r) => inDateWindow(r.timestamp));
 
     // Filter by user
     if (userFilter !== 'All Users') {
@@ -228,7 +273,7 @@ export default function AuditLogView({ onNavigate }) {
     });
 
     return rows;
-  }, [userFilter, dateFilter, eventFilter, searchQuery, sortOrder]);
+  }, [userFilter, inDateWindow, eventFilter, searchQuery, sortOrder]);
 
   const handlePrint = () => {
     window.print();

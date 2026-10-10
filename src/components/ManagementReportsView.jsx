@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, ChevronDown, FileText } from 'lucide-react';
+import { Plus, ChevronDown } from 'lucide-react';
 
 export default function ManagementReportsView() {
   const reports = [

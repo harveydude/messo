@@ -1,13 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Sparkles, 
-  Sliders, 
-  Eye, 
-  EyeOff,
-  ChevronRight,
-  ThumbsUp,
-  ThumbsDown
-} from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Sparkles, Sliders, Eye, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react';
 import PillNav from './PillNav';
 import FeedCard from './FeedCard';
 import CreateActions from './CreateActions';
@@ -34,7 +26,7 @@ export default function DashboardView({
     try {
       const saved = localStorage.getItem('qb_dashboard_privacy');
       return saved !== null ? JSON.parse(saved) : false;
-    } catch (e) {
+    } catch {
       return false;
     }
   });
@@ -135,7 +127,7 @@ export default function DashboardView({
       const nextVal = !prev;
       try {
         localStorage.setItem('qb_dashboard_privacy', JSON.stringify(nextVal));
-      } catch (e) {}
+      } catch {}
       return nextVal;
     });
   };

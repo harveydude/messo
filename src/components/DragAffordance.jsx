@@ -30,7 +30,7 @@ export default function DragAffordance({ onRemove }) {
       <button
         onClick={(e) => {
           e.stopPropagation();
-          onRemove && onRemove();
+          onRemove?.();
         }}
         className="w-[44px] h-[44px] mt-[36px] -ml-[26px] bg-[#1B8A1B] hover:bg-[#167016] text-white rounded-[8px] flex items-center justify-center cursor-pointer shadow-lg transition-transform hover:scale-105 active:scale-95"
         title="Remove widget"

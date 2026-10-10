@@ -1,23 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight,
-  Search, 
-  Printer, 
-  Settings, 
-  Pencil, 
-  MessageSquare, 
-  Info, 
-  ArrowLeftRight,
-  Check,
-  Sliders,
-  Gem,
-  LayoutGrid,
-  FileText,
-  CreditCard,
-  DollarSign
-} from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Search, Printer, Settings, Pencil, MessageSquare, Info, ArrowLeftRight, Check, Sliders, Gem } from 'lucide-react';
 
 export const INITIAL_CHART_OF_ACCOUNTS = [
   { id: 1, name: 'Checking', type: 'Bank', badge: 'BAL', detail: 'Checking', bank: true, qb: 1201.00, bankBal: -3621.93, action: 'View register', indent: 0 },

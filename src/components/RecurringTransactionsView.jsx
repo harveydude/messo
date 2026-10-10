@@ -1,15 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  ChevronDown, 
-  ChevronUp, 
-  Printer, 
-  Settings, 
-  Sliders, 
-  MessageSquare, 
-  X,
-  Gem,
-  Plus
-} from 'lucide-react';
+import { ChevronDown, Printer, Settings, Sliders, MessageSquare, X, Gem } from 'lucide-react';
 
 export default function RecurringTransactionsView({ onNavigate }) {
   // Navigation sidebar collapse states

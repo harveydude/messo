@@ -1,17 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  ArrowLeft, 
-  RefreshCw, 
-  Share2, 
-  Printer, 
-  MoreVertical, 
-  Sparkles, 
-  ChevronDown, 
-  ChevronRight,
-  Filter,
-  Sliders,
-  Calendar
-} from 'lucide-react';
+import { ArrowLeft, RefreshCw, Share2, Printer, MoreVertical, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
 
 export default function BalanceSheetView({ onBack }) {
   const [reportPeriod, setReportPeriod] = useState("This year to date");

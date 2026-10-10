@@ -71,3 +71,18 @@
   );
 }
 
+/* Loading spinner for lazily-loaded screens. Named so it cannot collide with
+   any Tailwind or third-party animation. */
+@keyframes mes-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  svg[style*='mes-spin'],
+  [style*='animation: mes-spin'] {
+    animation: none !important;
+  }
+}
+

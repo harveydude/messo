@@ -1,22 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight,
-  Search, 
-  Settings, 
-  BookOpen, 
-  Info, 
-  X, 
-  AlertTriangle, 
-  Check, 
-  Plus, 
-  Sliders, 
-  Gem,
-  MoreHorizontal,
-  ToggleLeft,
-  ToggleRight
-} from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronLeft, ChevronRight, Search, Settings, BookOpen, Info, X, AlertTriangle, Check, Sliders, Gem, MoreHorizontal } from 'lucide-react';
 
 export const INITIAL_RULES = [
   {
@@ -275,9 +258,13 @@ export default function RulesView({ onNavigate }) {
                     key={item}
                     onClick={() => {
                       if (item === 'Sales transactions' || item === 'Invoices') {
-                        onNavigate && onNavigate('sales_transactions');
+                        onNavigate?.('sales_transactions');
                       } else if (item === 'Products & services') {
-                        onNavigate && onNavigate('products_services');
+                        onNavigate?.('products_services');
+                      } else {
+                        // No screen for this one yet. Previously the click did
+                        // nothing at all, which reads as a broken menu.
+                        onNavigate?.('not_built');
                       }
                     }}
                     className="w-full h-[38px] flex items-center pl-[44px] pr-3 text-[14px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer"

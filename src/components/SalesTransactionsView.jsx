@@ -1,19 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  ChevronDown, 
-  Printer, 
-  Share2, 
-  Settings, 
-  Sparkles, 
-  X,
-  Filter,
-  Check
-} from 'lucide-react';
+import { ChevronDown, Printer, Share2, Settings, Sparkles, X } from 'lucide-react';
 import { INITIAL_SALES_TRANSACTIONS } from '../data/qbData';
 
 export default function SalesTransactionsView({ onOpenInvoiceModal }) {
   const [showAiBanner, setShowAiBanner] = useState(true);
-  const [transactions, setTransactions] = useState(INITIAL_SALES_TRANSACTIONS);
+  const [transactions] = useState(INITIAL_SALES_TRANSACTIONS);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">

@@ -1,16 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  Sparkles, 
-  ChevronDown, 
-  Plus, 
-  Copy, 
-  Settings, 
-  Upload, 
-  Bot, 
-  CheckCircle, 
-  Building,
-  Info
-} from 'lucide-react';
+import { Sparkles, ChevronDown, Plus, Copy, Settings, Upload, CheckCircle, Building } from 'lucide-react';
 
 export default function BusinessFeedView() {
   const [tone, setTone] = useState("😐 Formal");

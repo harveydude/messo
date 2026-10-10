@@ -132,7 +132,7 @@ export default function ProfitLossCard({
                 </span>
               </div>
               <button 
-                onClick={() => onNavigate && onNavigate('expenses')}
+                onClick={() => onNavigate && onNavigate('expense_transactions')}
                 className="text-[13px] text-[#0077C5] hover:underline font-medium cursor-pointer"
               >
                 {data.expenses.reviewText}

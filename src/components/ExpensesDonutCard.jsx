@@ -161,7 +161,7 @@ export default function ExpensesDonutCard({
             <div className="flex items-center space-x-2 pt-0.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#9E9E9E] flex-shrink-0" />
               <button 
-                onClick={() => onNavigate && onNavigate('expenses')}
+                onClick={() => onNavigate && onNavigate('expense_transactions')}
                 className="text-[#0077C5] hover:underline font-medium cursor-pointer"
               >
                 {data.reviewText}
@@ -174,14 +174,18 @@ export default function ExpensesDonutCard({
       {/* Footer */}
       <div className="pt-4 mt-4 flex items-center justify-between border-t border-transparent">
         <button 
-          onClick={() => onNavigate && onNavigate('expenses')}
+          onClick={() => onNavigate && onNavigate('expense_transactions')}
           className="text-[14px] text-[#0077C5] hover:underline font-medium cursor-pointer"
         >
           {data.footerLink}
         </button>
 
-        <button className="text-[#6B6C72] hover:text-[#393A3D] p-1 cursor-pointer">
-          <MoreVertical size={18} />
+        <button
+          type="button"
+          className="text-[#6B6C72] hover:text-[#393A3D] p-1 cursor-pointer"
+          aria-label="More options for the expenses card"
+        >
+          <MoreVertical size={18} aria-hidden="true" />
         </button>
       </div>
     </div>

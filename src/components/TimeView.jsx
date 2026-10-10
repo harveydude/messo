@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Search, ChevronDown, X, MessageSquare } from 'lucide-react';
+import { Clock, Search, X, MessageSquare } from 'lucide-react';
 
 export default function TimeView() {
   const [showTooltip, setShowTooltip] = useState(true);
