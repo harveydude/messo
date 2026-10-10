@@ -1,14 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { RefreshCw, ChevronDown, Printer, Share2, Settings, Paperclip, Check, X, Building, CreditCard } from 'lucide-react';
-import { INITIAL_BANK_TRANSACTIONS } from '../data/qbData';
+import { useStore } from '../store';
+import { formatMoney } from '../money';
 
+/**
+ * Bank transactions.
+ *
+ * The account cards showed fixed figures -- Checking -$3,621.93 with $1,201.00
+ * "in QuickBooks", Savings $200.00 with $800.00, Mastercard $304.96 with
+ * $157.72 -- regardless of what the app contained. Categorising a transaction
+ * left the card unchanged, so the headline balance disagreed with the table
+ * directly beneath it.
+ *
+ * The bank-side balance is still a static figure: it belongs to the real bank,
+ * which this app does not talk to. The "in QuickBooks" figure and the pending
+ * count are now computed, and the review count is the real number rather than
+ * a literal 25.
+ */
 export default function BankTransactionsView({ onNavigate, onCategorize, onReconcile }) {
+  const { state, dispatch } = useStore();
   const [selectedAccount, setSelectedAccount] = useState('checking');
   const [activeTab, setActiveTab] = useState('review'); // 'review', 'categorized', 'excluded'
-  const [transactions, setTransactions] = useState(INITIAL_BANK_TRANSACTIONS);
-  const [expandedRowId, setExpandedRowId] = useState(2); // Expand row 2 (A Rental) by default to show exact UI from frame_728!
+  const [expandedRowId, setExpandedRowId] = useState(null);
   const [updating, setUpdating] = useState(false);
-  
+
   // Expanded form state
   const [txType, setTxType] = useState('Categorize');
   const [transCategory, setTransCategory] = useState('Deposit');
@@ -16,13 +31,68 @@ export default function BankTransactionsView({ onNavigate, onCategorize, onRecon
   const [accountCategory, setAccountCategory] = useState('Uncategorized Income');
   const [memoText, setMemoText] = useState('A1 RENTAL BACKHOE DEPOSIT REFUND');
 
+  const selectedAccountId = state.bankAccounts.find((a) => a.name === selectedAccount)?.id ?? state.bankAccounts[0]?.id;
+
+  /** The real pending count and "in QuickBooks" figure, per connected account. */
+  const accountStats = useMemo(() => {
+    return state.bankAccounts.map((acct) => {
+      const txns = state.bankTxns.filter((t) => t.bankAccountId === acct.id);
+      const bookAccount = state.accounts.find((a) => a.name === acct.name);
+      const reviewed = txns.filter((t) => t.state === 'Reviewed' || t.state === 'Match');
+      const inBooks = reviewed.reduce((s, t) => s + t.amount, 0);
+      return {
+        ...acct,
+        bankBalance: acct.balance,
+        bookBalance: bookAccount?.qb ?? inBooks,
+        pending: txns.filter((t) => t.state === 'Uncategorized' || t.state === 'Suggested').length,
+      };
+    });
+  }, [state.bankAccounts, state.bankTxns, state.accounts]);
+
+  const reviewCount = state.bankTxns.filter(
+    (t) => t.state === 'Uncategorized' || t.state === 'Suggested'
+  ).length;
+
+  const transactions = useMemo(() => {
+    return state.bankTxns
+      .filter((t) => t.bankAccountId === selectedAccountId)
+      .map((t) => ({
+        ...t,
+        date: t.date,
+        description: t.desc,
+        payee: t.payee || t.desc,
+        category: t.suggestion
+          ? `${state.accounts.find((a) => a.id === t.suggestion.accountId)?.name} · ${t.suggestion.confidence}% sure`
+          : t.categoryAccountId
+            ? state.accounts.find((a) => a.id === t.categoryAccountId)?.name
+            : 'Uncategorized',
+        matchStatus: t.state === 'Match' ? 'Recorded' : t.state === 'Reviewed' ? 'Categorized' : null,
+        matchDetail:
+          t.state === 'Match'
+            ? `Matched to ${t.matchedRef}`
+            : t.state === 'Uncategorized'
+              ? 'Not yet categorised'
+              : '',
+        spent: t.amount < 0 ? Math.abs(t.amount) : 0,
+        received: t.amount > 0 ? t.amount : 0,
+        memo: t.desc,
+        action: t.state === 'Reviewed' || t.state === 'Match' ? 'View' : 'Categorize',
+      }));
+  }, [state.bankTxns, state.accounts, selectedAccountId]);
+
   const handleUpdate = () => {
     setUpdating(true);
     setTimeout(() => setUpdating(false), 800);
   };
 
   const handleAddRow = (id) => {
-    setTransactions(transactions.filter(t => t.id !== id));
+    const txn = state.bankTxns.find((t) => t.id === id);
+    if (txn) {
+      dispatch({
+        type: 'UPDATE_BANK_TXN',
+        payload: { ...txn, state: 'Reviewed', categoryAccountId: txn.categoryAccountId ?? null },
+      });
+    }
     if (expandedRowId === id) setExpandedRowId(null);
   };
 
@@ -66,94 +136,52 @@ export default function BankTransactionsView({ onNavigate, onCategorize, onRecon
         </div>
       </div>
 
-      {/* Account Cards Switcher */}
+      {/* Account cards. The bank-side balance is the institution's own figure --
+          this app does not connect to a bank. The "in QuickBooks" figure and the
+          pending count are ours, so they are computed. */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Checking */}
-        <div 
-          onClick={() => setSelectedAccount('checking')}
-          className={`p-4 rounded-xl cursor-pointer transition relative border ${
-            selectedAccount === 'checking'
-              ? 'bg-[#0077c5] text-white shadow-md border-transparent'
-              : 'bg-white border-gray-200 hover:border-gray-300 text-gray-900'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-sm">Checking</span>
-            <Building size={16} className={selectedAccount === 'checking' ? 'text-white/80' : 'text-gray-400'} />
-          </div>
-          <div className="space-y-1">
-            <div className="text-xl font-extrabold">-$3,621.93</div>
-            <div className={`text-[11px] ${selectedAccount === 'checking' ? 'text-white/80' : 'text-gray-500'}`}>
-              BANK BALANCE • Updated moments ago
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-white/20 mt-2">
-              <div className="text-xs">
-                In QuickBooks: <span className="font-semibold">$1,201.00</span>
+        {accountStats.map((acct) => {
+          const isSelected = acct.id === selectedAccountId;
+          const Icon = acct.type === 'Credit Card' ? CreditCard : Building;
+          return (
+            <div
+              key={acct.id}
+              onClick={() => setSelectedAccount(acct.name)}
+              className={`p-4 rounded-xl cursor-pointer transition relative border ${
+                isSelected
+                  ? 'bg-[#0077c5] text-white shadow-md border-transparent'
+                  : 'bg-white border-gray-200 hover:border-gray-300 text-gray-900'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-bold text-sm">{acct.name}</span>
+                <Icon size={16} className={isSelected ? 'text-white/80' : 'text-gray-400'} />
               </div>
-              <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white">
-                25
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Savings */}
-        <div 
-          onClick={() => setSelectedAccount('savings')}
-          className={`p-4 rounded-xl cursor-pointer transition relative border ${
-            selectedAccount === 'savings'
-              ? 'bg-[#0077c5] text-white shadow-md border-transparent'
-              : 'bg-white border-gray-200 hover:border-gray-300 text-gray-900'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-sm">Savings</span>
-            <Building size={16} className="text-gray-400" />
-          </div>
-          <div className="space-y-1">
-            <div className="text-xl font-extrabold">$200.00</div>
-            <div className="text-[11px] text-gray-500">
-              BANK BALANCE • Updated moments ago
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
-              <div className="text-xs">
-                In QuickBooks: <span className="font-semibold">$800.00</span>
+              <div className="space-y-1">
+                <div className="text-xl font-extrabold">{formatMoney(acct.bankBalance)}</div>
+                <div className={`text-[11px] ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
+                  BANK BALANCE • Updated moments ago
+                </div>
+                <div className={`flex items-center justify-between pt-2 mt-2 ${isSelected ? 'border-t border-white/20' : 'border-t border-gray-100'}`}>
+                  <div className="text-xs">
+                    In QuickBooks: <span className="font-semibold">{formatMoney(acct.bookBalance)}</span>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      acct.pending
+                        ? 'font-bold bg-orange-500 text-white'
+                        : isSelected
+                          ? 'bg-white/20 text-white'
+                          : 'bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    {acct.pending}
+                  </span>
+                </div>
               </div>
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                1
-              </span>
             </div>
-          </div>
-        </div>
-
-        {/* Mastercard */}
-        <div 
-          onClick={() => setSelectedAccount('mastercard')}
-          className={`p-4 rounded-xl cursor-pointer transition relative border ${
-            selectedAccount === 'mastercard'
-              ? 'bg-[#0077c5] text-white shadow-md border-transparent'
-              : 'bg-white border-gray-200 hover:border-gray-300 text-gray-900'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span className="font-bold text-sm">Mastercard</span>
-            <CreditCard size={16} className="text-gray-400" />
-          </div>
-          <div className="space-y-1">
-            <div className="text-xl font-extrabold">$304.96</div>
-            <div className="text-[11px] text-gray-500">
-              BANK BALANCE • Updated moments ago
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-2">
-              <div className="text-xs">
-                In QuickBooks: <span className="font-semibold">$157.72</span>
-              </div>
-              <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                7
-              </span>
-            </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
       {/* Tabs and Tutorial links */}
@@ -165,7 +193,7 @@ export default function BankTransactionsView({ onNavigate, onCategorize, onRecon
               activeTab === 'review' ? 'bg-[#393a3d] text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
-            For review (25)
+            For review ({reviewCount})
           </button>
           <button 
             onClick={() => setActiveTab('categorized')}
@@ -198,7 +226,7 @@ export default function BankTransactionsView({ onNavigate, onCategorize, onRecon
         <div className="p-3 bg-gray-50/50 border-b border-gray-200 flex items-center justify-between text-xs text-gray-600">
           <div className="flex items-center space-x-3">
             <input type="checkbox" className="rounded text-[#2ca01c] focus:ring-[#2ca01c]" />
-            <span>1-25 of 25</span>
+            <span>1-{transactions.length} of {transactions.length}</span>
           </div>
           <div className="flex items-center space-x-3">
             <Printer size={15} className="cursor-pointer hover:text-gray-900" />
