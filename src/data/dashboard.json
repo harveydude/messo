@@ -1,0 +1,383 @@
+{
+  "greeting": "Good morning!",
+  "feed": [
+    {
+      "type": "action",
+      "icon": "receipt",
+      "title": "Overdue invoices",
+      "body": "Over **$3,110.97** worth of invoice reminders are ready for you to review and send",
+      "link": "Review all",
+      "border": "gradient-green"
+    },
+    {
+      "type": "action",
+      "icon": "file-text",
+      "title": "Profit and loss",
+      "body": "Based on connected transactions, I calculated net profit for the last month.",
+      "link": "View net profit",
+      "border": "solid"
+    },
+    {
+      "type": "insight",
+      "body": "Autofilling expenses keeps your records organized",
+      "link": "Learn more",
+      "border": "gradient-green"
+    },
+    {
+      "type": "insight",
+      "body": "Forwarding emails to autofill transactions can help you cut down on manual work",
+      "link": "Learn more",
+      "border": "gradient-blue"
+    }
+  ],
+  "funnel": {
+    "period": "Last 30 days",
+    "steps": [
+      {
+        "cta": true,
+        "title": "Create a new payment request",
+        "subtitle": "Send invoices, pay links, and more",
+        "button": "Request payment"
+      },
+      {
+        "label": "Not Paid",
+        "amount": "$1,861.55"
+      },
+      {
+        "label": "Paid",
+        "amount": "$2,363.52",
+        "badge": "4 paid"
+      },
+      {
+        "label": "Deposited",
+        "amount": "$1,276.15",
+        "badge": "2 deposited"
+      }
+    ]
+  },
+  "bank": {
+    "asOf": "As of today",
+    "todaysBalance": "-$3,422",
+    "accounts": [
+      {
+        "name": "Checking",
+        "bankBalance": "-$3,621.93",
+        "inBooks": "$1,201.00",
+        "updated": "Updated moments ago",
+        "reviewLink": "25 to review"
+      },
+      {
+        "name": "Mastercard",
+        "bankBalance": "$304.96",
+        "inBooks": "$157.72",
+        "updated": "Updated moments ago",
+        "reviewLink": "7 to review"
+      }
+    ]
+  },
+  "pnl": {
+    "period": "Last month",
+    "title": "PROFIT & LOSS",
+    "subtitle": "Net profit for September",
+    "amount": "$1,393",
+    "marginBadge": "78%",
+    "trendText": "Up 673% from prior month",
+    "trendDirection": "up",
+    "income": {
+      "amount": "$8,347",
+      "label": "Income",
+      "bookedPercent": 73,
+      "unreviewedPercent": 27,
+      "reviewText": "8 to review"
+    },
+    "expenses": {
+      "amount": "$6,953",
+      "label": "Expenses",
+      "bookedPercent": 63,
+      "unreviewedPercent": 37,
+      "reviewText": "15 to review"
+    },
+    "footerLink": "Categorize 23 transactions"
+  },
+  "expenses": {
+    "period": "Last 30 days",
+    "title": "EXPENSES",
+    "subtitle": "Spending for last 30 days",
+    "amount": "$1,117",
+    "percentBadge": "63%",
+    "trendText": "Down 81% from prior 30 days",
+    "trendDirection": "down",
+    "categories": [
+      { "name": "Cost of Goods Sold", "color": "#0077C5", "percent": 16 },
+      { "name": "Legal & Professional Fees", "color": "#00A699", "percent": 9 },
+      { "name": "Automobile", "color": "#1E3A8A", "percent": 7 },
+      { "name": "Other", "color": "#F97316", "percent": 4 },
+      { "name": "Major Expenses", "color": "#1A1A1A", "percent": 64 }
+    ],
+    "reviewText": "10 to review",
+    "footerLink": "Categorize 10 transactions"
+  },
+  "cashflow": {
+    "title": "CASH FLOW TREND",
+    "amount": "-$3,422",
+    "period": "12 months",
+    "activeToggle": "Cash balance",
+    "months": ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+  },
+  "accountsPayable": {
+    "title": "ACCOUNTS PAYAB...",
+    "asOf": "As of today",
+    "updated": "Data updated 11 minutes ago",
+    "totalLabel": "Total A/P amount",
+    "total": "$1,602.67",
+    "buckets": [
+      { "amount": "$0.00", "label": "Current", "color": "#2CA01C" },
+      { "amount": "$755.00", "label": "1-7 days", "color": "#4E9FD4" },
+      { "amount": "$0.00", "label": "8-14 days", "color": "#E8A33D" }
+    ],
+    "gauge": [
+      { "color": "#4E9FD4", "pct": 55, "label": "1-7 days" },
+      { "color": "#A9CBE8", "pct": 30, "label": "15-30 days" },
+      { "color": "#EC6FA8", "pct": 15, "label": "31+ days" }
+    ],
+    "footerLink": "Go to report"
+  },
+  "widgetCatalog": {
+    "smartSuggestions": [
+      { "id": "sales", "label": "Sales", "checked": false },
+      { "id": "ar", "label": "Accounts receivable", "checked": false }
+    ],
+    "all": [
+      { "id": "ap", "label": "Accounts Payable", "checked": false },
+      { "id": "ar", "label": "Accounts receivable", "checked": false },
+      { "id": "bank", "label": "Bank Accounts", "checked": true },
+      { "id": "cashflow", "label": "Cash flow", "checked": true },
+      { "id": "deposits", "label": "Deposits", "checked": false },
+      { "id": "expenses", "label": "Expenses", "checked": true },
+      { "id": "invoices", "label": "Invoices", "checked": false },
+      { "id": "mileage", "label": "Mileage", "checked": false },
+      { "id": "integrations", "label": "My Integrations", "checked": false },
+      { "id": "pnl", "label": "Profit & loss", "checked": true },
+      { "id": "referrals", "label": "Referrals", "checked": false },
+      { "id": "salesW", "label": "Sales", "checked": false },
+      { "id": "funnel", "label": "Sales & Get Paid Funnel", "checked": false },
+      { "id": "smart", "label": "Smart suggestions", "checked": true, "info": true }
+    ]
+  },
+  "tooltips": {
+    "customize": "Customize your dashboard."
+  },
+  "apGauge": {
+    "size": 150,
+    "sweepPct": 83,
+    "segments": [
+      { "color": "#1C7FD6", "pct": 45 },
+      { "color": "#7FB8E6", "pct": 40 },
+      { "color": "#E5348B", "pct": 15 }
+    ]
+  },
+  "savedLayout": [
+    { "id": "pnl", "span": 1 },
+    { "id": "expenses", "span": 1 },
+    { "id": "ap", "span": 1 },
+    { "id": "placeholder", "span": 1 },
+    { "id": "cashflow", "span": 2 },
+    { "id": "bank", "span": 1 }
+  ],
+  "privacy": {
+    "hideTooltip": "Hide the financial info on your dashboard.",
+    "showTooltip": "Show the financial info on your dashboard.",
+    "notice": "See your financial info by turning privacy off."
+  },
+  "search": {
+    "recent": [
+      { "name": "Billexp Charge", "contact": "Travis Waldron", "date": "09/24/2025", "amount": "$103.55" },
+      { "name": "Expense 13", "contact": "Hicks Hardware", "date": "09/21/2025", "amount": "$215.66" },
+      { "name": "Refund 1020", "contact": "Pye's Cakes", "date": "09/25/2025", "amount": "$87.50" },
+      { "name": "Inventory START", "contact": null, "date": "09/27/2025", "amount": "$0.00" },
+      { "name": "Invoice 1005", "contact": "55 Twin Lane", "date": "09/18/2025", "amount": "$54.00" }
+    ],
+    "suggest": {
+      "jumpTo": [
+        { "label": "Projects list", "icon": "link" },
+        { "label": "Customers", "icon": "link", "hl": "om" },
+        { "label": "Create vendor credit", "icon": "plus" },
+        { "label": "My Integrations", "icon": "link", "hl": "n" },
+        { "label": "Mobile time tracking", "icon": "link" }
+      ],
+      "helpTopics": [
+        { "label": "open a budget", "hl": "open" },
+        { "label": "open a backup", "hl": "open" },
+        { "label": "open an attachment" },
+        { "label": "open as administrator" },
+        { "label": "Open programs", "hl": "Open" }
+      ]
+    },
+    "results": {
+      "query": "Show me open invoices for the last 30 days",
+      "chips": [
+        "Date range: 09/24/2025-10/24/2…",
+        "Transaction type: Invoice"
+      ],
+      "transactions": [
+        { "date": "09/27/2025", "type": "Invoice", "refNo": "1037", "contact": "Sonnenschein Family Store", "dueDate": "10/27/2025", "balance": "$362.07", "amount": "$362.07", "memo": "", "lastModified": "Oct 24, 2025, 11:58 AM" },
+        { "date": "09/27/2025", "type": "Invoice", "refNo": "1035", "contact": "Mark Cho", "dueDate": "10/27/2025", "balance": "$314.28", "amount": "$314.28", "memo": "", "lastModified": "Oct 24, 2025, 11:58 AM" },
+        { "date": "09/27/2025", "type": "Invoice", "refNo": "1036", "contact": "Freeman Sporting Goods:0969 Ocean View Road", "dueDate": "10/27/2025", "balance": "$477.50", "amount": "$477.50", "memo": "", "lastModified": "Oct 24, 2025, 11:58 AM" },
+        { "date": "09/26/2025", "type": "Invoice", "refNo": "1033", "contact": "Geeta Kalapatapu", "dueDate": "10/26/2025", "balance": "$629.10", "amount": "$629.10", "memo": "", "lastModified": "Oct 24, 2025, 11:58 AM" },
+        { "date": "09/26/2025", "type": "Invoice", "refNo": "1034", "contact": "Rondonuwu Fruit and Vegi", "dueDate": "10/26/2025", "balance": "$78.60", "amount": "$78.60", "memo": "", "lastModified": "Oct 24, 2025, 11:58 AM" },
+        { "date": "09/25/2025", "type": "Invoice", "refNo": "1023", "contact": "Red Rock Diner", "dueDate": "10/25/2025", "balance": "$70.00", "amount": "$70.00", "memo": "", "lastModified": "Oct 24, 2025, 11:58 AM" }
+      ]
+    }
+  },
+  "integrations": {
+    "myIntegrations": [
+      {
+        "name": "Shopify Connecto…",
+        "initials": "S",
+        "logoType": "shopify",
+        "badge": { "type": "count", "value": 1 }
+      },
+      {
+        "name": "Dext",
+        "initials": "Dext",
+        "logoType": "dext",
+        "badge": { "type": "connected" }
+      },
+      {
+        "name": "Online Back-up a…",
+        "initials": "OB",
+        "logoType": "backup",
+        "badge": { "type": "connected" }
+      }
+    ],
+    "popularSearches": ["Stripe", "Square", "Paypal", "Time", "Amazon"],
+    "featured": [
+      {
+        "id": "biller-genie",
+        "name": "Biller Genie",
+        "initials": "bg",
+        "color": "#008CD8",
+        "rating": 5.0,
+        "count": 183,
+        "desc": "A/R: Automated. Integrated. Simplified.",
+        "badges": ["fave"]
+      },
+      {
+        "id": "buildertrend",
+        "name": "Buildertrend",
+        "initials": "b",
+        "color": "#003A6C",
+        "rating": 4.5,
+        "count": 216,
+        "desc": "Buildertrend. Work Simpler.",
+        "badges": []
+      },
+      {
+        "id": "housecall-pro",
+        "name": "Housecall Pro",
+        "initials": "HP",
+        "color": "#0077C5",
+        "rating": 4.5,
+        "count": 672,
+        "desc": "The #1 app to run your home service business",
+        "badges": []
+      },
+      {
+        "id": "keeper",
+        "name": "Keeper",
+        "initials": "Keeper",
+        "color": "#5D3FD3",
+        "rating": 5.0,
+        "count": 25,
+        "desc": "One app to run your bookkeeping business.",
+        "badges": ["fave", "pro"]
+      }
+    ],
+    "popular": [
+      { "id": "fundbox", "name": "Fundbox", "initials": "Fundbox", "color": "#000000" },
+      { "id": "dext", "name": "Dext", "initials": "Dext", "color": "#ED6A26" },
+      { "id": "run", "name": "run", "initials": "run", "color": "#0077C5" },
+      { "id": "fathom", "name": "Fathom", "initials": "Fathom", "color": "#00A699" }
+    ]
+  },
+  "assistant": {
+    "suggestions": [
+      "How can I manually upload transactions?",
+      "How can I import data to QuickBooks Online?",
+      "How can I format CSV files for bank transactions?",
+      "How do I connect my bank and credit card accounts?"
+    ]
+  },
+  "usage": {
+    "plan": "QuickBooks Online Plus",
+    "meters": [
+      {
+        "key": "billableUsers",
+        "label": "Billable Users",
+        "used": 1,
+        "limit": 5,
+        "unit": "user(s)",
+        "href": "/manage-users"
+      },
+      {
+        "key": "chartOfAccounts",
+        "label": "Chart of accounts",
+        "used": 44,
+        "limit": 250,
+        "unit": "account(s)",
+        "href": "/chart-of-accounts"
+      }
+    ]
+  },
+  "companySettings": {
+    "companyInfo": {
+      "name": "Craig's Design and Landscaping Services",
+      "address": "None listed",
+      "email": "noreply@quickbooks.com",
+      "phone": "None listed",
+      "website": "None listed",
+      "industry": "None listed"
+    },
+    "legalInfo": {
+      "legalName": "Lawns & Paws",
+      "ein": "None listed",
+      "businessType": "Corporation, one or more shareholders (Form 1120)",
+      "legalAddress": "None listed"
+    },
+    "customerContactInfo": {
+      "customerEmail": "noreply@quickbooks.com",
+      "customerAddress": "None listed",
+      "customerPhone": "None listed"
+    }
+  },
+  "advanced": {
+    "accountingMethod": "Accrual",
+    "customerLabel": "Customers",
+    "accounting": {
+      "fiscalYearStart": "January",
+      "taxYearStart": "Same as fiscal year",
+      "accountingMethod": "Accrual",
+      "closeTheBooks": "Off"
+    },
+    "automation": {
+      "applyCredits": "On",
+      "invoiceUnbilled": "Off",
+      "applyBillPayments": "On"
+    },
+    "projects": "Off",
+    "currency": {
+      "home": "United States Dollar",
+      "multicurrency": "Off"
+    },
+    "businessNetwork": {
+      "allowMembersToFindMe": "On"
+    },
+    "otherPreferences": {
+      "dateFormat": "mm/dd/yyyy",
+      "currencyFormat": "$123,456.00",
+      "customerLabel": "Customers",
+      "warnDuplicateCheck": "On"
+    }
+  }
+}
+

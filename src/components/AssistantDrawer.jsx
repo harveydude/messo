@@ -1,0 +1,180 @@
+import React, { useState } from 'react';
+import { X, Search, Send, Sparkles } from 'lucide-react';
+import dashboardData from '../data/dashboard.json';
+
+export default function AssistantDrawer({ isOpen, onClose }) {
+  const [activeTab, setActiveTab] = useState('assistant');
+  const [messages, setMessages] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+
+  if (!isOpen) return null;
+
+  const suggestions = dashboardData.assistant?.suggestions || [
+    "How can I manually upload transactions?",
+    "How can I import data to QuickBooks Online?",
+    "How can I format CSV files for bank transactions?",
+    "How do I connect my bank and credit card accounts?"
+  ];
+
+  const handleSend = (text) => {
+    if (!text || !text.trim()) return;
+    const query = text.trim();
+    setInputValue('');
+    
+    // Add user message
+    setMessages(prev => [...prev, { role: 'user', text: query }]);
+
+    // Simulate assistant reply after 600ms
+    setTimeout(() => {
+      setMessages(prev => [
+        ...prev, 
+        { 
+          role: 'assistant', 
+          text: `Here's what I found for "${query}":\n\nYou can manage this directly under Banking > Transactions, or click the Gear icon > Import data to follow the step-by-step assistant.` 
+        }
+      ]);
+    }, 600);
+  };
+
+  return (
+    <div 
+      className="fixed top-0 right-0 w-[637px] h-screen bg-white shadow-[-4px_0_24px_rgba(0,0,0,0.14)] z-[80] flex flex-col select-none animate-in slide-in-from-right duration-200"
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      {/* 1. Solid Blue Header Band (85px) */}
+      <div className="h-[85px] w-full bg-[#0077C5] px-6 flex items-center justify-between shrink-0">
+        <div className="text-white font-semibold text-[18px] flex items-center space-x-2.5">
+          <Sparkles size={20} className="text-[#80D0FF]" />
+          <span>Intuit Assistant</span>
+        </div>
+
+        <button 
+          onClick={onClose}
+          className="text-white hover:opacity-80 p-1.5 rounded-full transition cursor-pointer"
+          title="Close assistant"
+        >
+          <X size={22} />
+        </button>
+      </div>
+
+      {/* 2. Half-Width Tabs (Assistant / Search) */}
+      <div className="h-[56px] border-b border-[#E3E5E8] flex shrink-0">
+        {/* Assistant Tab (50% width, 3px green underline spans entire half) */}
+        <button
+          onClick={() => setActiveTab('assistant')}
+          className={`flex-1 flex items-center justify-center space-x-2 text-[15px] font-semibold transition cursor-pointer relative ${
+            activeTab === 'assistant' ? 'text-[#393A3D]' : 'text-[#6B6C72] hover:text-[#393A3D]'
+          }`}
+        >
+          {/* Teal circular spiral icon */}
+          <div className="w-[18px] h-[18px] rounded-full border-2 border-[#0E9F9F] flex items-center justify-center">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#0E9F9F]" />
+          </div>
+          <span>Assistant</span>
+
+          {activeTab === 'assistant' && (
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#2CA01C]" />
+          )}
+        </button>
+
+        {/* Search Tab (50% width) */}
+        <button
+          onClick={() => setActiveTab('search')}
+          className={`flex-1 flex items-center justify-center space-x-2 text-[15px] font-semibold transition cursor-pointer relative ${
+            activeTab === 'search' ? 'text-[#393A3D]' : 'text-[#6B6C72] hover:text-[#393A3D]'
+          }`}
+        >
+          <Search size={16} className="text-[#6B6C72]" />
+          <span>Search</span>
+
+          {activeTab === 'search' && (
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#2CA01C]" />
+          )}
+        </button>
+      </div>
+
+      {/* 3. Tab Body */}
+      {activeTab === 'assistant' ? (
+        <div className="flex-1 flex flex-col justify-between overflow-y-auto">
+          {messages.length === 0 ? (
+            /* Welcome State (Screenshot 1) */
+            <div className="flex-1 flex flex-col justify-end px-5 pb-8 pt-12">
+              {/* Centered Welcome Title & Subtitle */}
+              <div className="text-center mb-10">
+                <h2 className="text-[30px] font-semibold text-[#393A3D] mb-2">
+                  Welcome
+                </h2>
+                <p className="text-[15px] text-[#6B6C72]">
+                  Here are a few things I can help you with.
+                </p>
+              </div>
+
+              {/* 4 Suggestion Chips (Exact 25px gap, pale cyan) */}
+              <div className="space-y-[25px]">
+                {suggestions.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(chip)}
+                    className="w-full h-[44px] px-4 rounded-[8px] bg-[#DFF3F8] hover:bg-[#CFE9F2] text-[15px] text-[#393A3D] text-left transition cursor-pointer flex items-center truncate"
+                  >
+                    <span className="truncate">{chip}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Active Chat State */
+            <div className="flex-1 p-6 space-y-4 overflow-y-auto">
+              {messages.map((m, idx) => (
+                <div 
+                  key={idx}
+                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div 
+                    className={`max-w-[85%] rounded-[10px] p-4 text-[15px] leading-relaxed ${
+                      m.role === 'user' 
+                        ? 'bg-[#DFF3F8] text-[#393A3D]' 
+                        : 'bg-[#F4F5F7] text-[#393A3D] border border-[#E3E5E8]'
+                    }`}
+                  >
+                    {m.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Composer Input Bar */}
+          <div className="p-4 border-t border-[#E3E5E8] bg-white flex items-center space-x-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend(inputValue)}
+              placeholder="Ask anything about your books..."
+              className="flex-1 h-[42px] px-4 border border-[#8D9096] rounded-full text-[15px] text-[#393A3D] focus:outline-none focus:border-[#2CA01C]"
+            />
+            <button
+              onClick={() => handleSend(inputValue)}
+              className="w-[42px] h-[42px] rounded-full bg-[#0077C5] hover:bg-[#005e9e] text-white flex items-center justify-center transition cursor-pointer shrink-0"
+              title="Send message"
+            >
+              <Send size={16} />
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Search Tab Stub */
+        <div className="flex-1 p-8 text-center text-[#6B6C72] flex flex-col items-center justify-center">
+          <Search size={40} className="mb-4 text-[#9DA2A8]" />
+          <h3 className="text-[18px] font-semibold text-[#393A3D] mb-1">
+            Search Assistant
+          </h3>
+          <p className="text-[14px]">
+            Search QuickBooks help articles and documentation topics.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
