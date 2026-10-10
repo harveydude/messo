@@ -253,7 +253,7 @@ export default function App() {
         return <RecurringTransactionsView onNavigate={(v) => navigate(v)} />;
       case 'sales_transactions':
       case 'invoices':
-        return <SalesTransactionsView onOpenInvoiceModal={() => handleQuickCreateAction('Invoice')} />;
+        return <SalesTransactionsView onOpenInvoiceModal={() => handleQuickCreateAction('Invoice')} onNavigate={(v) => navigate(v)} />;
       case 'expense_transactions':
         return <ExpensesView onOpenExpenseModal={() => handleQuickCreateAction('Expense')} />;
       case 'customers_list':
@@ -261,6 +261,7 @@ export default function App() {
           <CustomersView
             onOpenNewCustomer={() => handleQuickCreateAction('Add customer')}
             onOpenCreateInvoice={() => handleQuickCreateAction('Invoice')}
+            onNavigate={(v) => navigate(v)}
           />
         );
       case 'standard_reports':
