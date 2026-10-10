@@ -34,6 +34,12 @@ export const ROUTES = [
     // matched, so three links produced a completely blank screen.
     aliases: ['/expenses-to-review', '/categorize'] },
   { id: 'customers_list', slug: '/customers', label: 'Customers' },
+  // The supplier-side lists. `/vendors` and `/team` were previously claimed by
+  // other routes (the Time screen aliased `/team`), so they were unreachable:
+  // the address a person would guess from the menu led somewhere else entirely.
+  { id: 'vendors', slug: '/vendors', label: 'Vendors' },
+  { id: 'team', slug: '/team', label: 'Team' },
+  { id: 'payroll', slug: '/payroll', label: 'Payroll' },
 
   { id: 'standard_reports', slug: '/reports', label: 'Reports' },
   { id: 'balance_sheet', slug: '/reports/balance-sheet', label: 'Balance sheet' },
@@ -42,9 +48,19 @@ export const ROUTES = [
   { id: 'reconcile', slug: '/reconcile', label: 'Reconcile' },
   { id: 'report_view', slug: '/reports/view', label: 'Report', aliases: ['/report'] },
 
+  // India-first statutory screens. `sales_tax` is the GST screen -- CGST, SGST,
+  // IGST, HSN/SAC and the GSTR return calendar -- not a US sales-tax form with
+  // the wording changed. Aliases cover the spellings these have been reached by.
+  { id: 'sales_tax', slug: '/sales-tax', label: 'Sales tax', aliases: ['/gst', '/tax'] },
+  { id: 'business_tax', slug: '/business-tax', label: 'Business tax', aliases: ['/tds'] },
+  { id: 'lending', slug: '/lending', label: 'Lending', aliases: ['/loans'] },
+
   { id: 'feed', slug: '/feed', label: 'Business feed' },
   { id: 'mileage', slug: '/mileage', label: 'Mileage' },
-  { id: 'time_entries', slug: '/time', label: 'Time', aliases: ['/team'] },
+  // `/team` used to be an alias for this. It is now the Team screen's own address
+// -- the alias meant the name people expected to reach the staff list opened
+// the timesheet instead, which is why the Team screen had no way in.
+{ id: 'time_entries', slug: '/time', label: 'Time' },
   { id: 'budgets', slug: '/budgets', label: 'Budgets' },
   { id: 'pricing', slug: '/pricing', label: 'Plans' },
   { id: 'apps', slug: '/apps', label: 'Integrations' },
@@ -66,6 +82,7 @@ export const ROUTES = [
   { id: 'customer_hub', slug: '/customer-hub', label: 'Customer hub' },
   { id: 'custom_reports', slug: '/reports/custom', label: 'Custom reports' },
   { id: 'financial_planning', slug: '/planning', label: 'Financial planning' },
+  { id: 'marketing', slug: '/marketing', label: 'Marketing' },
 
   // Sales documents.
   { id: 'estimates', slug: '/estimates', label: 'Estimates' },

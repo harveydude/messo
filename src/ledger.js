@@ -165,8 +165,62 @@ export function deriveLedger(state) {
   }
 
   // ---- Expenses ----------------------------------------------------------
+  /**
+   * An expense debits the account it was coded to, and credits cash -- unless a
+   * bank transaction has already moved that exact money, in which case the bank
+   * feed owns the cash leg entirely and the expense contributes nothing.
+   *
+   * This is the rule that was documented and not enforced, and it is worth
+   * spelling out because both halves are legitimate on their own:
+   *
+   *   A card or cheque purchase genuinely is a cash event. The bank will never
+   *   report it, because a bank feed only lists what cleared. If the expense
+   *   did not credit the bank account, the books would overstate cash for
+   *   every card purchase ever made.
+   *
+   *   But when a bank row does exist for the same money -- a payroll run that
+   *   actually left the account -- the feed has already moved the cash, and
+   *   taking the leg again counts the same 3,600 twice.
+   *
+   * The suppression is all-or-nothing: the whole entry is skipped. Debiting the
+   * expense while dropping only the cash side would leave an entry with one leg
+   * and break the balance equation by exactly the amount suppressed.
+   *
+   * Matching is on the account and the amount. Both halves are needed -- an
+   * amount alone would mis-suppress whenever two different expenses happen to
+   * cost the same, and an account alone would mis-suppress every recurring
+   * payment.
+   */
+  /**
+   * Has this exact money ALREADY POSTED through the bank feed?
+   *
+   * Only a row that actually posts can take over the cash leg. A 'Suggested' or
+   * 'Uncategorized' row posts nothing -- that is the whole point of the review
+   * queue -- so matching against one would suppress a legitimate expense that
+   * nothing has replaced, and the expense would vanish from the books while the
+   * bill sat in the queue waiting to be categorised.
+   *
+   * Getting this wrong is silent: the balance still balances, because the cash
+   * leg was suppressed along with the expense leg. It just quietly understates
+   * both the expense account and the bank account.
+   */
+  const POSTING_STATES = new Set(['Match', 'Reviewed']);
+
+  const alreadyInBankFeed = (accountId, amount) => {
+    const id = Number(accountId);
+    if (!id) return false;
+    return state.bankTxns.some(
+      (t) =>
+        POSTING_STATES.has(t.state) &&
+        bankAccountIdFor(state, t) === id &&
+        Math.abs(Math.abs(t.amount) - Math.abs(amount)) < 0.01
+    );
+  };
+
   for (const exp of state.expenses) {
     const total = docTotal(exp);
+    // Skip the entry entirely -- both legs -- when the bank feed already has it.
+    if (alreadyInBankFeed(exp.paymentAccountId, total)) continue;
     for (const line of exp.lines) {
       post(byAccount, line.accountId, Number(line.amount) || 0, 'debit');
     }
@@ -180,8 +234,7 @@ export function deriveLedger(state) {
    * it lives in one place rather than being spelled out at each call site.
    */
   const postCash = (txn) => {
-    const bank = state.bankAccounts.find((b) => b.id === txn.bankAccountId);
-    const id = bank ? accountByName(CHART_OF_ACCOUNTS, bank.name)?.id : null;
+    const id = bankAccountIdFor(state, txn);
     post(byAccount, id, Math.abs(txn.amount), txn.amount > 0 ? 'debit' : 'credit');
     return id;
   };
@@ -205,8 +258,15 @@ export function deriveLedger(state) {
         post(byAccount, 11, docTotal(bill), 'debit');
         cf.operatingOut += docTotal(bill);
       } else {
-        post(byAccount, ACC.AR, invoiceTotals(inv, state).total, 'credit');
-        cf.operatingIn += invoiceTotals(inv, state).total;
+        const { total } = invoiceTotals(inv, state);
+        // The customer pays the gross, tax included, so the receivable clears by
+        // the gross. The tax collected is not new income -- it was always owed
+        // to the government, held on the payables side since the invoice was
+        // raised. It does not leave with this payment; it sits until it is
+        // remitted. Debiting it here would understate what you owe the tax
+        // authority on every invoice you were paid for.
+        post(byAccount, ACC.AR, total, 'credit');
+        cf.operatingIn += total;
       }
       continue;
     }
@@ -321,6 +381,19 @@ export function deriveLedger(state) {
 /** Resolve a chart-of-accounts row by its display name. */
 function accountByName(list, name) {
   return list.find((a) => a.name === name || a.detail === name);
+}
+
+/**
+ * The chart-of-accounts id behind a bank feed row.
+ *
+ * The bank feed names an institution account ("Checking"); the chart calls it
+ * the same thing. Resolving through the name rather than assuming they share an
+ * id is what stops two systems from drifting apart silently.
+ */
+export function bankAccountIdFor(state, txn) {
+  const feed = state.bankAccounts.find((b) => b.id === txn.bankAccountId);
+  if (!feed) return null;
+  return accountByName(CHART_OF_ACCOUNTS, feed.name)?.id ?? null;
 }
 
 /** Accounts of a type, for pickers. Excludes sub-accounts. */

@@ -43,6 +43,9 @@ const RecurringTransactionsView = lazy(() => import('./components/RecurringTrans
 const SalesTransactionsView = lazy(() => import('./components/SalesTransactionsView'));
 const ExpensesView = lazy(() => import('./components/ExpensesView'));
 const CustomersView = lazy(() => import('./components/CustomersView'));
+const VendorsView = lazy(() => import('./components/VendorsView'));
+const TeamView = lazy(() => import('./components/TeamView'));
+const PayrollView = lazy(() => import('./components/PayrollView'));
 const ReportsView = lazy(() => import('./components/ReportsView'));
 const BalanceSheetView = lazy(() => import('./components/BalanceSheetView'));
 const ManagementReportsView = lazy(() => import('./components/ManagementReportsView'));
@@ -51,6 +54,13 @@ const BusinessFeedView = lazy(() => import('./components/BusinessFeedView'));
 const MileageView = lazy(() => import('./components/MileageView'));
 const TimeView = lazy(() => import('./components/TimeView'));
 const BudgetsView = lazy(() => import('./components/BudgetsView'));
+const SalesTaxView = lazy(() => import('./components/SalesTaxView'));
+const BusinessTaxView = lazy(() => import('./components/BusinessTaxView'));
+const LendingView = lazy(() => import('./components/LendingView'));
+const CustomerHubView = lazy(() => import('./components/CustomerHubView'));
+const CustomReportsView = lazy(() => import('./components/CustomReportsView'));
+const FinancialPlanningView = lazy(() => import('./components/FinancialPlanningView'));
+const MarketingView = lazy(() => import('./components/MarketingView'));
 const SearchResultsView = lazy(() => import('./components/SearchResultsView'));
 const PricingPlansView = lazy(() => import('./components/PricingPlansView'));
 const FindIntegrationsView = lazy(() => import('./components/FindIntegrationsView'));
@@ -429,6 +439,20 @@ export default function App() {
             onNavigate={(v) => navigate(v)}
           />
         );
+      case 'vendors':
+        return <VendorsView onNavigate={(v) => navigate(v)} />;
+      case 'customer_hub':
+        return <CustomerHubView onNavigate={(v) => navigate(v)} />;
+      case 'custom_reports':
+        return <CustomReportsView onNavigate={(v) => navigate(v)} />;
+      case 'financial_planning':
+        return <FinancialPlanningView onNavigate={(v) => navigate(v)} />;
+      case 'marketing':
+        return <MarketingView onNavigate={(v) => navigate(v)} />;
+      case 'team':
+        return <TeamView onNavigate={(v) => navigate(v)} />;
+      case 'payroll':
+        return <PayrollView onNavigate={(v) => navigate(v)} />;
       case 'standard_reports':
         return <ReportsView onOpenBalanceSheet={() => navigate('balance_sheet')} onNavigate={(v, q) => navigate(v, q)} />;
       case 'balance_sheet':
@@ -464,11 +488,24 @@ export default function App() {
       case 'feed':
         return <BusinessFeedView onNavigate={(v) => navigate(v)} />;
       case 'mileage':
-        return <MileageView />;
+        return <MileageView onNavigate={(v) => navigate(v)} />;
       case 'time_entries':
-        return <TimeView />;
+        return <TimeView onNavigate={(v) => navigate(v)} />;
       case 'budgets':
-        return <BudgetsView onOpenBudgetModal={() => setJournalModalOpen(true)} />;
+        return (
+          <BudgetsView
+            onNavigate={(v) => navigate(v)}
+            onOpenBudgetModal={() => setJournalModalOpen(true)}
+          />
+        );
+      // India-first statutory screens. Lazy-loaded like every other screen, so
+      // the dashboard does not pay for the GST return calendar it never opens.
+      case 'sales_tax':
+        return <SalesTaxView onNavigate={(v) => navigate(v)} />;
+      case 'business_tax':
+        return <BusinessTaxView onNavigate={(v) => navigate(v)} />;
+      case 'lending':
+        return <LendingView onNavigate={(v) => navigate(v)} />;
       case 'search_results':
         return (
           <SearchResultsView
