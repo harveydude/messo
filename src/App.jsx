@@ -16,6 +16,10 @@ import {
   SetupDrawer,
 } from './components/Modals';
 import AssistantDrawer from './components/AssistantDrawer';
+import InvoiceReview from './components/InvoiceReview';
+import BankCategorize from './components/BankCategorize';
+import Reconcile from './components/Reconcile';
+import { StoreProvider } from './store.jsx';
 
 /*
  * Screens are imported lazily.
@@ -263,7 +267,9 @@ export default function App() {
       case 'audit_log':
         return <AuditLogView />;
       case 'reconcile':
-        // Also previously routed to Reports.
+        // Reconciliation is now a full workflow overlay (Reconcile.jsx).
+        // The trigger lives in the bank screen and the settings menu; this
+        // route remains as a safe landing point.
         return <BankTransactionsView onNavigate={(v) => navigate(v)} />;
       case 'feed':
         return <BusinessFeedView />;
@@ -297,10 +303,16 @@ export default function App() {
     }
   };
 
+  // New workflow overlays
+  const [invoiceReview, setInvoiceReview] = useState(null);
+  const [bankCategorizeTxn, setBankCategorizeTxn] = useState(null);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
+
   return (
     /* The outer boundary covers the chrome. It used to sit around <main> only,
        so a throw in the top bar, sidebar or a popup blanked the entire app. */
     <ErrorBoundary title="Messo could not start">
+      <StoreProvider>
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F6F7F8] antialiased">
         <TopBar
           companyName={companyName}
@@ -378,7 +390,30 @@ export default function App() {
           isOpen={journalModalOpen}
           onClose={() => setJournalModalOpen(false)}
         />
+
+        {/* New workflow overlays */}
+        {invoiceReview && (
+          <InvoiceReview
+            invoice={invoiceReview}
+            onClose={() => setInvoiceReview(null)}
+            onSent={() => setInvoiceReview(null)}
+          />
+        )}
+        {bankCategorizeTxn && (
+          <BankCategorize
+            txn={bankCategorizeTxn}
+            onClose={() => setBankCategorizeTxn(null)}
+            onConfirm={() => setBankCategorizeTxn(null)}
+          />
+        )}
+        {reconcileOpen && (
+          <Reconcile
+            onClose={() => setReconcileOpen(false)}
+            onFinish={() => setReconcileOpen(false)}
+          />
+        )}
       </div>
+      </StoreProvider>
     </ErrorBoundary>
   );
 }
