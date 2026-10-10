@@ -1,52 +1,33 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, Search, Printer, Settings, Pencil, MessageSquare, Info, ArrowLeftRight, Check, Sliders, Gem } from 'lucide-react';
+import { useLedger } from '../store';
+import { formatMoney } from '../money';
+import { CHART_OF_ACCOUNTS, ACCOUNT_TYPE_FILTERS } from '../data/chartOfAccounts';
 
-export const INITIAL_CHART_OF_ACCOUNTS = [
-  { id: 1, name: 'Checking', type: 'Bank', badge: 'BAL', detail: 'Checking', bank: true, qb: 1201.00, bankBal: -3621.93, action: 'View register', indent: 0 },
-  { id: 2, name: 'Savings', type: 'Bank', badge: 'BAL', detail: 'Savings', bank: true, qb: 800.00, bankBal: 200.00, action: 'View register', indent: 0 },
-  { id: 3, name: 'Accounts Receivable (A/R)', type: 'Accounts receivable (A/R)', badge: 'BAL', detail: 'Accounts Receivable (A/R)', qb: 5281.52, bankBal: null, action: 'View register', indent: 0 },
-  { id: 4, name: 'Inventory Asset', type: 'Other Current Assets', badge: 'BAL', detail: 'Inventory', qb: 596.25, bankBal: null, action: 'View register', indent: 0 },
-  { id: 5, name: 'Prepaid Expenses', type: 'Other Current Assets', badge: 'BAL', detail: 'Prepaid Expenses', qb: 0.00, bankBal: null, action: 'View register', indent: 0 },
-  { id: 6, name: 'Uncategorized Asset', type: 'Other Current Assets', badge: 'BAL', detail: 'Other Current Assets', qb: 0.00, bankBal: null, action: 'View register', indent: 0 },
-  { id: 7, name: 'Undeposited Funds', type: 'Other Current Assets', badge: 'BAL', detail: 'Undeposited Funds', qb: 2062.52, bankBal: null, action: 'View register', indent: 0 },
-  { id: 8, name: 'Truck', type: 'Fixed Assets', badge: 'BAL', detail: 'Vehicles', qb: 13495.00, bankBal: null, action: 'View register', indent: 0 },
-  { id: 9, name: 'Depreciation', type: 'Fixed Assets', badge: 'BAL', detail: 'Accumulated Depreciation', qb: 0.00, bankBal: null, action: 'View register', indent: 1 },
-  { id: 10, name: 'Original Cost', type: 'Fixed Assets', badge: 'BAL', detail: 'Vehicles', qb: 13495.00, bankBal: null, action: 'View register', indent: 1 },
-  { id: 10.5, name: 'Accounts Payable (A/P)', type: 'Accounts payable (A/P)', badge: 'BAL', detail: 'Accounts Payable (A/P)', qb: 1602.67, bankBal: null, action: 'View register', indent: 0 },
-  { id: 11, name: 'Retained Earnings', type: 'Equity', badge: 'BAL', detail: 'Retained Earnings', qb: null, bankBal: null, action: 'Run report', indent: 0 },
-  { id: 12, name: 'Billable Expense Income', type: 'Income', badge: 'P&L', detail: 'Service/Fee Income', qb: null, bankBal: null, action: 'Run report', indent: 0 },
-  { id: 13, name: 'Design income', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 0 },
-  { id: 14, name: 'Discounts given', type: 'Income', badge: 'P&L', detail: 'Discounts/Refunds Given', qb: null, bankBal: null, action: 'Run report', indent: 0 },
-  { id: 15, name: 'Fees Billed', type: 'Income', badge: 'P&L', detail: 'Service/Fee Income', qb: null, bankBal: null, action: 'Run report', indent: 0 },
-  { id: 16, name: 'Landscaping Services', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 0 },
-  { id: 17, name: 'Job Materials', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 1 },
-  { id: 18, name: 'Decks and Patios', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 2 },
-  { id: 19, name: 'Fountains and Garden Lighting', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 2 },
-  { id: 20, name: 'Plants and Soil', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 2 },
-  { id: 21, name: 'Sprinklers and Drip Systems', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 2 },
-  { id: 22, name: 'Labor', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 1 },
-  { id: 23, name: 'Installation', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 2 },
-  { id: 24, name: 'Maintenance and Repair', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 2 },
-  { id: 25, name: 'Other Income', type: 'Income', badge: 'P&L', detail: 'Other Primary Income', qb: null, bankBal: null, action: 'Run report', indent: 0 }
-];
-
-const ACCOUNT_TYPES = [
-  'All',
-  'Bank',
-  'Accounts receivable (A/R)',
-  'Other Current Assets',
-  'Fixed Assets',
-  'Equity',
-  'Income'
-];
-
-function formatCurrency(n) {
-  if (n == null) return '';
-  const formatted = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return (n < 0 ? '-$' : '$') + formatted;
-}
+/**
+ * Chart of Accounts.
+ *
+ * This screen used to carry its own list of accounts, each with a balance typed
+ * in beside it: A/R 5,281.52, Truck 13,495.00, Undeposited 2,062.52. It was a
+ * second, parallel set of books that no transaction could ever touch -- record
+ * an expense and this screen carried on showing the number it was built with.
+ *
+ * The list now comes from `data/chartOfAccounts.js`, shared with the Balance
+ * Sheet, the Profit & Loss and the ledger, and the balance in every row is
+ * derived from the transaction history by `useLedger()`. Editing anything moves
+ * it here.
+ *
+ * The filter menu offers the type labels QuickBooks uses ("Accounts receivable
+ * (A/R)") while the reports bucket on canonical types, so the two never have to
+ * be spelled the same way.
+ *
+ * `bankBal` is deliberately not derived. It is what the *institution* says, and
+ * this app does not connect to a bank, so it is left blank rather than filled
+ * with an invention that would look authoritative.
+ */
 
 export default function ChartOfAccountsView({ onNavigate }) {
+  const ledger = useLedger();
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
@@ -72,24 +53,23 @@ export default function ChartOfAccountsView({ onNavigate }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // The one account list, with balances attached from the ledger and the
+  // QuickBooks display label in place of the canonical type.
+  const accounts = CHART_OF_ACCOUNTS.map((a) => ({ ...a, balance: ledger.balanceOf(a.id) }));
+
   // Filter accounts
-  let list = INITIAL_CHART_OF_ACCOUNTS.filter((r) => {
-    const matchesType = typeFilter === 'All' || r.type === typeFilter;
+  let list = accounts.filter((r) => {
+    const matchesType = typeFilter === 'All' || r.typeLabel === typeFilter;
     const q = query.trim().toLowerCase();
-    const matchesSearch = !q || (r.name + ' ' + r.type + ' ' + r.detail).toLowerCase().includes(q);
+    const matchesSearch = !q || (r.name + ' ' + r.typeLabel + ' ' + r.detail).toLowerCase().includes(q);
     return matchesType && matchesSearch;
   });
 
   // Sort accounts
   if (sort.col) {
     list = [...list].sort((a, b) => {
-      if (sort.col === 'qb' || sort.col === 'bank') {
-        const valA = sort.col === 'qb' ? a.qb : a.bankBal;
-        const valB = sort.col === 'qb' ? b.qb : b.bankBal;
-        if (valA == null && valB == null) return 0;
-        if (valA == null) return 1;
-        if (valB == null) return -1;
-        return (valA - valB) * sort.dir;
+      if (sort.col === 'balance') {
+        return (a.balance - b.balance) * sort.dir;
       }
       const key = sort.col;
       const va = (a[key] || '').toString().toLowerCase();
@@ -353,7 +333,7 @@ export default function ChartOfAccountsView({ onNavigate }) {
 
               {typeDropdownOpen && (
                 <div className="absolute z-40 mt-[4px] left-0 w-[260px] bg-white border border-[#D9D9D9] rounded-[4px] shadow-[0_4px_14px_rgba(0,0,0,0.15)] py-[6px] max-h-[300px] overflow-y-auto">
-                  {ACCOUNT_TYPES.map((t) => (
+                  {ACCOUNT_TYPE_FILTERS.map((t) => (
                     <div
                       key={t}
                       onClick={() => {
@@ -444,20 +424,20 @@ export default function ChartOfAccountsView({ onNavigate }) {
                   </button>
                 </div>
 
-                {/* QUICKBOOKS BALANCE */}
+                {/* BOOK BALANCE -- derived from the transaction history. */}
                 <div className="pl-2 border-r border-[#E3E5E8] h-full flex items-center">
-                  <button onClick={() => toggleSort('qb')} className="flex items-center gap-1.5 uppercase hover:opacity-75 cursor-pointer">
-                    <span>QUICKBOOKS BALANCE</span>
+                  <button onClick={() => toggleSort('balance')} className="flex items-center gap-1.5 uppercase hover:opacity-75 cursor-pointer">
+                    <span>BOOK BALANCE</span>
                     <span className="text-[12px] text-[#6B6C72]">⇅</span>
                   </button>
                 </div>
 
-                {/* BANK BALANCE */}
+                {/* BANK BALANCE -- what the institution says, not something this
+                    app can know. Left as a placeholder rather than filled in. */}
                 <div className="pl-2 border-r border-[#E3E5E8] h-full flex items-center">
-                  <button onClick={() => toggleSort('bank')} className="flex items-center gap-1.5 uppercase hover:opacity-75 cursor-pointer">
+                  <span className="flex items-center gap-1.5 uppercase cursor-default text-[#6B6C72]">
                     <span>BANK BALANCE</span>
-                    <span className="text-[12px] text-[#6B6C72]">⇅</span>
-                  </button>
+                  </span>
                 </div>
 
                 {/* ACTION */}
@@ -509,7 +489,7 @@ export default function ChartOfAccountsView({ onNavigate }) {
                   <div className="h-full flex items-center pl-2 pr-[18px] border-r border-[#E3E5E8]">
                     <span className="flex-1 min-w-0 flex items-center gap-[8px] text-[15px] text-[#393A3D] whitespace-nowrap truncate">
                       {r.bank && <ArrowLeftRight size={14} className="text-[#393A3D] shrink-0" />}
-                      <span className="truncate">{r.type}</span>
+                      <span className="truncate">{r.typeLabel}</span>
                     </span>
                     {/* Badge right-aligned in cell */}
                     {r.badge && (
@@ -528,14 +508,16 @@ export default function ChartOfAccountsView({ onNavigate }) {
                     <span className="truncate">{r.detail}</span>
                   </div>
 
-                  {/* QuickBooks Balance (Right-aligned numbers) */}
+                  {/* Book balance, derived. */}
                   <div className="h-full flex items-center justify-end pr-[10px] border-r border-[#E3E5E8] text-[15px] text-[#393A3D] font-medium">
-                    {formatCurrency(r.qb)}
+                    {formatMoney(r.balance)}
                   </div>
 
-                  {/* Bank Balance (Right-aligned numbers) */}
-                  <div className="h-full flex items-center justify-end pr-[10px] border-r border-[#E3E5E8] text-[15px] text-[#393A3D] font-medium">
-                    {formatCurrency(r.bankBal)}
+                  {/* Bank balance. This app does not connect to a bank, so it
+                      has no figure to show. An em dash says "not known" --
+                      an invented number here would look authoritative. */}
+                  <div className="h-full flex items-center justify-end pr-[10px] border-r border-[#E3E5E8] text-[15px] text-[#A0A2A8] font-medium">
+                    —
                   </div>
 
                   {/* Action Column with Link and Rotating Chevron Menu */}

@@ -1,53 +1,41 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, Fragment } from 'react';
 import { ArrowLeft, RefreshCw, Share2, Printer, MoreVertical, Sparkles, ChevronDown, ChevronRight, AlertTriangle } from 'lucide-react';
-import { useStore } from '../store';
+import { useStore, useLedger } from '../store';
 import { formatMoney } from '../money';
+import { CHART_OF_ACCOUNTS } from '../data/chartOfAccounts';
 
 /**
  * Balance Sheet.
  *
- * Every figure here was typed in: $1,001.00 of bank accounts, $5,475.92 of
- * receivables, $9,135.69 total current assets, $13,495.00 of fixed assets,
- * $22,630.69 grand total. They happened to satisfy Assets = Liabilities +
- * Equity, which is why the fiction went unnoticed -- a balanced statement looks
- * correct even when none of it is connected to a transaction.
+ * This screen used to show thirteen typed-in figures -- 1,001.00 of bank
+ * accounts, 5,475.92 of receivables, 22,630.69 grand total -- that happened to
+ * satisfy Assets = Liabilities + Equity, which is exactly why the fiction went
+ * unnoticed. A balanced statement looks correct even when none of it is
+ * connected to a transaction.
  *
- * Now every line reads from the store, so recording an expense moves Current
- * Assets and the equation stays true. The equation check at the foot is real: it
- * turns red if the books do not balance, which is the one thing this screen is
- * for.
+ * Every line now reads `useLedger()`, which derives the balance from the
+ * transaction history. Recording an expense moves Current Assets, and the
+ * check at the foot is a real test: it turns red and names the difference if
+ * any entry fails to post.
  *
- * Layout is unchanged: collapsible Assets / Liabilities / Equity tree, date
- * range, accrual/cash toggle, print and share.
+ * Sub-accounts (Truck's Original Cost and Depreciation, Job Materials' Decks
+ * and Patios) are the parent's breakdown, so they are shown indented but never
+ * rolled up -- counting both would double the asset.
  */
 
-/** Groups accounts into the collapsible buckets the report is laid out in. */
-function bucket(accounts) {
-  const sum = (list) => list.reduce((s, a) => s + (a.qb || 0), 0);
-  const byType = (t) => accounts.filter((a) => a.type === t);
-
-  const bank = byType('Bank');
-  const ar = byType('Accounts Receivable');
-  const otherCurrent = accounts.filter(
-    (a) => !['Bank', 'Accounts Receivable', 'Accounts Payable', 'Credit Card',
-      'Other Current Liability', 'Equity', 'Fixed Asset'].includes(a.type)
-  );
-  const ap = accounts.filter((a) => ['Accounts Payable', 'Credit Card', 'Other Current Liability'].includes(a.type));
-  const fixed = byType('Fixed Asset');
-  const equity = byType('Equity');
-
-  return {
-    bank, ar, otherCurrent, ap, fixed, equity,
-    bankTotal: sum(bank),
-    arTotal: sum(ar),
-    otherCurrentTotal: sum(otherCurrent),
-    currentAssetsTotal: sum(bank) + sum(ar) + sum(otherCurrent),
-    fixedTotal: sum(fixed),
-    assetsTotal: sum(bank) + sum(ar) + sum(otherCurrent) + sum(fixed),
-    apTotal: sum(ap),
-    equityTotal: sum(equity),
-  };
+/** Rows of one type, excluding sub-accounts, with their derived balances. */
+function rowsOf(accounts, ledger, type) {
+  return CHART_OF_ACCOUNTS
+    .filter((a) => a.type === type && !a.parentId)
+    .map((a) => ({
+      ...a,
+      balance: ledger.balanceOf(a.id),
+      childRows: CHART_OF_ACCOUNTS.filter((c) => c.parentId === a.id)
+        .map((c) => ({ ...c, balance: ledger.balanceOf(c.id) })),
+    }));
 }
+
+const sum = (list) => list.reduce((s, r) => s + r.balance, 0);
 
 /**
  * A labelled account line.
@@ -83,6 +71,7 @@ function GroupHeader({ label, open, onToggle, indent = 'py-1.5 pl-4', chevron = 
 
 export default function BalanceSheetView({ onBack }) {
   const { state } = useStore();
+  const ledger = useLedger();
   const [reportPeriod, setReportPeriod] = useState('This year to date');
   // The date inputs are shown in the header but do not yet re-scope the report:
   // everything below is a point-in-time snapshot, which is what a balance sheet
@@ -103,21 +92,38 @@ export default function BalanceSheetView({ onBack }) {
   const [clAccountsOpen, setClAccountsOpen] = useState(true);
   const [equityOpen, setEquityOpen] = useState(true);
 
-  const b = useMemo(() => bucket(state.accounts.filter((a) => a.active !== false)), [state.accounts]);
+  const b = useMemo(() => {
+    const rows = (type) => rowsOf(state.accounts, ledger, type);
+    const bank = rows('Bank');
+    const ar = rows('Accounts Receivable');
+    const otherCurrent = rows('Other Current Asset');
+    const fixed = rows('Fixed Asset');
+    const payables = [...rows('Accounts Payable'), ...rows('Credit Card'), ...rows('Other Current Liability')];
+    const equity = rows('Equity');
 
-  // Net income is what the period actually earned, so Equity reflects it even
-  // before it is closed to retained earnings.
-  const netIncome = useMemo(() => {
-    const income = state.accounts.filter((a) => a.type === 'Income').reduce((s, a) => s + (a.qb || 0), 0);
-    const expense = state.accounts.filter((a) => a.type === 'Expense' || a.type === 'Cost of Goods Sold')
-      .reduce((s, a) => s + (a.qb || 0), 0);
-    return income - expense;
-  }, [state.accounts]);
+    const bankTotal = sum(bank);
+    const arTotal = sum(ar);
+    const otherCurrentTotal = sum(otherCurrent);
+    const currentAssetsTotal = bankTotal + arTotal + otherCurrentTotal;
+    const fixedTotal = sum(fixed);
 
+    return {
+      bank, ar, otherCurrent, fixed, payables, equity,
+      bankTotal, arTotal, otherCurrentTotal, fixedTotal, currentAssetsTotal,
+      assetsTotal: currentAssetsTotal + fixedTotal,
+      payablesTotal: sum(payables),
+      equityTotal: sum(equity),
+    };
+  }, [state.accounts, ledger]);
+
+  // Earnings for the period have not been closed to retained earnings yet, so
+  // equity shows them separately rather than quietly inflating the carried
+  // forward figure.
+  const netIncome = ledger.pnl.netIncome;
   const equityWithIncome = b.equityTotal + netIncome;
-  const liabilitiesAndEquity = b.apTotal + equityWithIncome;
-  const balanced = Math.abs(b.assetsTotal - liabilitiesAndEquity) < 0.01;
-  const difference = b.assetsTotal - liabilitiesAndEquity;
+  const liabilitiesAndEquity = b.payablesTotal + equityWithIncome;
+  const balanced = ledger.balanced;
+  const difference = ledger.difference;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-5">
@@ -198,7 +204,7 @@ export default function BalanceSheetView({ onBack }) {
                   <>
                     <GroupHeader label="Bank Accounts" open={bankAccountsOpen} onToggle={() => setBankAccountsOpen(!bankAccountsOpen)} indent="py-1 pl-8" chevron={12} />
                     {bankAccountsOpen && b.bank.map((a) => (
-                      <Row key={a.id} label={a.name} value={a.qb} />
+                      <Row key={a.id} label={a.name} value={a.balance} />
                     ))}
                     <Row label="Total for Bank Accounts" value={b.bankTotal} indent="py-1 pl-8" emphasise />
 
@@ -215,7 +221,7 @@ export default function BalanceSheetView({ onBack }) {
                                 <Sparkles size={11} className="text-[#0077c5]" />
                               </span>
                             }
-                            value={a.qb}
+                            value={a.balance}
                           />
                         ))}
                         {b.ar.length === 0 && <Row label="No receivables" value={0} />}
@@ -227,7 +233,7 @@ export default function BalanceSheetView({ onBack }) {
                     {otherAssetsOpen && (
                       <>
                         {b.otherCurrent.map((a) => (
-                          <Row key={a.id} label={a.name} value={a.qb} />
+                          <Row key={a.id} label={a.name} value={a.balance} />
                         ))}
                         {b.otherCurrent.length === 0 && <Row label="Nothing in this group" value={0} />}
                         <Row label="Total for Other Current Assets" value={b.otherCurrentTotal} indent="py-1 pl-8" emphasise />
@@ -245,7 +251,14 @@ export default function BalanceSheetView({ onBack }) {
                 {fixedAssetsOpen && (
                   <>
                     {b.fixed.map((a) => (
-                      <Row key={a.id} label={a.name} value={a.qb} indent="py-1 pl-12" />
+                      <Fragment key={a.id}>
+                        <Row label={a.name} value={a.balance} indent="py-1 pl-12" />
+                        {/* Sub-accounts are the parent's breakdown. Shown, never
+                            added -- otherwise Truck would be counted twice. */}
+                        {a.childRows.map((c) => (
+                          <Row key={c.id} label={c.name} value={c.balance} indent="py-1 pl-16" tone="text-gray-500" />
+                        ))}
+                      </Fragment>
                     ))}
                     <Row label="Total for Fixed Assets" value={b.fixedTotal} indent="py-1 pl-8" emphasise />
                   </>
@@ -266,10 +279,10 @@ export default function BalanceSheetView({ onBack }) {
                 {clOpen && (
                   <>
                     <GroupHeader label="Accounts Payable" open={clAccountsOpen} onToggle={() => setClAccountsOpen(!clAccountsOpen)} indent="py-1 pl-8" chevron={12} />
-                    {clAccountsOpen && b.ap.map((a) => (
-                      <Row key={a.id} label={a.name} value={a.qb} />
+                    {clAccountsOpen && b.payables.map((a) => (
+                      <Row key={a.id} label={a.name} value={a.balance} />
                     ))}
-                    <Row label="Total for Accounts Payable" value={b.apTotal} indent="py-1 pl-8" emphasise />
+                    <Row label="Total for Current Liabilities" value={b.payablesTotal} indent="py-1 pl-8" emphasise />
                   </>
                 )}
               </>
@@ -280,9 +293,14 @@ export default function BalanceSheetView({ onBack }) {
             {equityOpen && (
               <>
                 {b.equity.map((a) => (
-                  <Row key={a.id} label={a.name} value={a.qb} indent="py-1 pl-8" />
+                  <Row key={a.id} label={a.name} value={a.balance} indent="py-1 pl-8" />
                 ))}
-                <Row label="Net income for the period" value={netIncome} indent="py-1 pl-8" tone="text-gray-700" />
+                <Row
+                  label="Net income for the period, not yet closed"
+                  value={netIncome}
+                  indent="py-1 pl-8"
+                  tone="text-gray-700"
+                />
                 <Row label="Total Equity" value={equityWithIncome} indent="py-1 pl-8" emphasise />
               </>
             )}

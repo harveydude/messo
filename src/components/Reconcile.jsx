@@ -1,17 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import { Check, ChevronLeft, AlertTriangle } from 'lucide-react';
-import { useStore } from '../store';
+import { useStore, useLedger } from '../store';
 import { formatMoney } from '../money';
+import { CHART_OF_ACCOUNTS } from '../data/chartOfAccounts';
 
 /**
  * Bank reconciliation workflow.
  *
- * Select account → enter statement date + balance → check off transactions
- * → difference must be $0.00 to finish.
+ * Select account -> enter statement date + balance -> check off transactions
+ * -> the difference must be zero to finish.
+ *
+ * The arithmetic used to be `statement balance - sum of ticked rows`, which is
+ * not a reconciliation. A statement is the *ending* balance: it equals the
+ * balance you started the period with plus everything that cleared since.
+ * Comparing it against the ticked rows alone could never reach zero, so the
+ * Finish button was permanently disabled however carefully you worked.
+ *
+ * It is now `statement balance - (book balance + cleared items)`, which is the
+ * rule a bookkeeper actually applies, and it reaches zero when the work is
+ * genuinely done.
+ *
+ * Only rows that are in the books are offered. An uncategorised transaction has
+ * no account, so it cannot be "cleared" -- ticking it would be ticking a fiction.
  */
 
 export default function Reconcile({ onClose, onFinish }) {
   const { state, dispatch } = useStore();
+  const ledger = useLedger();
   const [step, setStep] = useState('setup'); // setup | review | done
   const [accountId, setAccountId] = useState(state.bankAccounts[0]?.id || 1);
   const [statementDate, setStatementDate] = useState('2025-10-24');
@@ -20,11 +35,18 @@ export default function Reconcile({ onClose, onFinish }) {
   const [finishing, setFinishing] = useState(false);
 
   const account = state.bankAccounts.find(a => a.id === Number(accountId));
-  const qbBalance = state.accounts.find(a => a.name === account?.name)?.qb || 0;
 
+  // The derived book balance for this account -- not a typed-in figure.
+  const qbBalance = useMemo(() => {
+    const acct = CHART_OF_ACCOUNTS.find(a => a.name === account?.name);
+    return acct ? ledger.balanceOf(acct.id) : 0;
+  }, [account, ledger]);
+
+  // Everything the bank has told us about, that is also in the books. Matched
+  // rows count: they were settled against a document and they cleared the bank.
   const txns = useMemo(() => {
     return state.bankTxns
-      .filter(t => t.bankAccountId === Number(accountId) && t.state === 'Reviewed')
+      .filter(t => t.bankAccountId === Number(accountId) && t.state !== 'Uncategorized' && t.state !== 'Suggested')
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [state.bankTxns, accountId]);
 
@@ -32,10 +54,19 @@ export default function Reconcile({ onClose, onFinish }) {
     return txns.filter(t => checked.has(t.id)).reduce((s, t) => s + t.amount, 0);
   }, [txns, checked]);
 
+  // The rule: ending statement balance = opening book balance + what cleared.
+  const expectedEnding = useMemo(() => qbBalance + clearedBalance, [qbBalance, clearedBalance]);
+
   const difference = useMemo(() => {
     const stmtBal = parseFloat(statementBalance) || 0;
-    return stmtBal - clearedBalance;
-  }, [statementBalance, clearedBalance]);
+    return stmtBal - expectedEnding;
+  }, [statementBalance, expectedEnding]);
+
+  // One click to tick everything -- reconciliation is a check, not a test of
+  // patience, and the difference still has to come out at zero on its own.
+  const toggleAll = () => {
+    setChecked(checked.size === txns.length ? new Set() : new Set(txns.map(t => t.id)));
+  };
 
   const toggleTxn = (id) => {
     const next = new Set(checked);
@@ -117,9 +148,12 @@ export default function Reconcile({ onClose, onFinish }) {
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">QuickBooks balance</span>
+                <span className="text-gray-600">Balance in the books</span>
                 <span className="font-medium text-gray-900">{formatMoney(qbBalance)}</span>
               </div>
+              <p className="text-[11px] text-gray-500 mt-1">
+                The statement's ending balance should equal this, plus everything you clear below.
+              </p>
             </div>
           </div>
 
@@ -160,8 +194,8 @@ export default function Reconcile({ onClose, onFinish }) {
             <p className="text-lg font-bold text-gray-900">{formatMoney(parseFloat(statementBalance) || 0)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs text-gray-500">Cleared balance</p>
-            <p className="text-lg font-bold text-gray-900">{formatMoney(clearedBalance)}</p>
+            <p className="text-xs text-gray-500">Books plus cleared</p>
+            <p className="text-lg font-bold text-gray-900">{formatMoney(expectedEnding)}</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-gray-500">Difference</p>
@@ -174,11 +208,22 @@ export default function Reconcile({ onClose, onFinish }) {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-gray-700">Transactions to clear</h3>
-            <span className="text-xs text-gray-500">{checked.size} of {txns.length} cleared</span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-500">{checked.size} of {txns.length} cleared</span>
+              <button
+                type="button"
+                onClick={toggleAll}
+                className="text-xs font-semibold text-[#2CA01C] hover:underline"
+              >
+                {checked.size === txns.length ? 'Clear all' : 'Select all'}
+              </button>
+            </div>
           </div>
 
           {txns.length === 0 ? (
-            <p className="text-sm text-gray-500 py-8 text-center">No reviewed transactions for this account</p>
+            <p className="text-sm text-gray-500 py-8 text-center">
+              Nothing has cleared this account yet. Categorise a bank transaction first.
+            </p>
           ) : (
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               {txns.map(txn => (

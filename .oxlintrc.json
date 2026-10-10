@@ -39,10 +39,11 @@
           "useFavorites",
           "useBookmarks",
           "useCategories",
+          "useLedger",
+          "useAccountsOfType",
           "SEED",
           "INITIAL_AUDIT_LOGS",
-          "INITIAL_RULES",
-          "INITIAL_CHART_OF_ACCOUNTS"
+          "INITIAL_RULES"
         ]
       }
     ]

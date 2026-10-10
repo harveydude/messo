@@ -1,24 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import { RefreshCw, ChevronDown, Printer, Share2, Settings, Paperclip, Check, X, Building, CreditCard } from 'lucide-react';
-import { useStore } from '../store';
+import { useStore, useLedger } from '../store';
 import { formatMoney } from '../money';
+import { CHART_OF_ACCOUNTS } from '../data/chartOfAccounts';
 
 /**
  * Bank transactions.
  *
- * The account cards showed fixed figures -- Checking -$3,621.93 with $1,201.00
- * "in QuickBooks", Savings $200.00 with $800.00, Mastercard $304.96 with
- * $157.72 -- regardless of what the app contained. Categorising a transaction
- * left the card unchanged, so the headline balance disagreed with the table
- * directly beneath it.
+ * The account cards used to show fixed figures -- Checking -3,621.93 with
+ * 1,201.00 "in QuickBooks", Savings 200.00, Mastercard 304.96 -- regardless of
+ * what the app contained. Categorising a transaction left the card unchanged, so
+ * the headline balance disagreed with the table directly beneath it.
  *
- * The bank-side balance is still a static figure: it belongs to the real bank,
- * which this app does not talk to. The "in QuickBooks" figure and the pending
- * count are now computed, and the review count is the real number rather than
- * a literal 25.
+ * The bank-side balance is still a stated figure: it belongs to the institution,
+ * which this app does not talk to. The "in QuickBooks" figure is now derived by
+ * the ledger, the pending count is the real number rather than a literal 25, and
+ * the money sitting in the review queue is shown as a value, because that gap
+ * is what a reconciliation is for.
  */
 export default function BankTransactionsView({ onNavigate, onCategorize, onReconcile }) {
   const { state, dispatch } = useStore();
+  const ledger = useLedger();
   const [selectedAccount, setSelectedAccount] = useState('checking');
   const [activeTab, setActiveTab] = useState('review'); // 'review', 'categorized', 'excluded'
   const [expandedRowId, setExpandedRowId] = useState(null);
@@ -33,21 +35,34 @@ export default function BankTransactionsView({ onNavigate, onCategorize, onRecon
 
   const selectedAccountId = state.bankAccounts.find((a) => a.name === selectedAccount)?.id ?? state.bankAccounts[0]?.id;
 
-  /** The real pending count and "in QuickBooks" figure, per connected account. */
+  /**
+   * The two balances side by side, which is the whole reason this screen exists.
+   *
+   * "Bank balance" is the institution's figure -- this app does not connect to a
+   * bank, so that number is stated, not computed. "In QuickBooks" is the ledger's
+   * own figure and therefore derived: it moves the instant a transaction is
+   * categorised. Before, it was typed in at 1,201.00 and did not move at all, so
+   * reconciling against it could never have reached zero.
+   *
+   * The gap between them is not a bug to be hidden -- it is the outstanding
+   * review queue, so it is computed and shown.
+   */
   const accountStats = useMemo(() => {
     return state.bankAccounts.map((acct) => {
       const txns = state.bankTxns.filter((t) => t.bankAccountId === acct.id);
-      const bookAccount = state.accounts.find((a) => a.name === acct.name);
-      const reviewed = txns.filter((t) => t.state === 'Reviewed' || t.state === 'Match');
-      const inBooks = reviewed.reduce((s, t) => s + t.amount, 0);
+      const bookAccount = CHART_OF_ACCOUNTS.find((a) => a.name === acct.name);
+      const unreviewed = txns.filter((t) => t.state === 'Uncategorized' || t.state === 'Suggested');
+      const bookBalance = bookAccount ? ledger.balanceOf(bookAccount.id) : null;
       return {
         ...acct,
         bankBalance: acct.balance,
-        bookBalance: bookAccount?.qb ?? inBooks,
-        pending: txns.filter((t) => t.state === 'Uncategorized' || t.state === 'Suggested').length,
+        bookBalance,
+        pending: unreviewed.length,
+        // Money that has cleared the bank but is not in the books yet.
+        pendingValue: unreviewed.reduce((s, t) => s + Math.abs(t.amount), 0),
       };
     });
-  }, [state.bankAccounts, state.bankTxns, state.accounts]);
+  }, [state.bankAccounts, state.bankTxns, ledger]);
 
   const reviewCount = state.bankTxns.filter(
     (t) => t.state === 'Uncategorized' || t.state === 'Suggested'
@@ -160,11 +175,11 @@ export default function BankTransactionsView({ onNavigate, onCategorize, onRecon
               <div className="space-y-1">
                 <div className="text-xl font-extrabold">{formatMoney(acct.bankBalance)}</div>
                 <div className={`text-[11px] ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
-                  BANK BALANCE • Updated moments ago
+                  BANK BALANCE • stated by {acct.institution}
                 </div>
                 <div className={`flex items-center justify-between pt-2 mt-2 ${isSelected ? 'border-t border-white/20' : 'border-t border-gray-100'}`}>
                   <div className="text-xs">
-                    In QuickBooks: <span className="font-semibold">{formatMoney(acct.bookBalance)}</span>
+                    In the books: <span className="font-semibold">{formatMoney(acct.bookBalance)}</span>
                   </div>
                   <span
                     className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -178,6 +193,14 @@ export default function BankTransactionsView({ onNavigate, onCategorize, onRecon
                     {acct.pending}
                   </span>
                 </div>
+                {/* The two balances are only allowed to differ by what is still
+                    in the queue. Stating the gap turns a confusing mismatch
+                    into the actionable number it actually is. */}
+                {acct.pending > 0 && (
+                  <div className={`text-[11px] pt-1 ${isSelected ? 'text-orange-200' : 'text-orange-700'}`}>
+                    {formatMoney(acct.pendingValue)} cleared the bank but is not categorised yet
+                  </div>
+                )}
               </div>
             </div>
           );
