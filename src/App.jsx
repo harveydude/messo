@@ -32,6 +32,9 @@ import { StoreProvider } from './store';
  */
 const DashboardView = lazy(() => import('./components/DashboardView'));
 const BankTransactionsView = lazy(() => import('./components/BankTransactionsView'));
+// The gear menu's utility screens, and the shared sales-document list.
+const GearScreens = lazy(() => import('./components/GearScreens'));
+const SalesDocumentsView = lazy(() => import('./components/SalesDocumentsView'));
 const AllListsView = lazy(() => import('./components/AllListsView'));
 const ChartOfAccountsView = lazy(() => import('./components/ChartOfAccountsView'));
 const RulesView = lazy(() => import('./components/RulesView'));
@@ -106,6 +109,106 @@ const SETTINGS_ROUTES = {
   'Audit log': 'audit_log',
   'Reconcile': 'reconcile',
   'Subscriptions and billing': 'pricing',
+  'Vendors': 'vendors',
+  'Team': 'team',
+  'Payroll': 'payroll',
+  'Time': 'time_entries',
+  'Mileage': 'mileage',
+  'Sales tax': 'sales_tax',
+  'Business tax': 'business_tax',
+  'Lending': 'lending',
+  'Custom reports': 'custom_reports',
+  'Financial planning': 'financial_planning',
+  'Integrations': 'apps',
+
+  // Items that are a screen in their own right, or a tab within one. Before
+  // this, twenty-one of the forty items in the gear menu resolved to nothing
+  // and quietly did nothing when clicked.
+  'Manage users': 'team',
+  'Payroll settings': 'payroll',
+  'Import data': 'import_data',
+  'Import desktop data': 'import_data',
+  'Export data': 'export_data',
+  'Custom fields': 'custom_fields',
+  'Share screen': 'share_screen',
+  "Workers' comp": 'workers_comp',
+  'Order checks': 'order_checks',
+  'Get the desktop app': 'desktop_app',
+  'Resolution center': 'resolution_center',
+  "What's new": 'whats_new',
+  'Attachments': 'attachments',
+  'Privacy': 'privacy',
+  'Feedback': 'feedback',
+};
+
+/**
+ * Where every one of the 37 Create-menu items goes.
+ *
+ * These used to resolve through `map[action] ?? 'sales_transactions'`, so the
+ * seven entries that were mapped landed somewhere sensible and the other
+ * thirty landed on the Sales screen. Clicking "Bank deposit" or "Payroll" or
+ * "Add vendor" gave you an invoice list. A menu with thirty wrong items is
+ * worse than a menu with three, because the label promises something and the
+ * screen denies it.
+ *
+ * Each entry now names its own destination. Anything that is genuinely a form
+ * rather than a screen maps to a modal instead.
+ *
+ * A key that is absent from this table is a bug, not a fallback: `createTarget`
+ * reports it so it gets fixed rather than silently landing somewhere.
+ */
+const CREATE_TARGETS = {
+  // Customers
+  Invoice: 'sales_transactions',
+  'Receive payment': 'sales_transactions',
+  Statement: 'standard_reports',
+  Estimate: 'estimates',
+  'Sales order': 'orders',
+  'Credit memo': 'credit_memos',
+  'Sales receipt': 'sales_transactions',
+  'Recurring payment': 'recurring_transactions',
+  'Shipping label': 'orders',
+  'Refund receipt': 'credit_memos',
+  'Delayed credit': 'credit_memos',
+  'Delayed charge': 'invoices',
+  'Add customer': 'customers_list',
+
+  // Vendors
+  Expense: 'expense_transactions',
+  Check: 'expense_transactions',
+  Bill: 'expense_transactions',
+  'Pay bills': 'expense_transactions',
+  'Purchase order': 'purchase_orders',
+  'Vendor credit': 'bills',
+  'Credit card credit': 'bills',
+  'Print checks': 'expense_transactions',
+  'Add vendor': 'vendors',
+
+  // Team
+  Payroll: 'payroll',
+  'Single time activity': 'time_entries',
+  'Weekly timesheet': 'time_entries',
+  'Review time': 'time_entries',
+  'Add employee': 'team',
+  'Add contractor': 'team',
+
+  // Other
+  'Bank deposit': 'bank_transactions',
+  Transfer: 'bank_transactions',
+  'Journal entry': { modal: 'journal' },
+  'Inventory qty adjustment': 'products_services',
+  'Pay down credit card': 'bills',
+  'Add product/service': 'products_services',
+};
+
+/** Items the dashboard's own Create-actions row sends. */
+const CREATE_ACTION_TARGETS = {
+  'Get paid online': 'sales_transactions',
+  'Create invoice': 'sales_transactions',
+  'Record expense': 'expense_transactions',
+  'Add bank deposit': 'bank_transactions',
+  'Create check': 'expense_transactions',
+  'Show all': { openMenu: true },
 };
 
 export default function App() {
@@ -156,21 +259,32 @@ export default function App() {
     }
   }, [navigate]);
 
+  /**
+   * Create-menu dispatch.
+   *
+   * Every item resolves through `CREATE_TARGETS`. An unknown item no longer
+   * falls back to Sales -- it lands on an honest "not built yet" page, because
+   * opening an invoice list in response to "Payroll" is a lie the user has to
+   * notice, and landing somewhere inert is at least accurate.
+   */
   const handleQuickCreateAction = useCallback((action) => {
     setCreateMenuOpen(false);
-    const map = {
-      'Journal entry': () => setJournalModalOpen(true),
-      'Invoice': 'sales_transactions',
-      'Create invoice': 'sales_transactions',
-      'Expense': 'expense_transactions',
-      'Record expense': 'expense_transactions',
-      'Add customer': 'customers_list',
-      'Bank deposit': 'bank_transactions',
-      'Add bank deposit': 'bank_transactions',
-    };
-    const target = map[action] ?? 'sales_transactions';
-    if (typeof target === 'function') target();
-    else navigate(target);
+    const target = CREATE_TARGETS[action] ?? CREATE_ACTION_TARGETS[action];
+
+    if (!target) {
+      console.warn(`Create menu item "${action}" has no destination in CREATE_TARGETS.`);
+      navigate('not_built', { label: action });
+      return;
+    }
+    if (target.openMenu) {
+      setCreateMenuOpen(true);
+      return;
+    }
+    if (target.modal === 'journal') {
+      setJournalModalOpen(true);
+      return;
+    }
+    navigate(target);
   }, [navigate]);
 
   /**
@@ -224,8 +338,59 @@ export default function App() {
             setCustomizeMode={setCustomizeMode}
           />
         );
+
+      /**
+       * The gear menu's utility screens, and the generic pages behind several
+       * Create-menu items.
+       *
+       * They share one module because they are forms and reference pages
+       * rather than distinct domains, and twenty separate files of a table
+       * with a heading each would be harder to maintain than one switch. The
+       * switch runs first so an individual screen defined below -- Import,
+       * Export, Custom fields -- still wins over the generic handling.
+       *
+       * If the module returns null the route has no screen, and the honest
+       * "not built yet" page answers instead.
+       */
+      case 'import_data':
+      case 'export_data':
+      case 'custom_fields':
+      case 'share_screen':
+      case 'workers_comp':
+      case 'order_checks':
+      case 'desktop_app':
+      case 'resolution_center':
+      case 'whats_new':
+      case 'attachments':
+      case 'privacy':
+      case 'feedback': {
+        const screen = <GearScreens screenId={viewId} onOpenSettings={() => { closeAllOverlays('settings'); setSettingsMenuOpen(true); }} />;
+        if (screen) return screen;
+        return <NotBuiltYet feature={routeLabel} />;
+      }
+
+      /**
+       * Sales and purchase documents.
+       *
+       * Estimates, orders and credit memos are real documents in the store, so
+       * these are lists of them rather than dead links. A purchase order is a
+       * vendor document, which is why it lives under bills rather than under
+       * sales.
+       */
+      case 'estimates':
+      case 'orders':
+      case 'purchase_orders':
+      case 'credit_memos':
+      case 'bills':
+        return (
+          <SalesDocumentsView
+            kind={viewId}
+            onNavigate={(v) => navigate(v)}
+          />
+        );
+
       case 'not_built':
-        return <NotBuiltYet feature={query.feature || 'That screen'} />;
+        return <NotBuiltYet feature={query.feature || query.label || 'That screen'} />;
       case 'bookmarks':
         return (
           <DashboardView

@@ -13,55 +13,48 @@ export default function ExpensesDonutCard({
     return val;
   };
 
+  /**
+   * Nothing to show is stated plainly. An empty ring with no words beside it
+   * reads as a broken chart rather than as "you have not spent anything".
+   */
   const data = expensesData || {
-    period: "Last 30 days",
-    title: "EXPENSES",
-    subtitle: "Spending for last 30 days",
-    amount: "$1,117",
-    percentBadge: "63%",
-    trendText: "Down 81% from prior 30 days",
-    categories: [
-      { name: "Cost of Goods Sold", color: "#0077C5", percent: 16 },
-      { name: "Legal & Professional Fees", color: "#00A699", percent: 9 },
-      { name: "Automobile", color: "#1E3A8A", percent: 7 },
-      { name: "Other", color: "#F97316", percent: 4 },
-      { name: "Major Expenses", color: "#1A1A1A", percent: 64 }
-    ],
-    reviewText: "10 to review",
-    footerLink: "Categorize 10 transactions"
+    period: 'This period',
+    title: 'EXPENSES',
+    subtitle: 'Spending for the period to date',
+    amount: '\u20b90.00',
+    percentBadge: '\u2014',
+    trendText: 'No data yet',
+    categories: [],
+    reviewText: 'Nothing to review',
+    footerLink: 'Add an expense',
   };
 
-  // SVG Donut calculation
-  // Radius r=44, Circumference C = 2 * PI * 44 ≈ 276.46
-  // Segments ordered clockwise from -90deg (12 o'clock):
-  // 1. Blue: 16%
-  // 2. Teal: 9%
-  // 3. Navy: 7%
-  // 4. Orange: 4%
-  // 5. Black: 64%
+  /**
+   * Slices come from the data, not from a list typed into this file.
+   *
+   * The ring used to be five fixed segments -- Cost of Goods Sold 16%, Legal &
+   * Professional Fees 9%, Automobile 7% -- with a legend that repeated those
+   * names in hardcoded markup, so the two could not agree with each other even
+   * if the data changed. Nothing spent is a legitimate result, so an empty ring
+   * is handled rather than divided by.
+   */
   const radius = 44;
   const strokeWidth = 26;
   const circumference = 2 * Math.PI * radius;
 
-  const segments = [
-    { name: "Cost of Goods Sold", color: "#0077C5", percent: 16 },
-    { name: "Legal & Professional Fees", color: "#00A699", percent: 9 },
-    { name: "Automobile", color: "#1E3A8A", percent: 7 },
-    { name: "Other", color: "#F97316", percent: 4 },
-    { name: "Uncategorized", color: "#1A1A1A", percent: 64 },
-  ];
+  const segments = (data.categories || []).filter((c) => c.percent > 0);
 
-  let accumulatedPercent = 0;
-  const donutSlices = segments.map((seg) => {
+  // Each slice starts where the one before it ended, so the running total is
+  // carried through the reduce rather than kept in a variable reassigned during
+  // the render pass -- which React's immutability rule rightly flags.
+  const donutSlices = segments.reduce((acc, seg) => {
     const strokeDasharray = `${(seg.percent / 100) * circumference} ${circumference}`;
-    const strokeDashoffset = -((accumulatedPercent / 100) * circumference);
-    accumulatedPercent += seg.percent;
+    const strokeDashoffset = -((acc.offset / 100) * circumference);
     return {
-      ...seg,
-      strokeDasharray,
-      strokeDashoffset,
+      slices: [...acc.slices, { ...seg, strokeDasharray, strokeDashoffset }],
+      offset: acc.offset + seg.percent,
     };
-  });
+  }, { slices: [], offset: 0 }).slices;
 
   return (
     <div className="bg-white border border-[#C7CBCE] rounded-[8px] p-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-between">
@@ -115,10 +108,13 @@ export default function ExpensesDonutCard({
         <div className="flex items-center justify-between gap-3 pt-1">
           {/* Donut Chart SVG */}
           <div className="relative w-[124px] h-[124px] flex-shrink-0">
-            <svg 
+            <svg
               className="w-full h-full -rotate-90 transform"
               viewBox="0 0 120 120"
             >
+              {donutSlices.length === 0 && (
+                <circle cx="60" cy="60" r={radius} fill="none" stroke="#E3E5E8" strokeWidth={strokeWidth} />
+              )}
               {donutSlices.map((slice, i) => (
                 <circle
                   key={i}
@@ -136,31 +132,25 @@ export default function ExpensesDonutCard({
             </svg>
           </div>
 
-          {/* Legend Items */}
+          {/* Legend, from the same data the ring is drawn from. */}
           <div className="flex-1 space-y-1.5 text-[12px] text-[#393A3D]">
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0077C5] flex-shrink-0" />
-              <span className="truncate">Cost of Goods Sold</span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#00A699] flex-shrink-0" />
-              <span className="truncate">Legal & Professional Fees</span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#1E3A8A] flex-shrink-0" />
-              <span className="truncate">Automobile</span>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#F97316] flex-shrink-0" />
-              <span className="truncate">Other</span>
-            </div>
-
+            {donutSlices.length === 0 ? (
+              <p className="text-gray-500">No expenses recorded yet.</p>
+            ) : (
+              donutSlices.map((slice, i) => (
+                <div key={i} className="flex items-center space-x-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: slice.color }}
+                  />
+                  <span className="truncate">{slice.name}</span>
+                  <span className="ml-auto text-gray-500 tabular-nums">{slice.percent}%</span>
+                </div>
+              ))
+            )}
             <div className="flex items-center space-x-2 pt-0.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#9E9E9E] flex-shrink-0" />
-              <button 
+              <button
                 onClick={() => onNavigate && onNavigate('expense_transactions')}
                 className="text-[#0077C5] hover:underline font-medium cursor-pointer"
               >

@@ -35,10 +35,26 @@ export const SEED = {
     timeSettings: { firstDayOfWeek: 'Monday', showServiceField: true, billableTime: true },
     usageLimits: { users: 5, accounts: 250 },
   },
+  /**
+ * Staff.
+ *
+ * `role` is the job title; `access` is the QuickBooks permission level
+ * (Admin / Standard / Time only) that decides what the person can actually do.
+ * They are separate fields because conflating them was a real defect: a
+ * bookkeeper and an administrator are different things, and the access level
+ * is the one with consequences.
+ *
+ * `rate` is the hourly rate in the company's own currency. The owner's is zero
+ * because the owner is not paid an hourly wage -- that is a fact about the
+ * arrangement, not a missing value.
+ */
   users: [
-    { id: 1, first: 'Craig', last: 'Carlson', email: 'craig@samplecompany.com', role: 'Admin', status: 'Active', rate: 0 },
-    { id: 2, first: 'Emily', last: 'Platt', email: 'emily@samplecompany.com', role: 'Standard', status: 'Active', rate: 45 },
-    { id: 3, first: 'John', last: 'Johnson', email: 'john@samplecompany.com', role: 'TimeOnly', status: 'Active', rate: 25 },
+    { id: 1, first: 'Craig', last: 'Carlson', email: 'craig@samplecompany.com', phone: '(555) 010-1001', role: 'Owner', access: 'Admin', status: 'Active', rate: 0, active: true },
+    { id: 2, first: 'Emily', last: 'Platt', email: 'emily@samplecompany.com', phone: '(555) 010-1002', role: 'Bookkeeper', access: 'Admin', status: 'Active', rate: 45, active: true },
+    { id: 3, first: 'John', last: 'Johnson', email: 'john@samplecompany.com', phone: '(555) 010-1003', role: 'Field crew', access: 'TimeOnly', status: 'Active', rate: 25, active: true },
+    { id: 4, first: 'Priya', last: 'Raghavan', email: 'priya@samplecompany.com', phone: '(555) 010-1004', role: 'Accountant', access: 'Standard', status: 'Active', rate: 62, active: true },
+    { id: 5, first: 'Marcus', last: 'Bell', email: 'marcus@samplecompany.com', phone: '(555) 010-1005', role: 'Estimator', access: 'Standard', status: 'Active', rate: 40, active: true },
+    { id: 6, first: 'Sofia', last: 'Marino', email: 'sofia@samplecompany.com', phone: '(555) 010-1006', role: 'Design assistant', access: 'TimeOnly', status: 'Inactive', rate: 28, active: false },
   ],
   customers: [
     { id: 1, displayName: 'Cool Cars', first: 'Grace', last: 'Pariente', email: 'Cool_Cars@intuit.com', phone: '(555) 234-5678', billingAddress: '65 Ocean Dr, Half Moon Bay, CA 94213', terms: 'Net 30', notes: '', balance: 0 },
@@ -86,6 +102,12 @@ export const SEED = {
     // bills already carried those amounts, so the ledger double-counted the
     // telephone and the office supplies against the bank.
     { id: 1, payeeId: 3, payeeName: 'Utility Power', paymentAccountId: 1, method: 'Card', date: '2025-10-21', lines: [{ accountId: 32, desc: 'Electricity', amount: 120.00 }], memo: '', attachment: null, source: 'Manual' },
+    // Payroll posts the GROSS to Payroll Expenses, not the net. The gross is
+    // what the payroll costs the business and what actually leaves the bank --
+    // the employee receives gross-minus-tax and the tax authority receives the
+    // rest. Booking the net would understate both the expense and the cash.
+    { id: 2, payeeId: null, payeeName: 'Payroll — August', paymentAccountId: 1, method: 'Transfer', date: '2025-08-29', lines: [{ accountId: 35, desc: 'Payroll 1–31 Aug 2025', amount: 3600.00 }], memo: 'Gross 3,600.00 less withholding 600.00', attachment: null, source: 'Payroll' },
+    { id: 3, payeeId: null, payeeName: 'Payroll — September', paymentAccountId: 1, method: 'Transfer', date: '2025-09-30', lines: [{ accountId: 35, desc: 'Payroll 1–30 Sep 2025', amount: 3600.00 }], memo: 'Gross 3,600.00 less withholding 600.00', attachment: null, source: 'Payroll' },
   ],
   payments: [],
   journalEntries: [],
@@ -113,6 +135,7 @@ export const SEED = {
     { id: 1, name: 'Monthly Building Lease', type: 'Scheduled', txnType: 'Expense', interval: 'Monthly', intervalN: 1, startDate: '2025-09-01', entityId: 3, lines: [{ accountId: 38, desc: 'Building lease', amount: 900 }], email: false, reminderDays: 3, nextDate: '2025-11-01' },
     { id: 2, name: 'Telephone Bill', type: 'Scheduled', txnType: 'Bill', interval: 'Monthly', intervalN: 1, startDate: '2025-09-12', entityId: 1, lines: [{ accountId: 33, desc: 'Telephone service', amount: 74.36 }], email: false, reminderDays: 3, nextDate: '2025-11-12' },
   ],
+  mileage: [],
   mileage: [],
   payrollRuns: [],
   timeEntries: [],

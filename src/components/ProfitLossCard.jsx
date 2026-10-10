@@ -13,28 +13,22 @@ export default function ProfitLossCard({
     return val;
   };
 
+  /**
+   * A missing figure is stated as missing. The previous fallback offered net
+   * profit of $1,393 and a trend of "Up 673% from prior month" -- a comparison
+   * against a period this app holds no data for at all.
+   */
   const data = pnlData || {
-    period: "Last month",
-    title: "PROFIT & LOSS",
-    subtitle: "Net profit for September",
-    amount: "$1,393",
-    marginBadge: "78%",
-    trendText: "Up 673% from prior month",
-    income: {
-      amount: "$8,347",
-      label: "Income",
-      bookedPercent: 73,
-      unreviewedPercent: 27,
-      reviewText: "8 to review"
-    },
-    expenses: {
-      amount: "$6,953",
-      label: "Expenses",
-      bookedPercent: 63,
-      unreviewedPercent: 37,
-      reviewText: "15 to review"
-    },
-    footerLink: "Categorize 23 transactions"
+    period: 'This period',
+    title: 'PROFIT & LOSS',
+    subtitle: 'Nothing recorded for this period yet',
+    amount: '\u20b90.00',
+    marginBadge: '\u2014',
+    trendText: 'No earlier period to compare',
+    trendDirection: 'up',
+    income: { amount: '\u20b90.00', label: 'Income', bookedPercent: 100, unreviewedPercent: 0, reviewText: 'Nothing to review' },
+    expenses: { amount: '\u20b90.00', label: 'Expenses', bookedPercent: 100, unreviewedPercent: 0, reviewText: 'Nothing to review' },
+    footerLink: 'Add a transaction'
   };
 
   return (

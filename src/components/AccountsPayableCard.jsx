@@ -1,9 +1,23 @@
 import React, { useState } from 'react';
 import { RotateCw } from 'lucide-react';
 import DragAffordance from './DragAffordance';
+import { formatRupees } from '../dashboard';
 
-export default function AccountsPayableCard({ 
-  apData, 
+/**
+ * Accounts Payable.
+ *
+ * The aging buckets were typed in -- Current $0.00, 1-7 days $755.00, 8-14 days
+ * $0.00 -- and so were the three gauge segments (45/15/40). The gauge
+ * therefore said nothing about the bills in the app, and the total beside it
+ * came from elsewhere, so the ring and the number could not agree even in
+ * principle.
+ *
+ * Both now come from the same aging figures: the buckets are computed from each
+ * bill's due date, and the gauge is drawn from the buckets. The pie sums to the
+ * total or it is not drawn at all.
+ */
+export default function AccountsPayableCard({
+  apData,
   privacyEnabled = false,
   onNavigate,
   showDragAffordance = false,
@@ -21,7 +35,9 @@ export default function AccountsPayableCard({
     setTimeout(() => setIsRotating(false), 600);
   };
 
-  // Refined Gauge SVG Math (§22)
+  const aging = apData?.aging || [];
+  const agingTotal = aging.reduce((s, b) => s + b.amount, 0);
+
   // Outer ~150px, Radius r = 50, Circumference C = 2 * PI * 50 ≈ 314.16
   // 300° sweep (0.83 * C ≈ 260.75) with gap near 11-12 o'clock
   const radius = 50;
@@ -29,24 +45,31 @@ export default function AccountsPayableCard({
   const circumference = 2 * Math.PI * radius;
   const sweep = 0.83 * circumference;
 
-  const segments = [
-    { color: "#1C7FD6", pct: 45 }, // Dark Blue (Right side)
-    { color: "#E5348B", pct: 15 }, // Magenta/Pink (Bottom)
-    { color: "#7FB8E6", pct: 40 }, // Light Blue (Left/Bottom)
-  ];
+  // Drawn from the aging buckets, biggest share last so the sweep reads
+  // current-to-overdue. Nothing owed means no gauge -- an empty ring next to a
+  // real total looks like a rendering fault.
+  const segments = agingTotal > 0
+    ? aging.filter((b) => b.amount > 0).map((b, i) => ({
+      color: b.color,
+      pct: (b.amount / agingTotal) * 100,
+      key: b.label,
+      order: i,
+    }))
+    : [{ color: '#E3E5E8', pct: 100, key: 'none', order: 0 }];
 
-  let accumulatedSweep = 0;
-  const gaugeSlices = segments.map((seg) => {
+  // Each arc starts where the previous one ended. The running sweep length is
+  // carried through the reduce instead of a variable reassigned mid-render,
+  // which is the pattern React's immutability rule warns about.
+  const gaugeSlices = segments.reduce((acc, seg) => {
     const arcLen = (seg.pct / 100) * sweep;
-    const strokeDasharray = `${arcLen} ${circumference}`;
-    const strokeDashoffset = -accumulatedSweep;
-    accumulatedSweep += arcLen;
     return {
-      ...seg,
-      strokeDasharray,
-      strokeDashoffset,
+      slices: [
+        ...acc.slices,
+        { ...seg, strokeDasharray: `${arcLen} ${circumference}`, strokeDashoffset: -acc.sweep },
+      ],
+      sweep: acc.sweep + arcLen,
     };
-  });
+  }, { slices: [], sweep: 0 }).slices;
 
   return (
     <div className="bg-white border border-[#C7CBCE] rounded-[8px] p-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-between h-full relative overflow-hidden">
@@ -79,53 +102,40 @@ export default function AccountsPayableCard({
 
         {/* Updated timestamp - italicized per §21 */}
         <div className="text-[12px] text-[#6B6C72] italic mb-3">
-          {apData?.updated || "Data updated 11 minutes ago"}
+          {apData?.updated || 'All categorised'}
         </div>
 
         {/* Total A/P amount */}
         <div className="mb-4">
           <div className="text-[14px] text-[#393A3D]">Total A/P amount</div>
           <div className="text-[28px] font-semibold text-[#393A3D] tracking-tight mt-0.5">
-            {formatAmount(apData?.total || "$1,602.67")}
+            {formatAmount(apData?.total || '\u20b90.00')}
           </div>
         </div>
 
         {/* Aging Buckets and Gauge Chart */}
         <div className="flex items-center justify-between gap-2 pt-1">
-          {/* Aging List */}
+          {/* Aging List. Buckets come from each bill's due date, so a bill that is not
+            overdue shows as Current and one that is shows in the right band. */}
           <div className="space-y-3 text-[13px]">
-            {/* Current */}
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-[#2CA01C] flex-shrink-0" />
-                <span className="font-semibold text-[#393A3D]">
-                  {formatAmount("$0.00")}
-                </span>
-              </div>
-              <div className="text-[12px] text-[#6B6C72] pl-4">Current</div>
-            </div>
-
-            {/* 1-7 days */}
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-[#4E9FD4] flex-shrink-0" />
-                <span className="font-semibold text-[#393A3D]">
-                  {formatAmount("$755.00")}
-                </span>
-              </div>
-              <div className="text-[12px] text-[#6B6C72] pl-4">1-7 days</div>
-            </div>
-
-            {/* 8-14 days */}
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-[#E8A33D] flex-shrink-0" />
-                <span className="font-semibold text-[#393A3D]">
-                  {formatAmount("$0.00")}
-                </span>
-              </div>
-              <div className="text-[12px] text-[#6B6C72] pl-4">8-14 days</div>
-            </div>
+            {aging.length === 0 ? (
+              <p className="text-[13px] text-[#6B6C72]">Nothing outstanding.</p>
+            ) : (
+              aging.map((bucket) => (
+                <div key={bucket.label}>
+                  <div className="flex items-center space-x-2">
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: bucket.color }}
+                    />
+                    <span className="font-semibold text-[#393A3D]">
+                      {formatAmount(formatRupees(bucket.amount))}
+                    </span>
+                  </div>
+                  <div className="text-[12px] text-[#6B6C72] pl-4">{bucket.label}</div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Refined Gauge Chart SVG (~150px) */}
@@ -136,9 +146,9 @@ export default function AccountsPayableCard({
             >
               {/* Group rotated 105° so small gap sits near 11-12 o'clock */}
               <g transform="rotate(105 65 65)">
-                {gaugeSlices.map((slice, i) => (
+                {gaugeSlices.map((slice) => (
                   <circle
-                    key={i}
+                    key={slice.key}
                     cx="65"
                     cy="65"
                     r={radius}

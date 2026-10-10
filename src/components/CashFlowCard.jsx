@@ -14,7 +14,7 @@ export default function CashFlowCard({
     return val;
   };
 
-  const amount = cashflowData?.amount || "-$3,422";
+  const amount = cashflowData?.amount || '\u20b90.00';
   const months = [
     'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 
     'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'

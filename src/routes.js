@@ -50,6 +50,44 @@ export const ROUTES = [
   { id: 'apps', slug: '/apps', label: 'Integrations' },
   { id: 'search_results', slug: '/search', label: 'Search results' },
 
+  // Create-menu and gear-menu destinations.
+  //
+  // These exist so that clicking "Payroll" or "Lending" or "Order checks"
+  // arrives somewhere real rather than being swallowed. Each maps to the screen
+  // that genuinely covers that job: purchase orders live with bills because
+  // they are a vendor document, estimates with sales because that is where an
+  // estimate is raised.
+  { id: 'vendors', slug: '/vendors', label: 'Vendors' },
+  { id: 'team', slug: '/team', label: 'Team' },
+  { id: 'payroll', slug: '/payroll', label: 'Payroll' },
+  { id: 'sales_tax', slug: '/sales-tax', label: 'Sales tax' },
+  { id: 'business_tax', slug: '/business-tax', label: 'Business tax' },
+  { id: 'lending', slug: '/lending', label: 'Lending' },
+  { id: 'customer_hub', slug: '/customer-hub', label: 'Customer hub' },
+  { id: 'custom_reports', slug: '/reports/custom', label: 'Custom reports' },
+  { id: 'financial_planning', slug: '/planning', label: 'Financial planning' },
+
+  // Sales documents.
+  { id: 'estimates', slug: '/estimates', label: 'Estimates' },
+  { id: 'orders', slug: '/orders', label: 'Sales orders' },
+  { id: 'purchase_orders', slug: '/purchase-orders', label: 'Purchase orders' },
+  { id: 'credit_memos', slug: '/credit-memos', label: 'Credit memos' },
+  { id: 'bills', slug: '/bills', label: 'Bills' },
+
+  // Gear-menu utility screens.
+  { id: 'import_data', slug: '/import', label: 'Import data' },
+  { id: 'export_data', slug: '/export', label: 'Export data' },
+  { id: 'custom_fields', slug: '/custom-fields', label: 'Custom fields' },
+  { id: 'share_screen', slug: '/share', label: 'Share screen' },
+  { id: 'workers_comp', slug: '/workers-comp', label: "Workers' comp" },
+  { id: 'order_checks', slug: '/order-checks', label: 'Order checks' },
+  { id: 'desktop_app', slug: '/desktop-app', label: 'Desktop app' },
+  { id: 'resolution_center', slug: '/resolution-center', label: 'Resolution center' },
+  { id: 'whats_new', slug: '/whats-new', label: "What's new" },
+  { id: 'attachments', slug: '/attachments', label: 'Attachments' },
+  { id: 'privacy', slug: '/privacy', label: 'Privacy' },
+  { id: 'feedback', slug: '/feedback', label: 'Feedback' },
+
   // A settings destination with no screen written yet. Given its own route
   // rather than a flag on the dashboard, so leaving it is ordinary navigation.
   { id: 'not_built', slug: '/not-built', label: 'Not built yet' },
