@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { X, Check, PlayCircle, TrendingUp, Search, Trash2 } from 'lucide-react';
 import { useStore, useLedger } from '../store';
 import { formatMoney } from '../money';
-import { accountsOfType } from '../ledger';
 
 /**
  * Budgets.
