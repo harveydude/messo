@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Check, Paperclip, Search } from 'lucide-react';
-import { useStore } from '../store.jsx';
+import { useStore } from '../store';
 import { formatMoney } from '../money';
 
 /**

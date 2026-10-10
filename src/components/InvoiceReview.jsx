@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, Send, Download, Check, ChevronLeft } from 'lucide-react';
-import { useStore } from '../store.jsx';
+import { useStore } from '../store';
 import { formatMoney } from '../money';
 
 /**

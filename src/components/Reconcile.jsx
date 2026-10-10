@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Check, ChevronLeft, AlertTriangle } from 'lucide-react';
-import { useStore } from '../store.jsx';
+import { useStore } from '../store';
 import { formatMoney } from '../money';
 
 /**

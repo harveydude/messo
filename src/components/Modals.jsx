@@ -1839,6 +1839,14 @@ export function JournalEntryModal({ isOpen, onClose }) {
             <button onClick={onClose} className="px-5 py-1.5 text-xs font-bold text-white bg-[#108000] hover:bg-green-800 rounded-full shadow-xs">
               Save and close
             </button>
+            {onReview && (
+              <button
+                onClick={() => onReview()}
+                className="px-5 py-1.5 text-xs font-bold text-white bg-[#0077c5] hover:bg-blue-700 rounded-full shadow-xs"
+              >
+                Review and send
+              </button>
+            )}
           </div>
         </div>
       </div>

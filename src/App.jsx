@@ -19,7 +19,8 @@ import AssistantDrawer from './components/AssistantDrawer';
 import InvoiceReview from './components/InvoiceReview';
 import BankCategorize from './components/BankCategorize';
 import Reconcile from './components/Reconcile';
-import { StoreProvider } from './store.jsx';
+import ReportsMath from './components/ReportsMath';
+import { StoreProvider } from './store';
 
 /*
  * Screens are imported lazily.
@@ -233,7 +234,13 @@ export default function App() {
           />
         );
       case 'bank_transactions':
-        return <BankTransactionsView onNavigate={(v) => navigate(v)} />;
+        return (
+          <BankTransactionsView
+            onNavigate={(v) => navigate(v)}
+            onCategorize={(tx) => setBankCategorizeTxn(tx)}
+            onReconcile={() => setReconcileOpen(true)}
+          />
+        );
       case 'all_lists':
         return <AllListsView onNavigate={(v) => navigate(v)} />;
       case 'chart_of_accounts':
@@ -257,7 +264,7 @@ export default function App() {
           />
         );
       case 'standard_reports':
-        return <ReportsView onOpenBalanceSheet={() => navigate('balance_sheet')} />;
+        return <ReportsView onOpenBalanceSheet={() => navigate('balance_sheet')} onNavigate={(v, q) => navigate(v, q)} />;
       case 'balance_sheet':
         return <BalanceSheetView onBack={() => navigate('standard_reports')} />;
       case 'management_reports':
@@ -270,7 +277,15 @@ export default function App() {
         // Reconciliation is now a full workflow overlay (Reconcile.jsx).
         // The trigger lives in the bank screen and the settings menu; this
         // route remains as a safe landing point.
-        return <BankTransactionsView onNavigate={(v) => navigate(v)} />;
+        return (
+          <BankTransactionsView
+            onNavigate={(v) => navigate(v)}
+            onCategorize={(tx) => setBankCategorizeTxn(tx)}
+            onReconcile={() => setReconcileOpen(true)}
+          />
+        );
+      case 'report-view':
+        return <ReportsMath reportType={query.report || 'balance-sheet'} />;
       case 'feed':
         return <BusinessFeedView />;
       case 'mileage':

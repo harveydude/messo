@@ -40,6 +40,7 @@ export const ROUTES = [
   { id: 'management_reports', slug: '/reports/management', label: 'Management reports' },
   { id: 'audit_log', slug: '/audit-log', label: 'Audit log' },
   { id: 'reconcile', slug: '/reconcile', label: 'Reconcile' },
+  { id: 'report_view', slug: '/reports/view', label: 'Report', aliases: ['/report'] },
 
   { id: 'feed', slug: '/feed', label: 'Business feed' },
   { id: 'mileage', slug: '/mileage', label: 'Mileage' },

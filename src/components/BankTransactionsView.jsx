@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { RefreshCw, ChevronDown, Printer, Share2, Settings, Paperclip, Check, X, Building, CreditCard } from 'lucide-react';
 import { INITIAL_BANK_TRANSACTIONS } from '../data/qbData';
 
-export default function BankTransactionsView({ onNavigate }) {
+export default function BankTransactionsView({ onNavigate, onCategorize, onReconcile }) {
   const [selectedAccount, setSelectedAccount] = useState('checking');
   const [activeTab, setActiveTab] = useState('review'); // 'review', 'categorized', 'excluded'
   const [transactions, setTransactions] = useState(INITIAL_BANK_TRANSACTIONS);
@@ -55,6 +55,14 @@ export default function BankTransactionsView({ onNavigate }) {
           <button className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50">
             Explore
           </button>
+          {onReconcile && (
+            <button
+              onClick={onReconcile}
+              className="px-3.5 py-1.5 text-xs font-semibold text-[#0077c5] bg-white border border-[#0077c5] rounded-full hover:bg-blue-50 flex items-center space-x-1 transition cursor-pointer"
+            >
+              <span>Reconcile</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -220,9 +228,12 @@ export default function BankTransactionsView({ onNavigate }) {
                 const isExpanded = expandedRowId === tx.id;
                 return (
                   <React.Fragment key={tx.id}>
-                    <tr 
+                    <tr
                       className={`hover:bg-blue-50/40 transition cursor-pointer ${isExpanded ? 'bg-blue-50/60 font-medium' : ''}`}
-                      onClick={() => setExpandedRowId(isExpanded ? null : tx.id)}
+                      onClick={() => {
+                        if (onCategorize) onCategorize(tx);
+                        else setExpandedRowId(isExpanded ? null : tx.id);
+                      }}
                     >
                       <td className="p-3" onClick={(e) => e.stopPropagation()}>
                         <input type="checkbox" className="rounded text-[#2ca01c] focus:ring-[#2ca01c]" />

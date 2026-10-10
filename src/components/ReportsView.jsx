@@ -67,8 +67,8 @@ export default function ReportsView({ onOpenBalanceSheet }) {
             </div>
 
             {/* Balance Sheet */}
-            <div 
-              onClick={onOpenBalanceSheet}
+            <div
+              onClick={() => onNavigate?.('report_view', { report: 'balance-sheet' })}
               className="flex items-center justify-between p-2 hover:bg-green-50/50 rounded-lg transition cursor-pointer"
             >
               <div className="flex items-center space-x-2 text-xs font-semibold text-[#0077c5] hover:underline">
@@ -82,13 +82,31 @@ export default function ReportsView({ onOpenBalanceSheet }) {
             </div>
 
             {/* Profit and Loss */}
-            <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition">
+            <div
+              onClick={() => onNavigate?.('report_view', { report: 'pnl' })}
+              className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition cursor-pointer"
+            >
               <div className="flex items-center space-x-2 text-xs font-medium text-gray-800">
                 <FileText size={14} className="text-gray-400" />
                 <span>Profit and Loss</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-400">
                 <Star size={14} className="text-green-600 fill-green-600 cursor-pointer" />
+                <MoreVertical size={14} className="cursor-pointer hover:text-gray-600" />
+              </div>
+            </div>
+
+            {/* Cash Flow */}
+            <div
+              onClick={() => onNavigate?.('report_view', { report: 'cash-flow' })}
+              className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition cursor-pointer"
+            >
+              <div className="flex items-center space-x-2 text-xs font-medium text-gray-800">
+                <FileText size={14} className="text-gray-400" />
+                <span>Statement of Cash Flows</span>
+              </div>
+              <div className="flex items-center space-x-3 text-gray-400">
+                <Star size={14} className="hover:text-green-600 cursor-pointer" />
                 <MoreVertical size={14} className="cursor-pointer hover:text-gray-600" />
               </div>
             </div>
