@@ -81,6 +81,19 @@ const fmtDay = (iso) => {
 };
 
 /**
+ * Is this document inside a return period?
+ *
+ * Matched on DATES, not on the period's name. The name is a display string;
+ * the dates are the fact. Matching on the string would also mean the annual
+ * return — whose period is a financial year, not a month — could never find its
+ * own documents and would file as nil against twelve months of real supplies.
+ */
+const withinPeriod = (doc, periodStart, periodEnd) => {
+  const d = doc.date;
+  return d >= periodStart && d <= periodEnd;
+};
+
+/**
  * The CGST / SGST / IGST split of one taxable value.
  *
  * This is the single place the intra-State vs inter-State rule lives. Typing it
@@ -167,8 +180,8 @@ export default function SalesTaxView({ onNavigate }) {
   /* ---- Every return, with its figures worked out from the period's rows ---- */
   const rows = useMemo(() => {
     return returns.map((r) => {
-      const supplies = sales.filter((s) => s.period === r.period);
-      const credits = itcInvoices.filter((c) => c.period === r.period);
+      const supplies = sales.filter((s) => withinPeriod(s, r.periodStart, r.periodEnd));
+      const credits = itcInvoices.filter((c) => withinPeriod(c, r.periodStart, r.periodEnd));
 
       const taxable = round2(supplies.reduce((s, x) => s + (Number(x.taxableValue) || 0), 0));
       let cgst = 0; let sgst = 0; let igst = 0;

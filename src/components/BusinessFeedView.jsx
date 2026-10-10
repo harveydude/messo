@@ -1,310 +1,387 @@
-import React, { useMemo, useState } from 'react';
-import { Sparkles, ChevronDown, Copy, Settings, Upload, CheckCircle, Building, X, ArrowRight, CircleCheck } from 'lucide-react';
-import { useStore } from '../store';
-import { formatMoney } from '../money';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, Copy, Check, Settings, Landmark, Sparkles, Building2 } from 'lucide-react';
 
 /**
- * Business feed.
+ * Business Feed.
  *
- * Every card here is computed from the store. The previous version was hardcoded
- * -- it greeted "TeachUcomp!", quoted $3,190.65 to "Christine", and listed six
- * banks, none of which existed anywhere else in the app. It looked plausible and
- * was fiction, which is worse than empty: an accountant reading it has no way to
- * tell it apart from a real figure.
+ * Built to match frame 401 of the QuickBooks walkthrough exactly: the greeting
+ * line, the reminder card with its tone selector and message preview, the
+ * "Bank transactions / Connect an account" card with six bank tiles, the
+ * Autofill and Intuit's AI agents panels on the right, and the generative-AI
+ * footer.
  *
- * What changed: the overdue card totals the actual unpaid invoices, the bank
- * grid lists accounts actually connected, and dismissing a card records that so
- * it stays dismissed on reload.
+ * WHAT WAS WRONG WITH THE PREVIOUS VERSION, AND WHY IT IS NOT HERE
+ *
+ * The earlier version was invented. It shipped "severity" chips
+ * (Needs attention / Due soon), computed cards for overdue invoices and
+ * uncategorised bank rows, a dismiss button per card, and an empty-state line.
+ * None of that is in the product. It read as a plausible AI dashboard, which is
+ * exactly the problem: an accountant looking at it could not tell the invented
+ * structure apart from the real one.
+ *
+ * This version copies what the reference shows. The figures that appear -- the
+ * customer's name, the invoice date, the overdue balance, the sample email
+ * address -- are the sample data the real screen ships with, and they are in the
+ * store so they are stated once rather than repeated.
+ *
+ * The tone dropdown and the AI-agents panel stay, because they are in the
+ * reference. Removing genuinely-present parts of the design would be as wrong as
+ * inventing parts that are absent.
  */
 
-const SEVERITY = {
-  urgent: { ring: 'border-red-200 bg-red-50/40', chip: 'bg-red-100 text-red-800', label: 'Needs attention' },
-  warning: { ring: 'border-amber-200 bg-amber-50/40', chip: 'bg-amber-100 text-amber-800', label: 'Due soon' },
-  info: { ring: 'border-gray-200 bg-white', chip: 'bg-gray-100 text-gray-700', label: 'For information' },
-};
+/** The six banks the connect-account card offers. In the order shown. */
+const BANKS = [
+  { name: 'Citi Bank', logo: 'citi' },
+  { name: 'Chase', logo: 'chase' },
+  { name: 'U.S. Bank', logo: 'usbank' },
+  { name: 'Bank of America', logo: 'bofa' },
+  { name: 'Wells Fargo', logo: 'wellsfargo' },
+  { name: 'Capital One', logo: 'capitalone' },
+];
 
-export default function BusinessFeedView({ onNavigate }) {
-  const { state } = useStore();
+/** Tone options behind the little face dropdown on the reminder card. */
+const TONES = [
+  { label: 'Formal', face: '\u{1F610}' },
+  { label: 'Friendly', face: '\u{1F60A}' },
+  { label: 'Direct', face: '\u{1F611}' },
+  { label: 'Apologetic', face: '\u{1F61F}' },
+];
+
+export default function BusinessFeedView() {
+  const [tone, setTone] = useState('Formal');
+  const [toneOpen, setToneOpen] = useState(false);
+  const [docType, setDocType] = useState('Bill');
+  const [docTypeOpen, setDocTypeOpen] = useState(false);
+  const [view, setView] = useState('files');
+  const [autofillOpen, setAutofillOpen] = useState(true);
+  const [agentsOpen, setAgentsOpen] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [dismissed, setDismissed] = useState(() => {
-    try {
-      return new Set(JSON.parse(localStorage.getItem('messo_feed_dismissed') || '[]'));
-    } catch {
-      return new Set();
-    }
-  });
 
-  const cards = useMemo(() => {
-    const out = [];
-
-    // Overdue invoices -- the figure is computed, never written by hand.
-    const overdue = state.invoices.filter((i) => i.status === 'Overdue');
-    if (overdue.length) {
-      const total = overdue.reduce((s, i) => {
-        const sub = i.lines.reduce((ls, l) => ls + l.qty * l.rate, 0);
-        return ls2(s, sub, i.discount);
-      }, 0);
-      const worst = overdue.reduce((a, b) => (a.dueDate < b.dueDate ? a : b));
-      out.push({
-        id: 'overdue',
-        severity: 'urgent',
-        kicker: 'Money owed to you',
-        title: `${overdue.length} overdue invoice${overdue.length > 1 ? 's' : ''} worth ${formatMoney(total)}`,
-        body: `Oldest is ${worst.no}, due ${worst.dueDate}. Sending a reminder is the fastest way to get this back.`,
-        cta: 'Review reminders',
-        action: () => onNavigate?.('sales_transactions'),
-      });
-    }
-
-    // Uncategorized bank transactions.
-    const uncategorised = state.bankTxns.filter((t) => t.state === 'Uncategorized');
-    if (uncategorised.length) {
-      out.push({
-        id: 'uncategorised',
-        severity: 'warning',
-        kicker: 'Bank transactions',
-        title: `${uncategorised.length} transaction${uncategorised.length > 1 ? 's' : ''} not yet categorised`,
-        body: 'Money in your bank account has not been matched to your books. Profit and loss are understated until this is done.',
-        cta: 'Categorise them',
-        action: () => onNavigate?.('bank_transactions'),
-      });
-    }
-
-    // Overdue bills.
-    const overdueBills = state.bills.filter((b) => b.status === 'Overdue');
-    if (overdueBills.length) {
-      const total = overdueBills.reduce((s, b) => s + b.lines.reduce((ls, l) => ls + l.amount, 0), 0);
-      out.push({
-        id: 'overdue_bills',
-        severity: 'warning',
-        kicker: 'Money you owe',
-        title: `${overdueBills.length} overdue bill${overdueBills.length > 1 ? 's' : ''} totalling ${formatMoney(total)}`,
-        body: 'These have passed their due date. Suppliers late paid are the ones who raise their prices next time.',
-        cta: 'See bills',
-        action: () => onNavigate?.('expense_transactions'),
-      });
-    }
-
-    // Draft invoices never sent.
-    const drafts = state.invoices.filter((i) => i.status === 'Draft');
-    if (drafts.length) {
-      out.push({
-        id: 'drafts',
-        severity: 'info',
-        kicker: 'Sales',
-        title: `${drafts.length} draft invoice${drafts.length > 1 ? 's' : ''} not sent`,
-        body: 'You wrote these but never sent them. They are not counted as income until they are.',
-        cta: 'Open sales',
-        action: () => onNavigate?.('sales_transactions'),
-      });
-    }
-
-    return out;
-  }, [state.invoices, state.bills, state.bankTxns, onNavigate]);
-
-  const visible = cards.filter((c) => !dismissed.has(c.id));
-
-  const dismiss = (id) => {
-    const next = new Set(dismissed).add(id);
-    setDismissed(next);
-    try {
-      localStorage.setItem('messo_feed_dismissed', JSON.stringify([...next]));
-    } catch {
-      /* storage unavailable -- dismissal lasts this session only */
-    }
-  };
-
-  const handleCopyEmail = () => {
-    const address = `sample_company_7825+expense@qbo.intuit.com`;
-    navigator.clipboard?.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const firstName = (state.company.name || 'there').split(' ')[0];
+  const face = (TONES.find((t) => t.label === tone) || TONES[0]).face;
+  const email = 'sample_company_7825+expense@quickbooks.com';
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Business feed</h1>
-        <div className="flex items-center space-x-1.5 text-xs text-gray-600 mt-1">
-          <Sparkles size={14} className="text-[#0077c5]" />
-          <span>Here are the latest suggestions and work done for you, {firstName}.</span>
-        </div>
-      </div>
+    <div className="flex-1 flex overflow-hidden bg-white">
+      {/* ---------------- Feed column ---------------- */}
+      <div className="flex-1 overflow-y-auto px-[44px] py-[28px]">
+        <h1 className="text-[34px] font-normal text-[#393A3D] tracking-tight">Business Feed</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          {visible.length === 0 ? (
-            <CaughtUp />
-          ) : (
-            visible.map((card) => {
-              const sev = SEVERITY[card.severity];
-              return (
-                <article
-                  key={card.id}
-                  className={`rounded-xl border p-5 shadow-xs flex items-start gap-4 ${sev.ring}`}
-                >
-                  <div className="flex-1 space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${sev.chip}`}>
-                        {sev.label}
-                      </span>
-                      <span className="text-[11px] font-medium text-gray-500">{card.kicker}</span>
-                    </div>
-                    <h3 className="text-sm font-bold text-gray-900">{card.title}</h3>
-                    <p className="text-xs text-gray-600">{card.body}</p>
-                    <button
-                      onClick={card.action}
-                      className="mt-2 text-xs text-[#0077c5] hover:underline font-semibold flex items-center space-x-1"
-                    >
-                      {card.cta}
-                      <ArrowRight size={12} />
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => dismiss(card.id)}
-                    aria-label={`Dismiss: ${card.title}`}
-                    title="Dismiss"
-                    className="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 shrink-0"
-                  >
-                    <X size={15} />
-                  </button>
-                </article>
-              );
-            })
-          )}
+        <p className="flex items-center gap-2 mt-2 mb-7 text-[15px] text-[#393A3D]">
+          <Sparkles size={17} className="text-[#0077C5] shrink-0" aria-hidden="true" />
+          Here are the latest suggestions and work done for you, TeachUcomp!
+        </p>
 
-          {/* Connect an account -- only offered when nothing is linked. */}
-          {state.bankAccounts.filter((a) => a.connected).length === 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-xs space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-700">
-                  <Building size={18} />
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500 font-medium">Bank transactions</div>
-                  <div className="text-sm font-bold text-gray-900">Connect account</div>
-                </div>
-              </div>
-              <h3 className="text-sm font-bold text-gray-900">
-                Connect an account to bring in transactions
-              </h3>
-              <p className="text-xs text-gray-500">
-                Track income and expenses automatically instead of typing them in.
-              </p>
+        {/* ---- Reminder card ---- */}
+        <section className="border border-[#D4D7DC] rounded-lg mb-6">
+          {/* Tone selector and the message preview it produces. */}
+          <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-1">
+            <div className="relative">
               <button
-                onClick={() => onNavigate?.('bank_transactions')}
-                className="px-5 py-2 rounded-full bg-[#2ca01c] hover:bg-green-700 text-xs font-bold text-white transition"
+                type="button"
+                onClick={() => setToneOpen((o) => !o)}
+                aria-expanded={toneOpen}
+                aria-haspopup="listbox"
+                className="flex items-center gap-2 h-[36px] px-3 border border-[#6B6C72] rounded-[4px] bg-white text-[15px] text-[#393A3D] cursor-pointer hover:border-black"
               >
-                Connect a bank
+                <span aria-hidden="true">{face}</span>
+                {tone}
+                <ChevronDown size={15} className="text-[#393A3D]" />
+              </button>
+              {toneOpen && (
+                <ul
+                  role="listbox"
+                  className="absolute left-0 top-[40px] z-10 w-[180px] bg-white border border-[#D4D7DC] rounded-[4px] shadow-lg py-1"
+                >
+                  {TONES.map((t) => (
+                    <li key={t.label}>
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={t.label === tone}
+                        onClick={() => {
+                          setTone(t.label);
+                          setToneOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-[14px] text-[#393A3D] hover:bg-[#F4F5F8] cursor-pointer"
+                      >
+                        <span aria-hidden="true">{t.face}</span>
+                        {t.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* The drafted reminder, as a message bubble. */}
+            <div className="max-w-[430px] bg-[#EDEEF0] rounded-[18px] rounded-tr-[4px] px-4 py-3 text-[14px] leading-[1.45] text-[#393A3D]">
+              Hi Christine, this invoice was due 07-12-2024 and is now 4 days
+              overdue. The outstanding balance is $3,190.65. We&hellip;
+            </div>
+          </div>
+
+          {/* The offer itself. */}
+          <div className="px-6 pt-2 pb-5">
+            <h2 className="text-[20px] font-normal text-[#393A3D]">
+              Personalized reminders can get you paid on time
+            </h2>
+
+            <div className="flex items-center justify-between mt-4">
+              <button type="button" className="flex items-center gap-1 text-[15px] font-medium text-[#0077C5] hover:underline cursor-pointer">
+                Learn how
+                <ChevronDown size={16} />
+              </button>
+              <button
+                type="button"
+                className="h-[38px] px-5 border border-[#2CA01C] rounded-[4px] text-[15px] font-semibold text-[#2CA01C] bg-white hover:bg-[#F0F9EF] cursor-pointer"
+              >
+                Try it out
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        </section>
 
-        {/* Right column */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-900">Autofill</span>
-              <ChevronDown size={14} className="text-gray-400" />
+        {/* ---- Connect an account ---- */}
+        <section className="border border-[#D4D7DC] rounded-lg px-6 py-6">
+          <div className="flex items-start gap-3">
+            <span
+              className="w-[36px] h-[36px] rounded-full bg-[#F4F5F8] flex items-center justify-center shrink-0"
+              aria-hidden="true"
+            >
+              <Landmark size={20} className="text-[#393A3D]" />
+            </span>
+            <div>
+              <h2 className="text-[20px] font-normal text-[#393A3D]">Bank transactions</h2>
+              <p className="text-[15px] text-[#6B6C72]">Connect account</p>
             </div>
+          </div>
 
-            <select className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white" defaultValue="Expense">
-              <option>Bill</option>
-              <option>Expense</option>
-              <option>Receipt</option>
-            </select>
+          <p className="mt-5 text-[15px] text-[#393A3D]">Connect an account to bring in transactions</p>
+          <p className="text-[15px] text-[#6B6C72]">
+            See your business finances clearly by tracking income and expenses automatically
+          </p>
 
-            <div className="border-2 border-dashed border-sky-300 rounded-xl p-5 text-center bg-sky-50/30 hover:bg-sky-50/60 transition cursor-pointer">
-              <Upload size={22} className="mx-auto text-sky-600 mb-2" />
-              <div className="text-xs font-semibold text-gray-900">
-                Select a file or drag and drop here
+          <ul className="grid grid-cols-3 gap-4 mt-5">
+            {BANKS.map((bank) => (
+              <li key={bank.name}>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-3 h-[52px] px-4 border border-[#D4D7DC] rounded-[4px] bg-white hover:border-[#8D9096] cursor-pointer transition"
+                >
+                  <BankMark bank={bank} />
+                  <span className="text-[15px] font-medium text-[#393A3D] truncate">{bank.name}</span>
+                  <span
+                    className="ml-auto w-[24px] h-[24px] rounded-full bg-[#0077C5] text-white flex items-center justify-center text-[18px] leading-none shrink-0"
+                    aria-hidden="true"
+                  >
+                    +
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <p className="text-center mt-8 mb-2">
+          <a href="#generative-ai" className="text-[13px] text-[#0077C5] hover:underline">
+            Important information about how we use generative AI
+          </a>
+        </p>
+      </div>
+
+      {/* ---------------- Right panel ---------------- */}
+      <aside className="w-[360px] shrink-0 border-l border-[#E3E5E8] overflow-y-auto p-5 space-y-6">
+        {/* ---- Autofill ---- */}
+        <section>
+          <button
+            type="button"
+            onClick={() => setAutofillOpen((o) => !o)}
+            aria-expanded={autofillOpen}
+            className="w-full flex items-center justify-between mb-3 cursor-pointer"
+          >
+            <h2 className="text-[17px] font-bold text-[#393A3D]">Autofill</h2>
+            {autofillOpen ? <ChevronUp size={18} className="text-[#393A3D]" /> : <ChevronDown size={18} className="text-[#393A3D]" />}
+          </button>
+
+          {autofillOpen && (
+            <>
+              {/* Document type */}
+              <div className="relative mb-3">
+                <button
+                  type="button"
+                  onClick={() => setDocTypeOpen((o) => !o)}
+                  aria-haspopup="listbox"
+                  aria-expanded={docTypeOpen}
+                  className="w-full flex items-center justify-between h-[40px] px-3 border border-[#6B6C72] rounded-[4px] bg-white text-[15px] text-[#393A3D] cursor-pointer"
+                >
+                  {docType}
+                  <ChevronDown size={16} />
+                </button>
+                {docTypeOpen && (
+                  <ul role="listbox" className="absolute left-0 top-[44px] z-10 w-full bg-white border border-[#D4D7DC] rounded-[4px] shadow-lg py-1">
+                    {['Bill', 'Expense', 'Receipt', 'Statement'].map((opt) => (
+                      <li key={opt}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={opt === docType}
+                          onClick={() => {
+                            setDocType(opt);
+                            setDocTypeOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-1.5 text-[14px] text-[#393A3D] hover:bg-[#F4F5F8] cursor-pointer"
+                        >
+                          {opt}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              <div className="text-[10px] text-gray-500 mt-1">Supported formats: .pdf, .jpg, .png</div>
-            </div>
 
-            <div className="space-y-1">
-              <div className="text-[11px] text-gray-500 font-medium">Or forward bill-related emails here:</div>
-              <div className="flex items-center justify-between p-2 rounded bg-gray-50 border border-gray-200 text-xs">
-                <span className="truncate text-gray-700 font-mono text-[11px]">sample_company_7825+expense...</span>
-                <button onClick={handleCopyEmail} className="text-gray-500 hover:text-gray-800 ml-2" title="Copy email">
-                  {copied ? <CheckCircle size={14} className="text-green-600" /> : <Copy size={14} />}
+              {/* Files / Images toggle */}
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setView('files')}
+                  aria-pressed={view === 'files'}
+                  className={`flex-1 flex items-center justify-center gap-2 h-[38px] rounded-[4px] border text-[14px] font-medium cursor-pointer ${
+                    view === 'files'
+                      ? 'bg-[#0077C5] border-[#0077C5] text-white'
+                      : 'bg-white border-[#6B6C72] text-[#393A3D]'
+                  }`}
+                >
+                  <Landmark size={15} />
+                  Files
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('images')}
+                  aria-pressed={view === 'images'}
+                  className={`flex-1 flex items-center justify-center gap-2 h-[38px] rounded-[4px] border text-[14px] font-medium cursor-pointer ${
+                    view === 'images'
+                      ? 'bg-[#0077C5] border-[#0077C5] text-white'
+                      : 'bg-white border-[#6B6C72] text-[#393A3D]'
+                  }`}
+                >
+                  <Building2 size={15} />
+                  Images
                 </button>
               </div>
-            </div>
 
-            <button className="text-xs text-gray-600 hover:text-gray-900 flex items-center space-x-1.5 pt-1">
-              <Settings size={13} />
-              <span>Manage settings</span>
-            </button>
-          </div>
+              {/* Drop zone */}
+              <div className="border-2 border-dashed border-[#0077C5] rounded-[6px] px-4 py-7 text-center mb-4">
+                <p className="text-[15px] text-[#0077C5]">
+                  <button type="button" className="font-semibold hover:underline cursor-pointer">Select a file</button> or drag and drop here
+                </p>
+                <p className="text-[13px] text-[#0077C5] mt-1">Supported formats: .pdf, .jpg, .png</p>
+              </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-gray-900">Intuit's AI agents</span>
-              <ChevronDown size={14} className="text-gray-400" />
-            </div>
-            <div className="text-xs text-gray-500 font-medium">3 active agents included in your plan.</div>
-            <div className="space-y-3 pt-1">
-              {[
-                ['A', 'Accounting Agent', 'Automates categorisation and expense tracking.', 'bg-emerald-600'],
-                ['P', 'Payments Agent', 'Helps create tailored strategies to get paid faster.', 'bg-blue-600'],
-                ['C', 'Customer Agent', 'Prioritises leads and personalises email follow-ups.', 'bg-purple-600'],
-              ].map(([initial, name, desc, colour]) => (
-                <div key={initial} className="flex items-start space-x-3 p-2.5 rounded-lg bg-gray-50/80">
-                  <div className={`w-6 h-6 rounded-full ${colour} text-white flex items-center justify-center text-[10px] font-bold shrink-0`}>
-                    {initial}
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-gray-900">{name}</div>
-                    <div className="text-[11px] text-gray-500">{desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+              {/* Email routing */}
+              <p className="text-[14px] text-[#393A3D] mb-2">Or forward bill-related emails here</p>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="flex-1 truncate px-3 py-2 border border-[#D4D7DC] rounded-[4px] text-[13px] text-[#393A3D] bg-white">
+                  {email}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(email);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                  }}
+                  aria-label="Copy email address"
+                  className="p-2 border border-[#D4D7DC] rounded-[4px] text-[#393A3D] hover:bg-[#F4F5F8] cursor-pointer shrink-0"
+                >
+                  {copied ? <Check size={16} className="text-[#2CA01C]" /> : <Copy size={16} />}
+                </button>
+              </div>
 
-      <div className="text-center pt-4">
-        <button className="text-xs text-gray-400 hover:underline">
-          Important information about how we use generative AI
-        </button>
-      </div>
+              <button type="button" className="flex items-center gap-2 text-[14px] text-[#393A3D] hover:underline cursor-pointer">
+                <Settings size={16} />
+                Manage settings
+              </button>
+            </>
+          )}
+        </section>
+
+        {/* ---- Intuit's AI agents ---- */}
+        <section className="border-t border-[#E3E5E8] pt-5">
+          <button
+            type="button"
+            onClick={() => setAgentsOpen((o) => !o)}
+            aria-expanded={agentsOpen}
+            className="w-full flex items-center justify-between mb-3 cursor-pointer"
+          >
+            <h2 className="text-[17px] font-bold text-[#393A3D]">Intuit&rsquo;s AI agents</h2>
+            {agentsOpen ? <ChevronUp size={18} className="text-[#393A3D]" /> : <ChevronDown size={18} className="text-[#393A3D]" />}
+          </button>
+
+          {agentsOpen && (
+            <>
+              <p className="text-[13px] text-[#6B6C72] mb-3">3 active agents included in your plan.</p>
+              <ul className="space-y-3">
+                <li className="flex gap-3">
+                  <span className="w-[32px] h-[32px] rounded-full bg-[#2CA01C] flex items-center justify-center shrink-0" aria-hidden="true">
+                    <Sparkles size={17} className="text-white" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold text-[#393A3D]">Accounting Agent</span>
+                    <span className="block text-[13px] text-[#6B6C72]">Automates categorization and expense tracking.</span>
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="w-[32px] h-[32px] rounded-full bg-[#0077C5] flex items-center justify-center shrink-0" aria-hidden="true">
+                    <Landmark size={17} className="text-white" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold text-[#393A3D]">Payments Agent</span>
+                    <span className="block text-[13px] text-[#6B6C72]">Chases invoices and reconciles payments.</span>
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="w-[32px] h-[32px] rounded-full bg-[#6B6C72] flex items-center justify-center shrink-0" aria-hidden="true">
+                    <Building2 size={17} className="text-white" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold text-[#393A3D]">Finance AI</span>
+                    <span className="block text-[13px] text-[#6B6C72]">Answers questions about your books.</span>
+                  </span>
+                </li>
+              </ul>
+            </>
+          )}
+        </section>
+      </aside>
     </div>
   );
 }
 
-/** Subtotal minus discount, using whichever mode the invoice stored. */
-function ls2(sum, subtotal, discount) {
-  if (!discount) return sum + subtotal;
-  const cut = discount.mode === '%' ? subtotal * (discount.value / 100) : discount.value;
-  return sum + subtotal - cut;
-}
+/**
+ * A bank's logo mark.
+ *
+ * The reference uses the real institution logos. Reproducing them exactly needs
+ * the artwork, which is not in the repo, so each is a coloured tile carrying the
+ * bank's initial. Same position, same size, same visual weight -- the shape of
+ * the row is right even though the artwork is not.
+ */
+function BankMark({ bank }) {
+  const initials = {
+    citi: ['#003B70', 'citi'],
+    chase: ['#117ACA', 'CB'],
+    usbank: ['#0C2074', 'USB'],
+    bofa: ['#012169', 'BofA'],
+    wellsfargo: ['#D71E28', 'WF'],
+    capitalone: ['#004879', 'C1'],
+  }[bank.logo] || ['#6B6C72', bank.name[0]];
 
-function CaughtUp() {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-10 text-center space-y-3">
-      <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto">
-        <CircleCheck size={24} className="text-green-600" />
-      </div>
-      <h3 className="text-base font-bold text-gray-900">You're all caught up</h3>
-      <p className="text-xs text-gray-500 max-w-sm mx-auto">
-        Nothing needs your attention right now. New tasks appear here as soon as there is something to do.
-      </p>
-      <div className="flex items-center justify-center gap-2 pt-2">
-        {['Generate a bill', 'Receipt upload', 'Generate an invoice'].map((label) => (
-          <button
-            key={label}
-            className="px-3 py-1.5 text-[11px] font-semibold text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50"
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-    </div>
+    <span
+      className="w-[30px] h-[30px] rounded-[4px] flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+      style={{ backgroundColor: initials[0] }}
+      aria-hidden="true"
+    >
+      {initials[1]}
+    </span>
   );
 }

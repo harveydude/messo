@@ -81,8 +81,14 @@ const monthLabel = (offset) => {
  */
 const AY_START_YEAR = TODAY.getMonth() >= 3 ? TODAY.getFullYear() : TODAY.getFullYear() - 1;
 
-/** Six monthly periods ending with the current month. */
-const GST_PERIODS = [5, 4, 3, 2, 1, 0].map((offset) => ({
+/**
+ * Twelve monthly periods ending with the current month.
+ *
+ * Twelve rather than six so the annual return has a financial year of supplies
+ * behind it. A GSTR-9 that shows nil because the register only went back half a
+ * year is technically true and practically useless.
+ */
+const GST_PERIODS = Array.from({ length: 12 }, (_, i) => 11 - i).map((offset) => ({
   offset,
   label: monthLabel(offset),
   start: iso(monthStart(offset)),
@@ -243,9 +249,11 @@ const filedBefore = (dueDate) => {
  * Periods two months back and earlier are filed; the last two are deliberately
  * left open so the screen always has something genuinely overdue to show.
  * GSTR-1 is due on the 11th and GSTR-3B on the 20th of the following month;
- * GSTR-9 is the annual return, due 31 December for the year just closed.
+ * GSTR-9 is the annual return for the year just closed, due on 31 December
+ * FOLLOWING that year — not 31 December of the year the return is labelled with,
+ * which is a year early and would mark every annual return overdue.
  */
-const PREVIOUS_FY_END_YEAR = AY_START_YEAR - 1;
+const PREVIOUS_FY_END_YEAR = AY_START_YEAR;
 
 export const GST_RETURNS = [
   ...GST_PERIODS.flatMap((period) => {

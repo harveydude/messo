@@ -224,7 +224,7 @@ const CREATE_ACTION_TARGETS = {
 export default function App() {
   const { viewId, query, navigate, routeLabel } = useRoute();
 
-  const [companyName, setCompanyName] = useState('Sample Company');
+  const [companyName, setCompanyName] = useState('Sample Company. 7-8-25');
   const [searchQuery, setSearchQuery] = useState(query.q || '');
 
   // Modals & drawers
@@ -486,7 +486,7 @@ export default function App() {
           </div>
         );
       case 'feed':
-        return <BusinessFeedView onNavigate={(v) => navigate(v)} />;
+        return <BusinessFeedView />;
       case 'mileage':
         return <MileageView onNavigate={(v) => navigate(v)} />;
       case 'time_entries':

@@ -12,7 +12,7 @@ import MyIntegrationsPopover from '../components/MyIntegrationsPopover';
 import NotificationsPanel from '../components/NotificationsPanel';
 
 export default function TopBar({ 
-  companyName = "Sample Company", 
+  companyName = "Sample Company. 7-8-25", 
   searchQuery = "", 
   setSearchQuery, 
   onSearch, 
@@ -68,7 +68,21 @@ export default function TopBar({
   };
 
   return (
-    <header className="h-[56px] w-full bg-white border-b border-[#E3E5E8] flex items-center justify-between px-4 select-none relative z-30 shadow-[0_1px_2px_rgba(0,0,0,0.03)] shrink-0">
+    <header className="w-full bg-white relative z-30 shrink-0">
+      {/*
+        The promo banner sits above the toolbar, spanning the full width, and is
+        part of the chrome in the reference. It was absent entirely -- which is
+        the sort of thing that makes a reproduction "close" without being right.
+      */}
+      <div className="h-[34px] w-full bg-gradient-to-r from-[#2CA01C] via-[#0AA574] to-[#0077C5] flex items-center justify-center gap-3 text-[13px] text-white">
+        <span className="font-medium">Buy now and save 90% for 3 months</span>
+        <span className="w-px h-[14px] bg-white/40" aria-hidden="true" />
+        <a href="#subscribe" className="font-semibold underline hover:no-underline">
+          Subscribe now
+        </a>
+      </div>
+
+      <div className="h-[56px] w-full bg-white border-b border-[#E3E5E8] flex items-center justify-between px-4 select-none relative shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       {/* Left cluster: Logo (x:16, y:12) and Company Name */}
       <div className="flex items-center space-x-6 min-w-[260px] pl-0">
         <div className="flex items-center space-x-1.5 cursor-pointer shrink-0" onClick={() => onSearch('')}>
@@ -108,7 +122,7 @@ export default function TopBar({
             onFocus={() => setIsSearchFocused(true)}
             onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Navigate or search for transactions, contacts, reports, and more"
+            placeholder="Search for transactions, contacts, reports, help and more"
             className={`w-full text-[15px] text-[#393A3D] placeholder-[#6B6C72] bg-white rounded-full transition-all pl-[42px] pr-10 focus:outline-none ${
               isSearchFocused
                 ? 'h-[44px] border-2 border-[#2CA01C] shadow-lg'
@@ -234,8 +248,9 @@ export default function TopBar({
           className="w-[32px] h-[32px] rounded-full bg-[#0077C5] hover:bg-[#005e9e] text-white flex items-center justify-center font-bold text-sm shadow-xs ml-2 cursor-pointer transition"
           title="Accountant view & Shortcuts"
         >
-          I
+          T
         </button>
+      </div>
       </div>
     </header>
   );
