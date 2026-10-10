@@ -106,8 +106,36 @@ export const SEED = {
     { id: 5, no: 'INV-1005', customerId: 5, date: '2025-09-18', dueDate: '2025-10-18', terms: 'Net 30', lines: [{ productId: 6, desc: 'Patio and decking', qty: 1, rate: 6750, taxable: false }], discount: { mode: '%', value: 0 }, taxRateId: null, status: 'Paid', sentAt: '2025-09-18T11:00:00Z', timeEntryIds: [] },
   ],
   estimates: [
-    { id: 1, no: 'EST-001', customerId: 1, date: '2025-10-01', expiry: '2025-10-31', lines: [{ productId: 1, desc: 'Design work', qty: 1, rate: 75, taxable: false }], status: 'Open', convertedTo: null },
+    { id: 1, no: 'EST-001', customerId: 1, date: '2025-10-01', expiry: '2025-10-31', lines: [{ productId: 1, desc: 'Garden design', qty: 1, rate: 4800, taxable: false }], status: 'Sent', convertedTo: null },
   ],
+
+  /**
+   * Sales documents other than invoices.
+   *
+   * Estimates, sales orders, purchase orders and credit memos. They are held in
+   * one map keyed by type rather than four sibling arrays, because they are one
+   * shape and a fifth type should not mean a fifth array here.
+   *
+   * None of them posts to the ledger. An estimate is an intention to trade and
+   * an order is a commitment; neither has been earned, so booking either would
+   * put revenue in the books for work that has not happened. They become money
+   * when converted to an invoice, which does post.
+   */
+  salesDocs: {
+    estimates: [
+      { id: 1, no: 'EST-001', customerId: 1, date: '2025-10-06', dueDate: '2025-11-05', terms: 'Net 30', lines: [{ productId: 4, desc: 'Rock fountain with installation', qty: 1, rate: 16500, taxable: true }], discount: { mode: '%', value: 5 }, status: 'Sent', memo: 'Includes planting and first-year maintenance' },
+      { id: 2, no: 'EST-002', customerId: 3, date: '2025-10-11', dueDate: '2025-11-10', terms: 'Net 30', lines: [{ productId: 6, desc: 'Patio and decking', qty: 1, rate: 9800, taxable: false }], discount: { mode: '%', value: 0 }, status: 'Draft', memo: '' },
+    ],
+    orders: [
+      { id: 1, no: 'SO-001', customerId: 5, date: '2025-09-20', dueDate: '2025-10-20', terms: 'Net 30', lines: [{ productId: 3, desc: 'Fountain pumps and fittings', qty: 4, rate: 1850, taxable: true }], discount: { mode: '%', value: 0 }, status: 'Closed', memo: 'Delivered 2025-09-28' },
+    ],
+    purchase_orders: [
+      { id: 1, no: 'PO-001', vendorId: 1, date: '2025-09-25', dueDate: '2025-10-25', terms: 'Net 30', lines: [{ desc: 'Fountain pump units', qty: 6, rate: 640, taxable: true }], discount: { mode: '%', value: 0 }, status: 'Received', memo: 'For SO-001' },
+    ],
+    credit_memos: [
+      { id: 1, no: 'CM-001', customerId: 2, date: '2025-10-08', dueDate: '2025-10-08', terms: 'Due on receipt', lines: [{ productId: 5, desc: 'Lighting supplied short on site', qty: 1, rate: 450, taxable: false }], discount: { mode: '%', value: 0 }, status: 'Sent', memo: 'Credited against INV-1003' },
+    ],
+  },
   bills: [
     { id: 1, no: 'BILL-001', vendorId: 1, date: '2025-10-01', dueDate: '2025-10-31', terms: 'Net 30', lines: [{ accountId: 33, desc: 'Telephone service', amount: 74.36 }], status: 'Paid', scheduleDate: null, paidDate: '2025-10-24' },
     { id: 2, no: 'BILL-002', vendorId: 2, date: '2025-10-05', dueDate: '2025-10-20', terms: 'Net 15', lines: [{ accountId: 31, desc: 'Office supplies', amount: 48.20 }], status: 'Paid', scheduleDate: null, paidDate: '2025-10-23' },

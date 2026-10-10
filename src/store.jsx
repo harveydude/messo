@@ -291,6 +291,54 @@ function reducer(state, action) {
         audit: logAudit(state, 'Deleted a marketing campaign', false, null),
       };
 
+    /**
+     * Sales documents: estimates, sales orders, purchase orders, credit memos.
+     *
+     * These were dispatched by SalesDocumentsView from the start, with no case
+     * to receive them, so creating an estimate silently did nothing -- the
+     * dialog closed and the table stayed empty, which reads as a bug and not as
+     * a missing action.
+     *
+     * They are kept under one `salesDocs` map keyed by type rather than four
+     * sibling arrays, because they are one shape and adding a fifth type should
+     * not mean a fifth array in the seed.
+     *
+     * Note what they do NOT do: they do not post to the ledger. An estimate is
+     * an intention to trade and a sales order is a commitment; neither is a
+     * transaction, and treating either as one would put revenue in the books
+     * for work that has not been done. They become real money when converted
+     * into an invoice, which does post.
+     */
+    case 'ADD_SALES_DOC':
+      return {
+        ...state,
+        salesDocs: {
+          ...state.salesDocs,
+          [action.payload.kind]: [...(state.salesDocs?.[action.payload.kind] || []), action.payload],
+        },
+        audit: logAudit(state, `Created ${action.payload.no}`, true, { type: 'salesDoc', id: action.payload.id }),
+      };
+    case 'UPDATE_SALES_DOC':
+      return {
+        ...state,
+        salesDocs: {
+          ...state.salesDocs,
+          [action.payload.kind]: (state.salesDocs?.[action.payload.kind] || []).map((d) =>
+            d.id === action.payload.doc.id ? { ...d, ...action.payload.doc } : d
+          ),
+        },
+        audit: logAudit(state, `Updated ${action.payload.doc.no}`, true, { type: 'salesDoc', id: action.payload.doc.id }),
+      };
+    case 'DELETE_SALES_DOC':
+      return {
+        ...state,
+        salesDocs: {
+          ...state.salesDocs,
+          [action.payload.kind]: (state.salesDocs?.[action.payload.kind] || []).filter((d) => d.id !== action.payload.id),
+        },
+        audit: logAudit(state, `Deleted ${action.payload.no}`, false, null),
+      };
+
     default:
       return state;
   }

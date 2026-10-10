@@ -61,10 +61,13 @@ export default function BudgetsView({ onOpenBudgetModal, onNavigate }) {
   const [showNew, setShowNew] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
+  /**
+   * Accounts a budget can be measured against: the top-level expense and
+   * cost-of-goods accounts. Sub-accounts are excluded because they are the
+   * breakdown of a parent, and budgeting both would count the same rupee twice.
+   */
   const budgetable = useMemo(
-    () => accountsOfType(state.accounts ?? [], undefined).length
-      ? (state.accounts ?? []).filter((a) => BUDGETABLE_TYPES.includes(a.type) && !a.parentId)
-      : [],
+    () => (state.accounts ?? []).filter((a) => BUDGETABLE_TYPES.includes(a.type) && !a.parentId),
     [state.accounts]
   );
   const accountById = useMemo(

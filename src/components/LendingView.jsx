@@ -453,14 +453,6 @@ export default function LendingView({ onNavigate }) {
               <td className="p-3 pr-4 text-right tabular-nums font-semibold text-gray-900">{formatMoney(summary.interest)}</td>
             </tr>
             <tr>
-              <td className="p-3 pl-4 text-gray-600">Outstanding principal, per the loan register</td>
-              <td className="p-3 pr-4 text-right tabular-nums font-semibold text-gray-900">{formatMoney(round2(outstandingPrincipal))}</td>
-            </tr>
-            <tr>
-              <td className="p-3 pl-4 text-gray-600">Interest charged over the life of these loans</td>
-              <td className="p-3 pr-4 text-right tabular-nums font-semibold text-gray-900">{formatMoney(round2(totalInterest))}</td>
-            </tr>
-            <tr>
               <td className="p-3 pl-4 text-gray-600">Liabilities carried in the chart of accounts</td>
               <td className="p-3 pr-4 text-right tabular-nums font-semibold text-gray-900">{formatMoney(round2(ledger.liabilities.total))}</td>
             </tr>

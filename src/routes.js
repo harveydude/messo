@@ -78,7 +78,6 @@ export const ROUTES = [
   { id: 'payroll', slug: '/payroll', label: 'Payroll' },
   { id: 'sales_tax', slug: '/sales-tax', label: 'Sales tax' },
   { id: 'business_tax', slug: '/business-tax', label: 'Business tax' },
-  { id: 'lending', slug: '/lending', label: 'Lending' },
   { id: 'customer_hub', slug: '/customer-hub', label: 'Customer hub' },
   { id: 'custom_reports', slug: '/reports/custom', label: 'Custom reports' },
   { id: 'financial_planning', slug: '/planning', label: 'Financial planning' },
