@@ -21,6 +21,10 @@ import { determineTaxScheme, calculateGstSplits, registerGstRate, getGstRateForH
 import { recordItcEntry, getElectronicCreditLedgerSummary, isSection17_5Blocked } from '../server/src/services/itcService.js';
 import { generateIrnHash, generateEInvoice, cancelEInvoice, generateEwayBill } from '../server/src/services/eInvoiceService.js';
 import { compileGstr1, compileGstr3b, fileGstReturn } from '../server/src/services/gstReturnsService.js';
+import { validatePanStructure, validateAadhaarStructure, registerLowerDeductionCert, resolveTdsRateWithRules } from '../server/src/services/tdsPanValidator.js';
+import { processTdsForBillOrAdvance, adjustAdvancePaymentTds, calculateTcs } from '../server/src/services/tdsCalculationEngine.js';
+import { calculateTdsLateInterest, recordChallanItns281, compileForm26Q } from '../server/src/services/tdsComplianceService.js';
+import { registerFixedAsset, calculateDualDepreciation, listFixedAssets } from '../server/src/services/fixedAssetsService.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -993,9 +997,239 @@ async function runPhase20() {
     'Phase 20.3: GSTR-3B return submitted with ARN acknowledgment reference');
 }
 
+async function runPhase21() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 21: PAN/Aadhaar & Lower/Higher Deduction --');
+  console.log('======================================================');
+
+  // Test 21.1: Company PAN validation
+  const compPan = validatePanStructure('AAACB1234F');
+  assert(compPan.isValid === true && compPan.entityType === 'COMPANY',
+    'Phase 21.1: Company PAN accurately validated with fourth-char "C" identification');
+
+  // Test 21.2: Individual PAN validation
+  const indPan = validatePanStructure('AAAPB1234F');
+  assert(indPan.isValid === true && indPan.entityType === 'INDIVIDUAL',
+    'Phase 21.2: Individual PAN accurately validated with fourth-char "P" identification');
+
+  // Test 21.3: Malformed PAN rejection
+  const badPan = validatePanStructure('BAD123PAN');
+  assert(badPan.isValid === false,
+    'Phase 21.3: Malformed PAN structure strictly rejected by validator');
+
+  // Test 21.4: Section 206AA Higher Deduction Rule
+  const higherRate = resolveTdsRateWithRules({ vendorPan: 'BADPAN', baseRateBp: 200 });
+  assert(higherRate.appliedRateBp === 2000 && higherRate.isHigherRate === true,
+    'Phase 21.4: Section 206AA higher deduction (mandatory 20%) applied when PAN missing/invalid');
+
+  // Test 21.5: Section 197 Lower Deduction Certificate
+  const testVendorId = 'vend_cert_' + Date.now();
+  const cert = await registerLowerDeductionCert({
+    companyId: 'comp_1',
+    vendorId: testVendorId,
+    certificateNo: 'CERT-197-' + Date.now(),
+    sectionCode: '194C',
+    lowerRateBp: 50, // 0.5%
+    thresholdAmountPaise: 50000000n, // ₹5,00,000
+    validFrom: '2026-04-01',
+    validTo: '2027-03-31',
+  });
+
+  const resolved = resolveTdsRateWithRules({
+    vendorPan: 'AAACB1234F',
+    baseRateBp: 200,
+    lowerCert: cert,
+  });
+  assert(resolved.appliedRateBp === 50 && resolved.isLowerCert === true,
+    'Phase 21.5: Section 197 Lower Deduction Certificate applied lower rate (0.50% instead of standard 2.0%)');
+}
+
+async function runPhase22() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 22: Cumulative Threshold & Multi-Section TDS');
+  console.log('======================================================');
+
+  const vendorId = 'vend_cumul_' + Date.now();
+  const vendorPan = 'AAAPB9999F'; // Individual
+
+  // Test 22.1: Small contractor bill under single-bill threshold (₹20,000 < ₹30,000)
+  const bill1 = await processTdsForBillOrAdvance({
+    companyId: 'comp_1',
+    vendorId,
+    docType: 'BILL',
+    docId: 'bill_cumul_1',
+    sectionCode: '194C',
+    amountPaise: 2000000n, // ₹20,000
+    date: '2026-05-10',
+    vendorPan,
+  });
+  assert(bill1.tdsApplicable === false && bill1.tdsAmountPaise === '0',
+    'Phase 22.1: Bill under single-bill threshold (₹20k < ₹30k) does not deduct TDS');
+
+  // Test 22.2: Second bill pushes cumulative amount to ₹1,10,000 (breaches ₹1,00,000 threshold)
+  const bill2 = await processTdsForBillOrAdvance({
+    companyId: 'comp_1',
+    vendorId,
+    docType: 'BILL',
+    docId: 'bill_cumul_2',
+    sectionCode: '194C',
+    amountPaise: 9000000n, // ₹90,000 (total ₹1,10,000)
+    date: '2026-06-15',
+    vendorPan,
+  });
+  assert(bill2.tdsApplicable === true && bill2.isThresholdBreached === true && BigInt(bill2.tdsAmountPaise) > 0n,
+    'Phase 22.2: Annual cumulative threshold breach automatically triggers TDS deduction (1% on Individual)');
+
+  // Test 22.3: Section 194J Professional Services
+  const bill3 = await processTdsForBillOrAdvance({
+    companyId: 'comp_1',
+    vendorId: 'vend_prof_' + Date.now(),
+    docType: 'BILL',
+    docId: 'bill_prof_1',
+    sectionCode: '194J',
+    subCategory: 'PROFESSIONAL',
+    amountPaise: 5000000n, // ₹50,000 (exceeds ₹30k threshold)
+    date: '2026-07-01',
+    vendorPan: 'AAACB5555F',
+  });
+  assert(bill3.tdsApplicable === true && bill3.appliedRateBp === 1000 && bill3.tdsAmountPaise === '500000',
+    'Phase 22.3: Section 194J Professional fee (₹50k) deducts 10% TDS (500,000 paise)');
+}
+
+async function runPhase23() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 23: Whichever is Earlier & TCS Engine ------');
+  console.log('======================================================');
+
+  const vendorId = 'vend_adv_' + Date.now();
+  const advDocId = 'adv_' + Date.now();
+  const billDocId = 'bill_final_' + Date.now();
+
+  // Test 23.1: Deduct TDS on Advance Payment before Bill Booking
+  const advRes = await processTdsForBillOrAdvance({
+    companyId: 'comp_1',
+    vendorId,
+    docType: 'ADVANCE_PAYMENT',
+    docId: advDocId,
+    sectionCode: '194C',
+    amountPaise: 5000000n, // ₹50,000 advance
+    date: '2026-05-01',
+    vendorPan: 'AAACB1111F', // Company -> 2%
+  });
+  assert(advRes.tdsApplicable === true && advRes.tdsAmountPaise === '100000',
+    'Phase 23.1: TDS deducted on Advance Payment (₹50k at 2% = ₹1,000) under "whichever is earlier" rule');
+
+  // Test 23.2: Adjust Advance Payment TDS against final bill (₹80k bill)
+  const adjustRes = await adjustAdvancePaymentTds({
+    companyId: 'comp_1',
+    vendorId,
+    advanceDocId: advDocId,
+    billDocId,
+    billAmountPaise: 8000000n, // ₹80,000 bill
+    billDate: '2026-05-20',
+  });
+  assert(adjustRes.status === 'ADJUSTED_SUCCESSFULLY' && adjustRes.additionalTdsPaise === '60000',
+    'Phase 23.2: Final bill knocked off advance and deducted only remaining differential TDS (60,000 paise)');
+
+  // Test 23.3: Section 206C(1H) TCS Calculation
+  const tcsRes = calculateTcs({
+    customerId: 'cust_tcs_1',
+    receiptAmountPaise: 600000000n, // ₹60 Lakhs
+    cumulativeReceiptsPaise: 0n,
+    customerPan: 'AAACB2222F',
+  });
+  // Excess over 50L is 10L (100,000,000 paise), at 0.1% (10 bp) = 100,000 paise
+  assert(tcsRes.tcsApplicable === true && tcsRes.tcsAmountPaise === '100000',
+    'Phase 23.3: Section 206C(1H) TCS calculated accurately (0.1% on ₹10 Lakhs excess = 100,000 paise)');
+}
+
+async function runPhase24() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 24: ITNS 281 Challan Settlement & Form 26Q -');
+  console.log('======================================================');
+
+  // Test 24.1: Section 201(1A) Interest on Late Payment (1.5% per month)
+  // Deducted May 10, statutory due date June 7, paid July 10 (2 months delayed past deduction)
+  const interest = calculateTdsLateInterest({
+    tdsAmountPaise: 1000000n, // ₹10,000 TDS
+    deductibleDate: '2026-05-10',
+    deductionDate: '2026-05-10',
+    paymentDate: '2026-07-10',
+  });
+  // 2 months delay * 1.5% = 3.0% = 30,000 paise
+  assert(interest.isPaymentDelayed === true && interest.interestLatePaymentPaise === '30000',
+    'Phase 24.1: Section 201(1A) late payment interest calculated accurately (1.5%/month = 30,000 paise)');
+
+  // Test 24.2: Record ITNS 281 Challan Settlement
+  const challan = await recordChallanItns281({
+    companyId: 'comp_1',
+    challanNo: '00123',
+    bsrCode: '0210004',
+    depositDate: '2026-07-10',
+    taxApplicable: '0020',
+    typeOfPayment: '200',
+    sectionCode: '194C',
+    tdsPaise: 1000000n,
+    interestPaise: 30000n,
+    bankName: 'HDFC Bank',
+    financialYear: '2026-27',
+    quarter: 'Q1',
+  });
+  assert(challan.challan_no === '00123' && challan.total_deposited_paise === '1030000',
+    'Phase 24.2: ITNS 281 Challan settlement recorded with BSR code and interest component');
+
+  // Test 24.3: Compile Form 26Q Return
+  const form26q = await compileForm26Q({ companyId: 'comp_1', financialYear: '2026-27', quarter: 'Q1' });
+  assert(form26q.form === '26Q' && form26q.deducteeRecords.length >= 1,
+    'Phase 24.3: Form 26Q compiled with deductee schedules and challan settlement references');
+}
+
+async function runPhase25() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 25: Fixed Assets & Dual Depreciation -------');
+  console.log('======================================================');
+
+  const assetCode = 'FA-SRV-' + Date.now();
+
+  // Test 25.1: Register Fixed Asset
+  const asset = await registerFixedAsset({
+    companyId: 'comp_1',
+    assetCode,
+    assetName: 'Core AI Database Server Cluster',
+    assetCategory: 'COMPUTERS',
+    purchaseDate: '2026-10-15',
+    putToUseDate: '2026-10-15', // Put to use after October 3rd -> < 180 days in FY 2026-27
+    originalCostPaise: 50000000n, // ₹5,00,000
+    salvageValuePaise: 2500000n,  // ₹25,000 (5%)
+    usefulLifeYears: 3,
+    depreciationMethod: 'SLM',
+  });
+  assert(asset.asset_code === assetCode && asset.status === 'ACTIVE',
+    'Phase 25.1: Fixed Asset registered in Asset Register with useful life and category');
+
+  // Test 25.2 & 25.3: Dual Depreciation with 180-Day Rule
+  const deprResult = await calculateDualDepreciation({
+    companyId: 'comp_1',
+    assetId: asset.id,
+    financialYear: '2026-27',
+  });
+
+  // Income Tax: Computers block rate is 40%. Because put to use < 180 days, rate is halved to 20%!
+  // 20% on ₹5,00,000 = ₹1,00,000 (10,000,000 paise)
+  assert(deprResult.isLessThan180Days === true && deprResult.incomeTaxAct.effectiveRatePercent === '20.0',
+    'Phase 25.2: Income Tax Act 180-Day Rule accurately cut depreciation rate by 50% (40% -> 20%)');
+
+  assert(BigInt(deprResult.companiesAct.depreciationPaise) > 0n,
+    'Phase 25.3: Companies Act, 2013 SLM depreciation computed accurately for books P&L');
+
+  // Test 25.4: Timing difference computed
+  assert(deprResult.timingDifferencePaise !== undefined && deprResult.deferredTaxNature !== undefined,
+    'Phase 25.4: Book vs Tax timing difference computed accurately for Deferred Tax accounting');
+}
+
 async function main() {
   console.log('======================================================================');
-  console.log('🚀 MESO AUTONOMOUS CUMULATIVE VERIFICATION GATE: PHASES 1 TO 20');
+  console.log('🚀 MESO AUTONOMOUS CUMULATIVE VERIFICATION GATE: PHASES 1 TO 25');
   console.log('======================================================================');
 
   try {
@@ -1029,6 +1263,13 @@ async function main() {
     await runPhase19();
     await runPhase20();
 
+    // Domain 5: Indian Direct Tax — TDS, TCS & Fixed Assets (Phases 21-25)
+    await runPhase21();
+    await runPhase22();
+    await runPhase23();
+    await runPhase24();
+    await runPhase25();
+
     console.log('\n======================================================================');
     console.log(`VERIFICATION SUMMARY: ${testsPassed} PASSED, ${testsFailed} FAILED`);
     console.log('======================================================================');
@@ -1038,21 +1279,21 @@ async function main() {
       process.exit(1);
     }
 
-    // Update architecture-state.json to mark Phases 1-20 as PASSED
+    // Update architecture-state.json to mark Phases 1-25 as PASSED
     const statePath = path.resolve(__dirname, '../architecture-state.json');
     if (fs.existsSync(statePath)) {
       const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 25; i++) {
         state.phases[i].status = 'PASSED';
         state.phases[i].lastVerifiedAt = new Date().toISOString();
       }
-      state.currentPhase = 21;
+      state.currentPhase = 26;
       state.lastUpdated = new Date().toISOString();
       fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
-      console.log('✓ Successfully updated architecture-state.json: Phases 1 to 20 marked PASSED.');
+      console.log('✓ Successfully updated architecture-state.json: Phases 1 to 25 marked PASSED.');
     }
 
-    console.log('🎯 ALL DOMAIN 1, 2, 3 & 4 GATES CLEARED (100% PASS). Ready for Domain 5 (Phases 21-25).\n');
+    console.log('🎯 ALL DOMAIN 1, 2, 3, 4 & 5 GATES CLEARED (100% PASS). Ready for Domain 6 (Phases 26-30).\n');
     process.exit(0);
   } catch (err) {
     console.error('\n❌ Unhandled exception during verification runner:', err);

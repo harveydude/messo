@@ -454,6 +454,46 @@ export const api = {
     method: 'POST',
     body: JSON.stringify(data),
   }),
+
+  // Domain 5: Indian Direct Tax — TDS, TCS & Fixed Assets (Phases 21-25)
+  validatePanOrAadhaar: (data) => request('/direct-tax/pan/validate', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  registerLowerDeductionCert: (data) => request('/direct-tax/lower-cert', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  processTds: (data) => request('/direct-tax/tds/process', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  adjustAdvanceTds: (data) => request('/direct-tax/tds/adjust-advance', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  calculateTcs: (data) => request('/direct-tax/tcs/calculate', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  calculateTdsLateInterest: (data) => request('/direct-tax/tds/late-interest', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  recordTdsChallan: (data) => request('/direct-tax/challans', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getForm26Q: (financialYear, quarter) => request(`/direct-tax/form26q?financialYear=${encodeURIComponent(financialYear || '2026-27')}&quarter=${encodeURIComponent(quarter || 'Q1')}`),
+  getFixedAssets: () => request('/direct-tax/fixed-assets'),
+  registerFixedAsset: (data) => request('/direct-tax/fixed-assets', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  calculateDualDepreciation: (data) => request('/direct-tax/fixed-assets/depreciation', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
 };
 
 export default api;
