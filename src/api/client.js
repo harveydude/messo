@@ -363,6 +363,29 @@ export const api = {
   }),
   getTaxSchedules: () => request('/governance/tax-schedules'),
   getEffectiveTax: (code, kind, date) => request(`/governance/effective-tax?code=${encodeURIComponent(code)}&kind=${encodeURIComponent(kind)}&date=${encodeURIComponent(date)}`),
+
+  // Domain 2: Universal Data Ingestion & Migration
+  uploadImportFile: (data) => request('/import/upload', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  analyzeImportSchema: (data) => request('/import/analyze-schema', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  stageImportRows: (data) => request('/import/stage', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  promoteImportBatch: (batchId) => request('/import/promote', {
+    method: 'POST',
+    body: JSON.stringify({ batchId }),
+  }),
+  rollbackImportBatch: (batchId) => request('/import/rollback', {
+    method: 'POST',
+    body: JSON.stringify({ batchId }),
+  }),
+  getImportBatches: () => request('/import/batches'),
 };
 
 export default api;

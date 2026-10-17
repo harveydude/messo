@@ -9,6 +9,10 @@ import { recordAuditLog, verifyAuditChain, computeAuditHash, GENESIS_HASH } from
 import { getCompanyPolicy, updateCompanyPolicy, checkBooksLock, getEffectiveTaxSchedule } from '../server/src/services/policyService.js';
 import { softDeleteTransaction, softDeleteAttachment } from '../server/src/services/deletionService.js';
 import { ROLES, requirePermission } from '../server/src/middleware/rbac.js';
+import { parseRawImportFile, computeFileChecksum } from '../server/src/services/ingestionParser.js';
+import { autoDiscoverSchemaMapping, saveSchemaMappingTemplate, transformRowWithMapping } from '../server/src/services/schemaMapper.js';
+import { validateGstin, validatePan, validateMappedRow, matchOrAutoCreateContact, matchOrAutoCreateAccount } from '../server/src/services/stagingDoctor.js';
+import { promoteImportBatch, rollbackImportBatch } from '../server/src/services/promotionEngine.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -275,19 +279,241 @@ async function runPhase5() {
     'Phase 5.4: Current query on 2026-01-15 accurately returned 18% (1800 bp) schedule');
 }
 
+async function runPhase6() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 6: Multi-Format Ingestion Gateway ----------');
+  console.log('======================================================');
+
+  // Test 6.1: Parse CSV data
+  const csvContent = 'Party Name,GST No,Invoice No,Total\nTata Consultancy,27AAACT2727Q1ZW,INV-101,150000\nReliance Jio,27AAACR5055K1ZI,INV-102,85000';
+  const csvParsed = parseRawImportFile({ content: csvContent, fileName: 'sales.csv' });
+  assert(csvParsed.totalRows === 2 && csvParsed.fileFormat === 'CSV',
+    'Phase 6.1: CSV ingestion parsed 2 rows with automatic header detection');
+
+  // Test 6.2: Parse JSON data
+  const jsonContent = JSON.stringify([
+    { customer_name: 'Infosys Ltd', gstin: '29AAACI4747B1ZU', invoice_totals: 200000 },
+    { customer_name: 'Wipro Ltd', gstin: '29AAACW9999A1ZX', invoice_totals: 120000 }
+  ]);
+  const jsonParsed = parseRawImportFile({ content: jsonContent, fileName: 'dump.json' });
+  assert(jsonParsed.totalRows === 2 && jsonParsed.fileFormat === 'JSON',
+    'Phase 6.2: JSON cross-platform ingestion parsed array payload successfully');
+
+  // Test 6.3: Parse Tally Prime XML
+  const tallyXmlContent = `
+    <ENVELOPE>
+      <BODY>
+        <DATA>
+          <TALLYMESSAGE>
+            <VOUCHER VCHTYPE="Sales">
+              <VOUCHERNUMBER>TY-001</VOUCHERNUMBER>
+              <DATE>2026-04-01</DATE>
+              <PARTYNAME>Larsen & Toubro</PARTYNAME>
+              <AMOUNT>500000</AMOUNT>
+            </VOUCHER>
+          </TALLYMESSAGE>
+        </DATA>
+      </BODY>
+    </ENVELOPE>
+  `;
+  const tallyParsed = parseRawImportFile({ content: tallyXmlContent, fileName: 'tally_export.xml', formatHint: 'TALLY_XML' });
+  assert(tallyParsed.totalRows === 1 && tallyParsed.rows[0].VOUCHERNUMBER === 'TY-001',
+    'Phase 6.3: Tally Prime XML parsed vouchers and ledger names accurately');
+
+  // Test 6.4: Parse SQL/ORM Dump
+  const sqlContent = "INSERT INTO invoices (invoice_number, amount) VALUES ('INV-SQL-01', 75000);";
+  const sqlParsed = parseRawImportFile({ content: sqlContent, fileName: 'dump.sql', formatHint: 'SQL' });
+  assert(sqlParsed.totalRows === 1 && sqlParsed.rows[0].invoice_number === 'INV-SQL-01',
+    'Phase 6.4: SQL database dump extracted table and columns into canonical memory stream');
+
+  // Test 6.5: SHA-256 Checksum generation
+  const hash1 = computeFileChecksum(csvContent);
+  const hash2 = computeFileChecksum(csvContent);
+  assert(hash1 === hash2 && hash1.length === 64,
+    'Phase 6.5: SHA-256 checksum quarantine generated deterministic file hash');
+}
+
+async function runPhase7() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 7: Schema Discovery & Cross-Platform Mapping');
+  console.log('======================================================');
+
+  // Test 7.1: Discover Laravel snake_case
+  const laravelRows = [{ customer_name: 'HCL Technologies', gst_number: '07AAACH1111A1ZZ', invoice_totals: 350000, invoice_number: 'LAR-01' }];
+  const laravelDiscovery = autoDiscoverSchemaMapping({ rows: laravelRows, targetEntity: 'invoices', sourceSystem: 'LARAVEL' });
+  assert(laravelDiscovery.mappings.contact_name === 'customer_name' && laravelDiscovery.mappings.total_amount === 'invoice_totals',
+    'Phase 7.1: AI & Heuristic engine mapped Laravel snake_case to canonical Meso fields');
+
+  // Test 7.2: Discover Tally XML fields
+  const tallyRows = [{ PARTYNAME: 'Adani Ports', VOUCHERNUMBER: 'TY-99', AMOUNT: 400000 }];
+  const tallyDiscovery = autoDiscoverSchemaMapping({ rows: tallyRows, targetEntity: 'invoices', sourceSystem: 'TALLY' });
+  assert(tallyDiscovery.mappings.contact_name === 'PARTYNAME' && tallyDiscovery.mappings.total_amount === 'AMOUNT',
+    'Phase 7.2: Tally Prime XML voucher fields discovered and mapped to invoice schema');
+
+  // Test 7.3: Discover Excel raw headers
+  const excelRows = [{ 'Party Name': 'Mahindra & Mahindra', 'GST No': '27AAACM1234M1Z2', 'Total': 180000 }];
+  const excelDiscovery = autoDiscoverSchemaMapping({ rows: excelRows, targetEntity: 'contacts', sourceSystem: 'EXCEL' });
+  assert(excelDiscovery.mappings.display_name === 'Party Name' && excelDiscovery.mappings.gstin === 'GST No',
+    'Phase 7.3: Standard Excel business headers mapped to Meso contacts schema');
+
+  // Test 7.4: Save reusable mapping template in DB
+  const testCompId = 'comp_map_test_' + Date.now();
+  const template = await saveSchemaMappingTemplate({
+    companyId: testCompId,
+    name: 'Standard Tally Sales Template',
+    sourceSystem: 'TALLY',
+    targetEntity: 'invoices',
+    columnMappings: tallyDiscovery.mappings
+  });
+  assert(template && template.id && template.name === 'Standard Tally Sales Template',
+    'Phase 7.4: Reusable schema mapping template persisted in database');
+}
+
+async function runPhase8() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 8: Staging Sandbox & Validation Quarantine -');
+  console.log('======================================================');
+
+  // Test 8.1: Valid GSTIN
+  const gstin1 = validateGstin('27AAPFU0939F1ZV');
+  assert(gstin1.valid === true, 'Phase 8.1: Valid 15-digit Indian GSTIN format accepted');
+
+  // Test 8.2: Invalid GSTIN
+  const gstin2 = validateGstin('INVALID_GSTIN_123');
+  assert(gstin2.valid === false, 'Phase 8.2: Malformed GSTIN correctly flagged by validator');
+
+  // Test 8.3: Valid Indian PAN
+  const pan1 = validatePan('AAPFU0939F');
+  assert(pan1.valid === true, 'Phase 8.3: Valid Indian Income Tax PAN structure accepted');
+
+  // Test 8.4: Invalid Indian PAN
+  const pan2 = validatePan('12345ABCDE');
+  assert(pan2.valid === false, 'Phase 8.4: Invalid PAN structure correctly rejected');
+
+  // Test 8.5: Staging row validation
+  const validCheck = validateMappedRow('contacts', { display_name: 'Sun Pharma', gstin: '27AAPFU0939F1ZV' });
+  assert(validCheck.valid === true, 'Phase 8.5: Complete row validated for staging promotion');
+}
+
+async function runPhase9() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 9: Master Data Deduplication & Auto-Creation');
+  console.log('======================================================');
+
+  const testCompId = 'comp_dedup_' + Date.now();
+
+  // Test 9.1: Auto-create new contact
+  const match1 = await matchOrAutoCreateContact({
+    companyId: testCompId,
+    name: 'Bajaj Auto Ltd',
+    gstin: '27AAACB2222B1Z3',
+    contactType: 'CUSTOMER'
+  });
+  assert(match1.created === true && match1.contact.display_name === 'Bajaj Auto Ltd',
+    'Phase 9.1: Brand new contact auto-created in contacts directory');
+
+  // Test 9.2: Deduplicate against existing contact by GSTIN
+  const match2 = await matchOrAutoCreateContact({
+    companyId: testCompId,
+    name: 'Bajaj Auto Limited (Branch)',
+    gstin: '27AAACB2222B1Z3'
+  });
+  assert(match2.created === false && match2.matchedOn === 'GSTIN' && match2.contact.id === match1.contact.id,
+    'Phase 9.2: Deduplication confirmed: GSTIN matched existing contact without creating duplicates');
+
+  // Test 9.3: Auto-create missing Chart of Accounts ledger
+  const accMatch = await matchOrAutoCreateAccount({
+    companyId: testCompId,
+    accountName: 'Cloud Server Infrastructure Cost',
+    accountType: 'Expense'
+  });
+  assert(accMatch.created === true && accMatch.account.name === 'Cloud Server Infrastructure Cost',
+    'Phase 9.3: Missing Chart of Accounts category auto-created with proper classification');
+}
+
+async function runPhase10() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 10: Atomic Ledger Promotion & Rollback -----');
+  console.log('======================================================');
+
+  const db = await getDb();
+  const testCompId = 'comp_promote_' + Date.now();
+  const testChecksum = 'chk_' + Math.random().toString(36).substring(2, 10);
+
+  // 1. Create batch
+  const batchRes = await db.query(
+    `INSERT INTO import_batches (company_id, file_name, file_format, file_sha256, total_rows, status)
+     VALUES ($1, 'invoices_upload.csv', 'CSV', $2, 1, 'VALIDATED')
+     RETURNING id`,
+    [testCompId, testChecksum]
+  );
+  const batchId = batchRes.rows[0].id;
+
+  // 2. Insert staging row
+  await db.query(
+    `INSERT INTO import_staging_rows (
+      batch_id, company_id, row_index, target_entity, mapped_data, validation_status
+    ) VALUES ($1, $2, 1, 'invoices', $3, 'VALID')`,
+    [
+      batchId,
+      testCompId,
+      JSON.stringify({
+        doc_number: 'INV-STAGE-01',
+        contact_name: 'Bharti Airtel',
+        total_amount: 150000,
+        txn_date: '2026-04-15'
+      })
+    ]
+  );
+
+  // Test 10.1: Promote batch atomically
+  const promoResult = await promoteImportBatch({ batchId, companyId: testCompId });
+  assert(promoResult.success === true && promoResult.status === 'PROMOTED',
+    'Phase 10.1: Staged batch atomically promoted into live invoices and contacts');
+
+  // Test 10.2: Verify invoice exists with batch tag
+  const invRes = await db.query(
+    `SELECT * FROM invoices WHERE import_batch_id = $1 AND company_id = $2`,
+    [batchId, testCompId]
+  );
+  assert(invRes.rows.length === 1 && invRes.rows[0].invoice_number === 'INV-STAGE-01',
+    'Phase 10.2: Promoted invoice verified in live database with correct import_batch_id tag');
+
+  // Test 10.3: 1-Click Rollback Pipeline
+  const rollbackResult = await rollbackImportBatch({ batchId, companyId: testCompId });
+  assert(rollbackResult.success === true && rollbackResult.status === 'ROLLED_BACK',
+    'Phase 10.3: 1-Click Rollback executed successfully');
+
+  // Test 10.4: Verify live invoice is now soft-deleted / voided
+  const checkInvVoided = await db.query(
+    `SELECT * FROM invoices WHERE import_batch_id = $1 AND company_id = $2`,
+    [batchId, testCompId]
+  );
+  assert(checkInvVoided.rows[0].is_deleted === true && checkInvVoided.rows[0].status === 'VOIDED',
+    'Phase 10.4: Rollback proof: Live invoices marked is_deleted=TRUE with audit reason');
+}
+
 async function main() {
   console.log('======================================================================');
-  console.log('🚀 MESO AUTONOMOUS CUMULATIVE VERIFICATION GATE: DOMAIN 1 (PHASES 1-5)');
+  console.log('🚀 MESO AUTONOMOUS CUMULATIVE VERIFICATION GATE: PHASES 1 TO 10');
   console.log('======================================================================');
 
   try {
     await initDb();
 
+    // Domain 1: Multi-Tenant Core, Policies & Safe Deletion (Phases 1-5)
     await runPhase1();
     await runPhase2();
     await runPhase3();
     await runPhase4();
     await runPhase5();
+
+    // Domain 2: Universal Data Ingestion & Cross-Platform Migration (Phases 6-10)
+    await runPhase6();
+    await runPhase7();
+    await runPhase8();
+    await runPhase9();
+    await runPhase10();
 
     console.log('\n======================================================================');
     console.log(`VERIFICATION SUMMARY: ${testsPassed} PASSED, ${testsFailed} FAILED`);
@@ -298,21 +524,21 @@ async function main() {
       process.exit(1);
     }
 
-    // Update architecture-state.json to mark Phases 1-5 as PASSED
+    // Update architecture-state.json to mark Phases 1-10 as PASSED
     const statePath = path.resolve(__dirname, '../architecture-state.json');
     if (fs.existsSync(statePath)) {
       const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 10; i++) {
         state.phases[i].status = 'PASSED';
         state.phases[i].lastVerifiedAt = new Date().toISOString();
       }
-      state.currentPhase = 6;
+      state.currentPhase = 11;
       state.lastUpdated = new Date().toISOString();
       fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
-      console.log('✓ Successfully updated architecture-state.json: Phases 1 to 5 marked PASSED.');
+      console.log('✓ Successfully updated architecture-state.json: Phases 1 to 10 marked PASSED.');
     }
 
-    console.log('🎯 ALL DOMAIN 1 GATES CLEARED (100% PASS). Ready for Domain 2 (Phases 6-10).\n');
+    console.log('🎯 ALL DOMAIN 1 & DOMAIN 2 GATES CLEARED (100% PASS). Ready for Domain 3 (Phases 11-15).\n');
     process.exit(0);
   } catch (err) {
     console.error('\n❌ Unhandled exception during verification runner:', err);
