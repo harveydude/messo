@@ -1,0 +1,314 @@
+{
+  "system": "Meso Continuous Indian Cloud ERP",
+  "version": "2.0.0-2026",
+  "architectureSpec": "MASTER_ARCHITECTURE_50_PHASES.md",
+  "lastUpdated": "2026-10-17T10:04:59.568Z",
+  "currentPhase": 6,
+  "phases": [
+    {
+      "id": 1,
+      "domain": "Domain 1: Multi-Tenant Core, Policies & MCA Audit",
+      "name": "Multi-Tenant Isolation & RBAC Security",
+      "status": "PASSED",
+      "lastVerifiedAt": "2026-10-17T10:04:59.568Z"
+    },
+    {
+      "id": 2,
+      "domain": "Domain 1: Multi-Tenant Core, Policies & MCA Audit",
+      "name": "Company Accounting Policy Engine",
+      "status": "PASSED",
+      "lastVerifiedAt": "2026-10-17T10:04:59.568Z"
+    },
+    {
+      "id": 3,
+      "domain": "Domain 1: Multi-Tenant Core, Policies & MCA Audit",
+      "name": "MCA Rule 3(1) Tamper-Evident Audit Trail",
+      "status": "PASSED",
+      "lastVerifiedAt": "2026-10-17T10:04:59.568Z"
+    },
+    {
+      "id": 4,
+      "domain": "Domain 1: Multi-Tenant Core, Policies & MCA Audit",
+      "name": "Non-Destructive File & Transaction Deletion Pipeline",
+      "status": "PASSED",
+      "lastVerifiedAt": "2026-10-17T10:04:59.568Z"
+    },
+    {
+      "id": 5,
+      "domain": "Domain 1: Multi-Tenant Core, Policies & MCA Audit",
+      "name": "Fiscal Year Lock & Historical Effective-Date Engine",
+      "status": "PASSED",
+      "lastVerifiedAt": "2026-10-17T10:04:59.568Z"
+    },
+    {
+      "id": 6,
+      "domain": "Domain 2: Universal Data Ingestion & Migration",
+      "name": "Multi-Format Ingestion Gateway",
+      "status": "PENDING"
+    },
+    {
+      "id": 7,
+      "domain": "Domain 2: Universal Data Ingestion & Migration",
+      "name": "AI + Heuristic Schema Discovery & Mapper",
+      "status": "PENDING"
+    },
+    {
+      "id": 8,
+      "domain": "Domain 2: Universal Data Ingestion & Migration",
+      "name": "Staging Sandbox & Trial Balance Quarantine",
+      "status": "PENDING"
+    },
+    {
+      "id": 9,
+      "domain": "Domain 2: Universal Data Ingestion & Migration",
+      "name": "Master Data Deduplication & Auto-Creation",
+      "status": "PENDING"
+    },
+    {
+      "id": 10,
+      "domain": "Domain 2: Universal Data Ingestion & Migration",
+      "name": "Atomic Ledger Promotion & Rollback Pipeline",
+      "status": "PENDING"
+    },
+    {
+      "id": 11,
+      "domain": "Domain 3: Continuous General Ledger & Multi-Currency",
+      "name": "Paise-Precision Double-Entry Core",
+      "status": "PENDING"
+    },
+    {
+      "id": 12,
+      "domain": "Domain 3: Continuous General Ledger & Multi-Currency",
+      "name": "Multi-Currency & GIFT City IFSC Functional Currency Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 13,
+      "domain": "Domain 3: Continuous General Ledger & Multi-Currency",
+      "name": "Continuous Sub-Ledger to GL Reconciliation Guard",
+      "status": "PENDING"
+    },
+    {
+      "id": 14,
+      "domain": "Domain 3: Continuous General Ledger & Multi-Currency",
+      "name": "Multi-GSTIN Branches, Cost Centers & Classes",
+      "status": "PENDING"
+    },
+    {
+      "id": 15,
+      "domain": "Domain 3: Continuous General Ledger & Multi-Currency",
+      "name": "Automated Year-End Close & Retained Earnings Roll-Forward",
+      "status": "PENDING"
+    },
+    {
+      "id": 16,
+      "domain": "Domain 4: Indian GST Compliance Engine",
+      "name": "Place of Supply (PoS) & Tax Determination Matrix",
+      "status": "PENDING"
+    },
+    {
+      "id": 17,
+      "domain": "Domain 4: Indian GST Compliance Engine",
+      "name": "Effective-Dated HSN/SAC & GST Rate Registry",
+      "status": "PENDING"
+    },
+    {
+      "id": 18,
+      "domain": "Domain 4: Indian GST Compliance Engine",
+      "name": "Input Tax Credit (ITC) Ledger, Blocked Credit & RCM Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 19,
+      "domain": "Domain 4: Indian GST Compliance Engine",
+      "name": "E-Invoicing (IRN / QR) & E-Way Bill Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 20,
+      "domain": "Domain 4: Indian GST Compliance Engine",
+      "name": "GSTR-1, GSTR-2B Match & GSTR-3B Auto-Filing Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 21,
+      "domain": "Domain 5: Indian Direct Tax — TDS, TCS & Fixed Assets",
+      "name": "PAN/Aadhaar Validator & Lower/Higher Deduction Certificates",
+      "status": "PENDING"
+    },
+    {
+      "id": 22,
+      "domain": "Domain 5: Indian Direct Tax — TDS, TCS & Fixed Assets",
+      "name": "Cumulative Threshold & Multi-Section TDS Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 23,
+      "domain": "Domain 5: Indian Direct Tax — TDS, TCS & Fixed Assets",
+      "name": "'Whichever is Earlier' TDS Trigger & TCS Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 24,
+      "domain": "Domain 5: Indian Direct Tax — TDS, TCS & Fixed Assets",
+      "name": "ITNS 281 Challan Settlement, Interest on Late TDS & Form 26Q",
+      "status": "PENDING"
+    },
+    {
+      "id": 25,
+      "domain": "Domain 5: Indian Direct Tax — TDS, TCS & Fixed Assets",
+      "name": "Fixed Assets Register & Dual Depreciation Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 26,
+      "domain": "Domain 6: Order-to-Cash & Revenue Recognition",
+      "name": "Estimates, Quotes & Sales Orders Pipeline",
+      "status": "PENDING"
+    },
+    {
+      "id": 27,
+      "domain": "Domain 6: Order-to-Cash & Revenue Recognition",
+      "name": "Multi-Template Tax Invoice, Bill of Supply & Export Invoice Builder",
+      "status": "PENDING"
+    },
+    {
+      "id": 28,
+      "domain": "Domain 6: Order-to-Cash & Revenue Recognition",
+      "name": "Ind AS 115 / ASC 606 Automated Revenue Recognition",
+      "status": "PENDING"
+    },
+    {
+      "id": 29,
+      "domain": "Domain 6: Order-to-Cash & Revenue Recognition",
+      "name": "Customer Receipts, GST on Advances & Payment Allocation",
+      "status": "PENDING"
+    },
+    {
+      "id": 30,
+      "domain": "Domain 6: Order-to-Cash & Revenue Recognition",
+      "name": "GST Credit Notes, Sales Returns & AI Dunning Workflows",
+      "status": "PENDING"
+    },
+    {
+      "id": 31,
+      "domain": "Domain 7: Procure-to-Pay, OCR & MSME Compliance",
+      "name": "Purchase Orders (PO) & 3-Way Matching Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 32,
+      "domain": "Domain 7: Procure-to-Pay, OCR & MSME Compliance",
+      "name": "AI Indian Invoice & Receipt OCR Pipeline",
+      "status": "PENDING"
+    },
+    {
+      "id": 33,
+      "domain": "Domain 7: Procure-to-Pay, OCR & MSME Compliance",
+      "name": "Vendor Bills, Recurring Expenses & Approval Workflows",
+      "status": "PENDING"
+    },
+    {
+      "id": 34,
+      "domain": "Domain 7: Procure-to-Pay, OCR & MSME Compliance",
+      "name": "MSME (Udyam) 45-Day Compliance Shield (Section 43B(h))",
+      "status": "PENDING"
+    },
+    {
+      "id": 35,
+      "domain": "Domain 7: Procure-to-Pay, OCR & MSME Compliance",
+      "name": "Batch Bill Payouts, Vendor Credits & Debit Notes",
+      "status": "PENDING"
+    },
+    {
+      "id": 36,
+      "domain": "Domain 8: Inventory, Manufacturing & Projects",
+      "name": "Continuous Inventory Valuation Engine (FIFO & Weighted Average)",
+      "status": "PENDING"
+    },
+    {
+      "id": 37,
+      "domain": "Domain 8: Inventory, Manufacturing & Projects",
+      "name": "Batch/Serial Tracking, Reorder Alerts & Stock Adjustments",
+      "status": "PENDING"
+    },
+    {
+      "id": 38,
+      "domain": "Domain 8: Inventory, Manufacturing & Projects",
+      "name": "Bill of Materials (BOM), Assemblies & Job Work (ITC-04)",
+      "status": "PENDING"
+    },
+    {
+      "id": 39,
+      "domain": "Domain 8: Inventory, Manufacturing & Projects",
+      "name": "Timesheets, Contractor Hours & Billable Expenses",
+      "status": "PENDING"
+    },
+    {
+      "id": 40,
+      "domain": "Domain 8: Inventory, Manufacturing & Projects",
+      "name": "Live Project & Customer Profitability Matrix",
+      "status": "PENDING"
+    },
+    {
+      "id": 41,
+      "domain": "Domain 9: Connected Banking, Reconciliation & Treasury",
+      "name": "Universal Indian Bank Statement & Feed Ingestor",
+      "status": "PENDING"
+    },
+    {
+      "id": 42,
+      "domain": "Domain 9: Connected Banking, Reconciliation & Treasury",
+      "name": "AI + Rule-Based Bank Categorization & Split Matching",
+      "status": "PENDING"
+    },
+    {
+      "id": 43,
+      "domain": "Domain 9: Connected Banking, Reconciliation & Treasury",
+      "name": "Undeposited Funds, Contra Transfers & Credit Card Settlement",
+      "status": "PENDING"
+    },
+    {
+      "id": 44,
+      "domain": "Domain 9: Connected Banking, Reconciliation & Treasury",
+      "name": "Statement Reconciliation & Post-Reconciliation Tamper Lock",
+      "status": "PENDING"
+    },
+    {
+      "id": 45,
+      "domain": "Domain 9: Connected Banking, Reconciliation & Treasury",
+      "name": "12-Month Rolling Cash Flow & Working Capital Forecaster",
+      "status": "PENDING"
+    },
+    {
+      "id": 46,
+      "domain": "Domain 10: AI Autonomous Accountant, Payroll & QA",
+      "name": "Indian Payroll & Compliance Engine",
+      "status": "PENDING"
+    },
+    {
+      "id": 47,
+      "domain": "Domain 10: AI Autonomous Accountant, Payroll & QA",
+      "name": "MCA Schedule III Financial Statements & CA Export Pack",
+      "status": "PENDING"
+    },
+    {
+      "id": 48,
+      "domain": "Domain 10: AI Autonomous Accountant, Payroll & QA",
+      "name": "'Meso Assist' AI Accounting Error Doctor",
+      "status": "PENDING"
+    },
+    {
+      "id": 49,
+      "domain": "Domain 10: AI Autonomous Accountant, Payroll & QA",
+      "name": "Natural Language Command Bar & Conversational CFO",
+      "status": "PENDING"
+    },
+    {
+      "id": 50,
+      "domain": "Domain 10: AI Autonomous Accountant, Payroll & QA",
+      "name": "Full-System Chaos Verification & Cloud Deployment Readiness",
+      "status": "PENDING"
+    }
+  ]
+}

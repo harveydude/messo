@@ -343,12 +343,26 @@ export const api = {
     ...opts,
   }),
 
-  // Section 3 Business At A Glance & Layout Feedback
-  getBusinessAtAGlance: () => request('/dashboard/business-at-a-glance'),
-  sendLayoutFeedback: (feedback, comment = '') => request('/dashboard/feedback/layout-customization', {
-    method: 'POST',
-    body: JSON.stringify({ feedback, comment }),
+  // Domain 1: Governance, Policies & Safe Deletion
+  getCompanyPolicies: () => request('/governance/policies'),
+  updateCompanyPolicies: (policy) => request('/governance/policies', {
+    method: 'PUT',
+    body: JSON.stringify(policy),
   }),
+  checkBooksLock: (data) => request('/governance/check-lock', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  voidTransaction: (data) => request('/governance/void', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getAuditTrail: () => request('/governance/audit-trail'),
+  verifyAuditTrail: () => request('/governance/audit-trail/verify', {
+    method: 'POST',
+  }),
+  getTaxSchedules: () => request('/governance/tax-schedules'),
+  getEffectiveTax: (code, kind, date) => request(`/governance/effective-tax?code=${encodeURIComponent(code)}&kind=${encodeURIComponent(kind)}&date=${encodeURIComponent(date)}`),
 };
 
 export default api;
