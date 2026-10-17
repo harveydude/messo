@@ -1,26 +1,57 @@
-import React, { useState } from 'react';
-import { Printer, Share2, Sliders, X, Filter, Calendar, ChevronDown, HelpCircle, ArrowDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Printer, Share2, Sliders, X, Filter, Calendar, ChevronDown, HelpCircle, ArrowDown, Sparkles } from 'lucide-react';
 import dashboardData from '../data/dashboard.json';
+import api from '../api/client';
 
 export default function SearchResultsView({ 
   query = "Show me open invoices for the last 30 days" 
 }) {
   const [activeTab, setActiveTab] = useState("transactions");
   const [showInfoBanner, setShowInfoBanner] = useState(true);
+  const [liveResults, setLiveResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [chips, setChips] = useState([
     "Date range: 09/24/2025-10/24/2…",
     "Transaction type: Invoice"
   ]);
 
+  useEffect(() => {
+    if (!query || !query.trim()) return;
+    setIsLoading(true);
+    api.smartSearch(query.trim()).then(res => {
+      if (res?.success) {
+        setLiveResults(res);
+      }
+    }).catch(err => {
+      console.warn('Smart search API call failed:', err);
+    }).finally(() => {
+      setIsLoading(false);
+    });
+  }, [query]);
+
   const searchData = dashboardData.search?.results || {};
-  const transactions = searchData.transactions || [
-    { date: "09/27/2025", type: "Invoice", refNo: "1037", contact: "Sonnenschein Family Store", dueDate: "10/27/2025", balance: "$362.07", amount: "$362.07", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
-    { date: "09/27/2025", type: "Invoice", refNo: "1035", contact: "Mark Cho", dueDate: "10/27/2025", balance: "$314.28", amount: "$314.28", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
-    { date: "09/27/2025", type: "Invoice", refNo: "1036", contact: "Freeman Sporting Goods:0969 Ocean View Road", dueDate: "10/27/2025", balance: "$477.50", amount: "$477.50", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
-    { date: "09/26/2025", type: "Invoice", refNo: "1033", contact: "Geeta Kalapatapu", dueDate: "10/26/2025", balance: "$629.10", amount: "$629.10", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
-    { date: "09/26/2025", type: "Invoice", refNo: "1034", contact: "Rondonuwu Fruit and Vegi", dueDate: "10/26/2025", balance: "$78.60", amount: "$78.60", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
-    { date: "09/25/2025", type: "Invoice", refNo: "1023", contact: "Red Rock Diner", dueDate: "10/25/2025", balance: "$70.00", amount: "$70.00", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" }
+  const defaultTransactions = searchData.transactions || [
+    { date: "09/27/2025", type: "Invoice", refNo: "1037", contact: "Sonnenschein Family Store", dueDate: "10/27/2025", balance: "₹362.07", amount: "₹362.07", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
+    { date: "09/27/2025", type: "Invoice", refNo: "1035", contact: "Mark Cho", dueDate: "10/27/2025", balance: "₹314.28", amount: "₹314.28", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
+    { date: "09/27/2025", type: "Invoice", refNo: "1036", contact: "Freeman Sporting Goods:0969 Ocean View Road", dueDate: "10/27/2025", balance: "₹477.50", amount: "₹477.50", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
+    { date: "09/26/2025", type: "Invoice", refNo: "1033", contact: "Geeta Kalapatapu", dueDate: "10/26/2025", balance: "₹629.10", amount: "₹629.10", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
+    { date: "09/26/2025", type: "Invoice", refNo: "1034", contact: "Rondonuwu Fruit and Vegi", dueDate: "10/26/2025", balance: "₹78.60", amount: "₹78.60", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
+    { date: "09/25/2025", type: "Invoice", refNo: "1023", contact: "Red Rock Diner", dueDate: "10/25/2025", balance: "₹70.00", amount: "₹70.00", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" }
   ];
+
+  const transactions = (liveResults?.records && liveResults.records.length > 0)
+    ? liveResults.records.map(r => ({
+        date: r.date || r.issue_date || '10/20/2025',
+        type: r.type || r.doc_type || 'Invoice',
+        refNo: r.doc_number || r.invoice_number || '1001',
+        contact: r.contact_name || r.customer_name || 'Customer',
+        dueDate: r.due_date || '11/19/2025',
+        balance: r.balance_inr ? `₹${r.balance_inr}` : (r.balance_due_inr ? `₹${r.balance_due_inr}` : '₹0.00'),
+        amount: r.total_inr ? `₹${r.total_inr}` : '₹0.00',
+        memo: r.memo || r.notes || '',
+        lastModified: 'Live PostgreSQL'
+      }))
+    : defaultTransactions;
 
   const handleRemoveChip = (chipToRemove) => {
     setChips(prev => prev.filter(c => c !== chipToRemove));
@@ -88,6 +119,26 @@ export default function SearchResultsView({
           Help
         </button>
       </div>
+
+      {/* Live AI Summary Banner */}
+      {liveResults?.ai_summary && (
+        <div className="w-full bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-[8px] p-4 flex items-start justify-between mb-6 shadow-xs animate-in fade-in duration-200">
+          <div className="flex items-start space-x-3">
+            <div className="w-7 h-7 rounded-full bg-[#7A3CE8] text-white flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles size={15} />
+            </div>
+            <div>
+              <div className="text-[15px] font-bold text-[#393A3D] flex items-center space-x-2">
+                <span>Intuit Assist Insights</span>
+                <span className="text-[10px] uppercase tracking-wider bg-purple-200 text-purple-800 px-1.5 py-0.5 rounded font-bold">NLP Live</span>
+              </div>
+              <div className="text-[14px] text-[#4A4B4E] mt-1 leading-relaxed">
+                {liveResults.ai_summary}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. Info Banner (Customize Search) */}
       {showInfoBanner && (

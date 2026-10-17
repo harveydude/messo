@@ -1,0 +1,10 @@
+const fs = require('fs');
+const file = './src/data/dashboard.json';
+let c = fs.readFileSync(file, 'utf8');
+c = c.replace(/QuickBooks Online Plus/g, 'Meso Plus');
+c = c.replace(/QuickBooks/gi, 'Meso');
+c = c.replace(/Intuit/gi, 'Meso');
+c = c.replace(/noreply@quickbooks\.com/g, 'noreply@meso.in');
+c = c.replace(/\$([0-9])/g, '\u20b9$1');
+fs.writeFileSync(file, c, 'utf8');
+console.log('Successfully updated dashboard.json');

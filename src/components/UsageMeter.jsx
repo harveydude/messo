@@ -3,7 +3,7 @@ import { Info } from 'lucide-react';
 
 /**
  * UsageMeter Component
- * Conforms to §53 of QuickBooks Online Spec (Part 11)
+ * Conforms to §53 of Meso Spec (Part 11)
  *
  * @param {string} label - Meter label (e.g. "Billable Users", "Chart of accounts")
  * @param {number} used - Current usage count

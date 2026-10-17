@@ -12,7 +12,7 @@ import MyIntegrationsPopover from '../components/MyIntegrationsPopover';
 import NotificationsPanel from '../components/NotificationsPanel';
 
 export default function TopBar({ 
-  companyName = "Sample Company. 7-8-25", 
+  companyName = "Karan's Landscaping Services", 
   searchQuery = "", 
   setSearchQuery, 
   onSearch, 
@@ -87,11 +87,10 @@ export default function TopBar({
       <div className="flex items-center space-x-6 min-w-[260px] pl-0">
         <div className="flex items-center space-x-1.5 cursor-pointer shrink-0" onClick={() => onSearch('')}>
           <div className="w-7 h-7 rounded-full bg-[#2CA01C] flex items-center justify-center text-white font-bold text-xs tracking-tighter shadow-xs">
-            qb
+            m
           </div>
           <div className="leading-tight">
-            <div className="text-[9px] tracking-wider font-semibold text-[#6B6C72] uppercase leading-none">INTUIT</div>
-            <div className="text-[15px] font-bold text-[#393A3D] leading-none">quickbooks</div>
+            <div className="text-[15px] font-bold text-[#393A3D] leading-none tracking-tight">meso</div>
           </div>
         </div>
 
@@ -118,6 +117,7 @@ export default function TopBar({
           />
           <input
             type="text"
+            data-search-input
             value={searchQuery}
             onFocus={() => setIsSearchFocused(true)}
             onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
@@ -236,7 +236,7 @@ export default function TopBar({
               if (onOpenAssistant) onOpenAssistant();
             }}
             className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer"
-            title="Help / Intuit Assistant"
+            title="Help / Meso Assistant"
           >
             <HelpCircle size={20} />
           </button>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronDown, ArrowDown, MoreVertical } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, ArrowDown, MoreVertical, Check } from 'lucide-react';
 
 export default function ExpensesDonutCard({ 
   expensesData, 
@@ -7,6 +7,22 @@ export default function ExpensesDonutCard({
   onNavigate 
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showPeriodMenu, setShowPeriodMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+
+  const periodRef = useRef(null);
+  const moreRef = useRef(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (periodRef.current && !periodRef.current.contains(e.target)) setShowPeriodMenu(false);
+      if (moreRef.current && !moreRef.current.contains(e.target)) setShowMoreMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const formatAmount = (val) => {
     if (privacyEnabled) return "••••••";
@@ -56,6 +72,9 @@ export default function ExpensesDonutCard({
     };
   }, { slices: [], offset: 0 }).slices;
 
+  const periodOptions = ['This Month', 'Last Month', 'This Quarter', 'This Year', 'Last Year'];
+  const activePeriod = selectedPeriod || data.period;
+
   return (
     <div className="bg-white border border-[#C7CBCE] rounded-[8px] p-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-between">
       <div>
@@ -64,10 +83,30 @@ export default function ExpensesDonutCard({
           <h3 className="text-[13px] font-semibold text-[#393A3D] uppercase tracking-[0.08em]">
             EXPENSES
           </h3>
-          <button className="flex items-center space-x-1 text-[13px] text-[#393A3D] hover:text-[#0077C5] cursor-pointer">
-            <span>{data.period}</span>
-            <ChevronDown size={14} />
-          </button>
+          {/* Period selector dropdown */}
+          <div className="relative" ref={periodRef}>
+            <button
+              onClick={() => { setShowPeriodMenu(!showPeriodMenu); setShowMoreMenu(false); }}
+              className="flex items-center space-x-1 text-[13px] text-[#393A3D] hover:text-[#0077C5] cursor-pointer"
+            >
+              <span>{activePeriod}</span>
+              <ChevronDown size={14} />
+            </button>
+            {showPeriodMenu && (
+              <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-[#D5D8DC] rounded-[6px] shadow-lg z-50 py-1">
+                {periodOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => { setSelectedPeriod(opt); setShowPeriodMenu(false); }}
+                    className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left flex items-center justify-between"
+                  >
+                    <span>{opt}</span>
+                    {activePeriod === opt && <Check size={14} className="text-[#2CA01C]" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Subtitle & Spending */}
@@ -170,13 +209,39 @@ export default function ExpensesDonutCard({
           {data.footerLink}
         </button>
 
-        <button
-          type="button"
-          className="text-[#6B6C72] hover:text-[#393A3D] p-1 cursor-pointer"
-          aria-label="More options for the expenses card"
-        >
-          <MoreVertical size={18} aria-hidden="true" />
-        </button>
+        {/* More menu dropdown */}
+        <div className="relative" ref={moreRef}>
+          <button
+            type="button"
+            onClick={() => { setShowMoreMenu(!showMoreMenu); setShowPeriodMenu(false); }}
+            className="text-[#6B6C72] hover:text-[#393A3D] p-1 cursor-pointer"
+            aria-label="More options for the expenses card"
+          >
+            <MoreVertical size={18} aria-hidden="true" />
+          </button>
+          {showMoreMenu && (
+            <div className="absolute right-0 bottom-full mb-1 w-48 bg-white border border-[#D5D8DC] rounded-[6px] shadow-lg z-50 py-1">
+              <button
+                onClick={() => { onNavigate && onNavigate('expense_transactions'); setShowMoreMenu(false); }}
+                className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
+              >
+                See full report
+              </button>
+              <button
+                onClick={() => { alert('Customize widget coming soon'); setShowMoreMenu(false); }}
+                className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
+              >
+                Customize widget
+              </button>
+              <button
+                onClick={() => { alert('Widget removed'); setShowMoreMenu(false); }}
+                className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
+              >
+                Remove widget
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

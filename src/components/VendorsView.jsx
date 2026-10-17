@@ -34,7 +34,7 @@ const STATUS = {
   Draft: 'bg-[#F1F1F1] text-[#5F6368]',
 };
 
-/** Payment terms QuickBooks offers, used by both the filter and the form. */
+/** Payment terms Meso offers, used by both the filter and the form. */
 const TERMS = ['Due on receipt', 'Net 15', 'Net 30', 'Net 45', 'Net 60'];
 
 /** Bills that are not settled. `Draft` bills are not yet a liability. */

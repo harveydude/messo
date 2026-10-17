@@ -1,4 +1,4 @@
-import { CHART_OF_ACCOUNTS } from './chartOfAccounts.js';
+﻿import { CHART_OF_ACCOUNTS } from './chartOfAccounts.js';
 import { INDIA_TAX_SEED } from './indiaTaxSeed.js';
 
 /**
@@ -39,7 +39,7 @@ export const SEED = {
   /**
  * Staff.
  *
- * `role` is the job title; `access` is the QuickBooks permission level
+ * `role` is the job title; `access` is the Meso permission level
  * (Admin / Standard / Time only) that decides what the person can actually do.
  * They are separate fields because conflating them was a real defect: a
  * bookkeeper and an administrator are different things, and the access level
@@ -58,7 +58,7 @@ export const SEED = {
     { id: 6, first: 'Sofia', last: 'Marino', email: 'sofia@samplecompany.com', phone: '(555) 010-1006', role: 'Design assistant', access: 'TimeOnly', status: 'Inactive', rate: 28, active: false },
   ],
   customers: [
-    { id: 1, displayName: 'Cool Cars', first: 'Grace', last: 'Pariente', email: 'Cool_Cars@intuit.com', phone: '(555) 234-5678', billingAddress: '65 Ocean Dr, Half Moon Bay, CA 94213', terms: 'Net 30', notes: '', balance: 0 },
+    { id: 1, displayName: 'Cool Cars', first: 'Gaurav', last: 'Parikh', email: 'Cool_Cars@meso.in', phone: '+91 98201 23456', billingAddress: '65 Marine Drive, Nariman Point, Mumbai, MH 400021', terms: 'Net 30', notes: '', balance: 0 },
     { id: 2, displayName: "Amy's Bird Sanctuary", first: 'Amy', last: 'Bird', email: 'amy@birdsanctuary.com', phone: '(555) 345-6789', billingAddress: '456 Oak Ave, San Francisco, CA 94102', terms: 'Due on receipt', notes: '', balance: 0 },
     { id: 3, displayName: 'Paulsen Medical Supplies', first: 'Paul', last: 'Paulsen', email: 'paul@medical.com', phone: '(555) 456-7890', billingAddress: '789 Pine St, Oakland, CA 94601', terms: 'Net 15', notes: '', balance: 0 },
     { id: 4, displayName: 'Sushi by Katsuyuki', first: 'Katsuyuki', last: 'Sushi', email: 'katsuyuki@sushi.com', phone: '(555) 567-8901', billingAddress: '321 Elm St, San Francisco, CA 94103', terms: 'Due on receipt', notes: '', balance: 80 },
@@ -312,7 +312,7 @@ export const SEED = {
   ],
   /** Facts about statements sent. The money is recomputed from the ledger. */
   statements: [
-    { id: 1, customerId: 1, date: '2025-10-25', sentTo: 'Cool_Cars@intuit.com' },
+    { id: 1, customerId: 1, date: '2025-10-25', sentTo: 'Cool_Cars@meso.in' },
   ],
 
   /**
@@ -382,7 +382,7 @@ export const SEED = {
   ],
   audit: [
     { date: new Date('2025-10-24T19:11:00+11:00'), user: 'Craig Carlson', event: 'Created invoice INV-1001', view: true, ref: { type: 'invoice', id: 1 } },
-    { date: new Date('2025-10-23T10:00:00+11:00'), user: 'Craig Carlson', event: 'Added expense to Office Supplies $48.20', view: true, ref: { type: 'expense', id: 2 } },
+    { date: new Date('2025-10-23T10:00:00+11:00'), user: 'Craig Carlson', event: 'Added expense to Office Supplies ₹48.20', view: true, ref: { type: 'expense', id: 2 } },
     { date: new Date('2025-10-22T14:30:00+11:00'), user: 'Craig Carlson', event: 'Added bill from Cal Telephone', view: true, ref: { type: 'bill', id: 1 } },
   ],
   dashboard: { widgets: ['sales', 'bank', 'pnl', 'expenses', 'cashflow', 'feed'], privacy: false, period: 'This month' },

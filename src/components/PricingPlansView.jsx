@@ -6,21 +6,21 @@ export default function PricingPlansView() {
     {
       name: "Simple Start",
       subtitle: "Build your financial foundation",
-      originalPrice: "$38",
-      price: "$19",
+      originalPrice: "₹3,173",
+      price: "₹1,586.50",
       users: "1 user",
       tag: null,
       features: [
         { label: "Smart expense organization", isAgent: false },
         { label: "Automated bookkeeping", isAgent: false },
-        { label: "5 free ACH bank transfers/mo for bills", isAgent: false }
+        { label: "5 free UPI/IMPS bank transfers/mo for bills", isAgent: false }
       ]
     },
     {
       name: "Essentials",
       subtitle: "Save time and focus on growth",
-      originalPrice: "$75",
-      price: "$37.50",
+      originalPrice: "₹6,262.50",
+      price: "₹3,131.25",
       users: "3 users",
       tag: null,
       features: [
@@ -32,8 +32,8 @@ export default function PricingPlansView() {
     {
       name: "Plus",
       subtitle: "Scale with greater clarity",
-      originalPrice: "$115",
-      price: "$57.50",
+      originalPrice: "₹9,602.50",
+      price: "₹4,801.25",
       users: "5 users",
       tag: "CUSTOMER FAVORITE",
       features: [
@@ -47,8 +47,8 @@ export default function PricingPlansView() {
     {
       name: "Advanced",
       subtitle: "Boost efficiency and profitability",
-      originalPrice: "$275",
-      price: "$137.50",
+      originalPrice: "₹22,962.50",
+      price: "₹11,481.25",
       users: "25 users",
       tag: null,
       features: [
@@ -65,8 +65,8 @@ export default function PricingPlansView() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-extrabold text-gray-900">Choose the right QuickBooks plan</h1>
-        <p className="text-sm text-gray-600">Save 50% for 3 months on all plans with Intuit Assist AI</p>
+        <h1 className="text-3xl font-extrabold text-gray-900">Choose the right Meso plan</h1>
+        <p className="text-sm text-gray-600">Save 50% for 3 months on all plans with Meso Assist AI</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
@@ -107,7 +107,7 @@ export default function PricingPlansView() {
               <div className="border border-emerald-200 bg-emerald-50/20 rounded-xl p-3 space-y-2.5">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-gray-900">
                   <Sparkles size={13} className="text-[#0077c5]" />
-                  <span>Intuit Assist</span>
+                  <span>Meso Assist</span>
                 </div>
 
                 <div className="space-y-2">

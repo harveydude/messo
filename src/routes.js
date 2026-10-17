@@ -27,8 +27,9 @@ export const ROUTES = [
   { id: 'products_services', slug: '/products-and-services', label: 'Products and services' },
   { id: 'recurring_transactions', slug: '/recurring', label: 'Recurring transactions' },
 
-  { id: 'sales_transactions', slug: '/sales', label: 'Sales', aliases: ['/invoices'] },
-  { id: 'invoices', slug: '/invoices/list', label: 'Invoices' },
+  { id: 'sales_transactions', slug: '/sales', label: 'Sales' },
+  { id: 'invoices', slug: '/invoices', label: 'Invoices', aliases: ['/invoices/list'] },
+  { id: 'invoice_editor', slug: '/invoices/new', label: 'New Invoice', aliases: ['/invoice-editor', '/invoices/create'] },
   { id: 'expense_transactions', slug: '/expenses', label: 'Expenses',
     // The dashboard cards used to navigate to 'expenses', which no branch
     // matched, so three links produced a completely blank screen.

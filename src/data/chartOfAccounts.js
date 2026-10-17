@@ -10,7 +10,7 @@
  *
  *   `type`      canonical bucket the reports roll up on ('Accounts Receivable')
  *   `typeLabel` what the Chart of Accounts screen shows ('Accounts receivable
- *               (A/R)') -- the label QuickBooks uses in its own filter menu
+ *               (A/R)') -- the label Meso uses in its own filter menu
  *
  * `parentId` marks a sub-account. Sub-accounts are the *breakdown* of their
  * parent, so they are shown but never rolled up: counting Truck and its
@@ -114,7 +114,7 @@ export const CHART_OF_ACCOUNTS = [
 ];
 
 /**
- * The filter menu on the Chart of Accounts screen, in QuickBooks' own order.
+ * The filter menu on the Chart of Accounts screen, in Meso's own order.
  * Derived from the list above rather than written out again -- a second list is
  * a second thing that can drift.
  */

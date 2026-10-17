@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, HelpCircle, Check, Copy, GripVertical, Pin, Trash2, ExternalLink, History, Settings as SettingsIcon, Calendar, Paperclip, CheckCircle2, ChevronDown, ChevronRight, PlayCircle, Store, Pencil } from 'lucide-react';
 import UsageMeter from './UsageMeter';
 import dashboardData from '../data/dashboard.json';
+import api from '../api/client';
 
 /* =========================================================
    1. QUICK CREATE MEGA MENU (+ Create)
@@ -10,76 +11,100 @@ import dashboardData from '../data/dashboard.json';
 export function QuickCreateMenu({ isOpen, onClose, onActionSelect }) {
   if (!isOpen) return null;
 
-  const sections = [
+  const columns = [
     {
-      title: "Customers",
+      title: 'Customers',
+      width: 177,
       items: [
-        "Invoice", "Receive payment", "Statement", "Estimate", 
-        "Sales order", "Credit memo", "Sales receipt", "Recurring payment", 
-        "Shipping label", "Refund receipt", "Delayed credit", "Delayed charge", 
-        "Add customer"
-      ]
+        'Invoice', 'Receive payment', 'Statement', 'Estimate',
+        'Sales order', 'Credit memo', 'Sales receipt',
+        'Refund receipt', 'Delayed credit', 'Delayed charge',
+        'Add customer',
+      ],
     },
     {
-      title: "Vendors",
+      title: 'Vendors',
+      width: 177,
       items: [
-        "Expense", "Check", "Bill", "Pay bills", 
-        "Purchase order", "Vendor credit", "Credit card credit", 
-        "Print checks", "Add vendor"
-      ]
+        'Expense', 'Check', 'Bill', 'Pay bills',
+        'Purchase order', 'Vendor credit', 'Credit card credit',
+        'Print checks', 'Add vendor',
+      ],
     },
     {
-      title: "Team",
+      title: 'Team',
+      width: 161,
       items: [
-        "Payroll", "Single time activity", "Weekly timesheet", 
-        "Review time", "Add employee", "Add contractor"
-      ]
+        { label: 'Payroll', external: true },
+        'Add contractor',
+      ],
     },
     {
-      title: "Other",
+      title: 'Other',
+      width: 179,
       items: [
-        "Bank deposit", "Transfer", "Journal entry", 
-        "Inventory qty adjustment", "Pay down credit card", "Add product/service"
-      ]
-    }
+        'Task', 'Bank deposit', 'Transfer', 'Journal entry',
+        'Inventory qty adjustment', 'Pay down credit card',
+        'Add product/service',
+      ],
+    },
   ];
 
+  const [hoveredItem, setHoveredItem] = useState(null);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-start pl-64 pt-14 bg-black/20" onClick={onClose}>
-      <div 
-        className="bg-white rounded-xl shadow-2xl border border-gray-200 p-6 m-4 w-full max-w-4xl z-50 animate-in fade-in zoom-in-95 duration-100"
+    /* Scrim – click to close */
+    <div className="fixed inset-0 z-50" onClick={onClose}>
+      {/* Panel: anchored at left:78 top:60, w=754, white, rounded-[6px] */}
+      <div
+        className="absolute bg-white rounded-[6px] py-6 px-[30px] select-none"
+        style={{
+          left: 78,
+          top: 60,
+          width: 754,
+          boxShadow: '0 10px 36px rgba(0,0,0,0.22)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {sections.map((col, idx) => (
-            <div key={idx} className="space-y-2">
-              <h4 className="text-xs font-bold text-gray-900 border-b border-gray-100 pb-1.5">{col.title}</h4>
-              <ul className="space-y-1.5 text-xs text-gray-700">
-                {col.items.map((item, i) => (
-                  <li key={i}>
-                    <button 
-                      onClick={() => {
-                        onActionSelect(item);
-                        onClose();
-                      }}
-                      className="hover:text-[#2ca01c] hover:underline text-left w-full py-0.5"
-                    >
-                      {item}
-                    </button>
-                  </li>
-                ))}
+        <div className="flex">
+          {columns.map((col, ci) => (
+            <div key={ci} style={{ width: col.width }} className="pr-4">
+              {/* Column header – 17px bold */}
+              <h4 className="text-[17px] font-bold text-[#393A3D] mb-3 leading-tight">{col.title}</h4>
+
+              {/* Items – 40px pitch */}
+              <ul className="space-y-0">
+                {col.items.map((raw, ii) => {
+                  const isObj = typeof raw === 'object';
+                  const label = isObj ? raw.label : raw;
+                  const isExternal = isObj && raw.external;
+                  const itemKey = `${ci}-${ii}`;
+                  const isHovered = hoveredItem === itemKey;
+
+                  return (
+                    <li key={ii}>
+                      <button
+                        onMouseEnter={() => setHoveredItem(itemKey)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                        onClick={() => {
+                          onActionSelect(label);
+                          onClose();
+                        }}
+                        className={`w-full text-left h-[36px] px-3 rounded-[6px] text-[15px] text-[#393A3D] flex items-center transition-colors ${
+                          isHovered ? 'bg-[#F4F5F8]' : ''
+                        }`}
+                      >
+                        <span>{label}</span>
+                        {isExternal && (
+                          <ExternalLink size={13} className="ml-1.5 text-[#6B6C72] shrink-0" />
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
-        </div>
-
-        <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-100 text-xs text-[#0077c5]">
-          <button className="flex items-center space-x-1 hover:underline font-medium">
-            <span>Video tutorials</span>
-          </button>
-          <button onClick={onClose} className="hover:underline font-medium text-gray-500">
-            Show less
-          </button>
         </div>
       </div>
     </div>
@@ -376,7 +401,7 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
   const [businessTypeMenuOpen, setBusinessTypeMenuOpen] = useState(false);
 
   const usageData = dashboardData?.usage || {
-    plan: "QuickBooks Online Plus",
+    plan: "Meso Plus",
     meters: [
       {
         key: "billableUsers",
@@ -419,28 +444,63 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
   const [multicurrencyEnabled, setMulticurrencyEnabled] = useState(false);
   const [tempMulticurrencyToggle, setTempMulticurrencyToggle] = useState(false);
   const [tempMulticurrencyChecked, setTempMulticurrencyChecked] = useState(false);
-  const [homeCurrency] = useState("United States Dollar");
-  const [selectedHomeCurrency] = useState("USD - United States ...");
+  const [homeCurrency] = useState("Indian Rupee (INR)");
+  const [selectedHomeCurrency] = useState("INR - Indian Rupee (₹)");
+
+  useEffect(() => {
+    api.getCompanySettings().then(res => {
+      if (res && res.success && res.settings) {
+        if (res.settings.name) {
+          setCompanyNameState(res.settings.name);
+          setNameValue(res.settings.name);
+        }
+        if (res.settings.accounting_method) {
+          const methodVal = res.settings.accounting_method === 'CASH' ? 'Cash' : 'Accrual';
+          setAccountingMethod(methodVal);
+          setSelectedMethod(methodVal);
+        }
+        if (res.settings.multicurrency_enabled !== undefined) {
+          setMulticurrencyEnabled(Boolean(res.settings.multicurrency_enabled));
+        }
+      }
+    }).catch(err => console.warn('[Meso API] Company settings fetch warning:', err));
+  }, []);
 
   // Hooks above, render gate here. A side benefit: the dialog now keeps what you
   // typed when you close and reopen it, instead of silently discarding it.
   if (!isOpen) return null;
 
-  const handleSaveName = () => {
+  const handleSaveName = async () => {
     setCompanyNameState(nameValue);
     if (onSaveName) onSaveName(nameValue);
+    try {
+      await api.updateCompanySettings({ name: nameValue });
+    } catch (e) {
+      console.warn('[Meso API] Error saving company name:', e);
+    }
     setEditingRow(null);
     setSaveToastVisible(true);
   };
 
-  const handleSaveAccountingMethod = () => {
+  const handleSaveAccountingMethod = async () => {
     setAccountingMethod(selectedMethod);
+    try {
+      await api.updateCompanySettings({ accountingMethod: selectedMethod.toUpperCase() });
+    } catch (e) {
+      console.warn('[Meso API] Error saving accounting method:', e);
+    }
     setEditingAdvancedCard(null);
     setSaveToastVisible(true);
   };
 
-  const handleSaveCurrency = () => {
-    setMulticurrencyEnabled(tempMulticurrencyToggle && tempMulticurrencyChecked);
+  const handleSaveCurrency = async () => {
+    const enabled = tempMulticurrencyToggle && tempMulticurrencyChecked;
+    setMulticurrencyEnabled(enabled);
+    try {
+      await api.updateCompanySettings({ multicurrencyEnabled: enabled });
+    } catch (e) {
+      console.warn('[Meso API] Error saving currency:', e);
+    }
     setEditingAdvancedCard(null);
     setSaveToastVisible(true);
   };
@@ -607,7 +667,7 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
                 {/* Email */}
                 <div className="h-[72px] px-6 flex items-center justify-between hover:bg-[#E8F0FB] transition-colors cursor-pointer">
                   <span className="text-[15px] font-semibold text-[#393A3D] w-[260px]">Email</span>
-                  <span className="text-[15px] text-[#393A3D] flex-1">noreply@quickbooks.com</span>
+                  <span className="text-[15px] text-[#393A3D] flex-1">noreply@meso.in</span>
                   <button className="text-[15px] font-medium text-[#0077C5] hover:underline cursor-pointer">Edit</button>
                 </div>
 
@@ -769,7 +829,7 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
                 </div>
                 <div className="h-[72px] px-6 flex items-center justify-between hover:bg-[#E8F0FB] transition-colors cursor-pointer">
                   <span className="text-[15px] font-semibold text-[#393A3D] w-[260px]">Customer-facing email</span>
-                  <span className="text-[15px] text-[#393A3D] flex-1">noreply@quickbooks.com</span>
+                  <span className="text-[15px] text-[#393A3D] flex-1">noreply@meso.in</span>
                   <button className="text-[15px] font-medium text-[#0077C5] hover:underline cursor-pointer">Edit</button>
                 </div>
                 <div className="h-[72px] px-6 flex items-center justify-between hover:bg-[#E8F0FB] transition-colors cursor-pointer">
@@ -789,7 +849,7 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
                 <div>
                   <h1 className="text-[32px] font-semibold text-[#393A3D] leading-tight">Usage limits</h1>
                   <p className="text-[15px] text-[#393A3D] max-w-[590px] leading-relaxed mt-2.5">
-                    Beginning April 2019, usage limits will go into effect and will depend on your plan. Your current plan is QuickBooks Online Plus. Upgrade to have greater capacity, or learn how to manage to these limits.
+                    Beginning April 2019, usage limits will go into effect and will depend on your plan. Your current plan is Meso Plus. Upgrade to have greater capacity, or learn how to manage to these limits.
                   </p>
                   <a 
                     href="#usage-limits" 
@@ -1088,10 +1148,10 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
                   </div>
                 </div>
 
-                {/* 3. Communications with Intuit Card (NO Edit button) */}
+                {/* 3. Communications with Meso Card (NO Edit button) */}
                 <div className="w-full bg-white border border-[#E3E5E8] rounded-[8px] overflow-hidden shadow-2xs">
                   <div className="h-[70px] px-6 border-b border-[#E3E5E8] flex items-center justify-between">
-                    <h3 className="text-[20px] font-semibold text-[#393A3D]">Communications with Intuit</h3>
+                    <h3 className="text-[20px] font-semibold text-[#393A3D]">Communications with Meso</h3>
                   </div>
                   <div className="px-6 py-5">
                     <a href="#marketing-preferences" onClick={(e) => e.preventDefault()} className="text-[15px] text-[#0077C5] hover:underline cursor-pointer">
@@ -1249,7 +1309,7 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
                             <ul className="list-disc pl-5 space-y-1 mt-1 text-[#393A3D]">
                               <li>You can't turn it off</li>
                               <li>You can't change your home currency</li>
-                              <li>Extra fields, columns and more are added to QuickBooks</li>
+                              <li>Extra fields, columns and more are added to Meso</li>
                               <li>Some features may no longer be available</li>
                             </ul>
                           </div>
@@ -1335,7 +1395,7 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
                     </div>
                     <div className="h-[60px] px-6 flex items-center">
                       <span className="w-[380px] text-[15px] text-[#393A3D]">Currency format</span>
-                      <span className="text-[15px] font-semibold text-[#393A3D]">$123,456.00</span>
+                      <span className="text-[15px] font-semibold text-[#393A3D]">₹123,456.00</span>
                     </div>
                     <div className="h-[60px] px-6 flex items-center">
                       <span className="w-[380px] text-[15px] text-[#393A3D]">Customer label</span>
@@ -1427,7 +1487,7 @@ export function AdditionalInfoModal({ isOpen, onClose }) {
 
         {/* Subtitle */}
         <p className="text-[14px] text-[#393A3D] mt-4">
-          You&apos;re viewing QuickBooks in <span className="font-semibold text-[#1F2937]">Accountant view</span>
+          You&apos;re viewing Meso in <span className="font-semibold text-[#1F2937]">Accountant view</span>
         </p>
 
         {/* Company ID line + Copy Button */}
@@ -1643,216 +1703,11 @@ export function CustomizeAppMenusModal({ isOpen, onClose }) {
 
 /* =========================================================
    6. JOURNAL ENTRY #1 MODAL
-   Matching frame_567
+/* =========================================================
+   6. JOURNAL ENTRY MODAL
+   Matching reference screenshot
 ========================================================= */
-export function JournalEntryModal({ isOpen, onClose }) {
-  // Hooks first, closed-check second. The early return used to sit above them,
-  // which made all three of these conditional.
-  const [date, setDate] = useState("10/20/2025");
-  const [journalNo, setJournalNo] = useState("1");
-  const [nextLineId, setNextLineId] = useState(9);
-  const [rows, setRows] = useState([
-    { id: 1, account: "", debit: 0, credit: 0, desc: "" },
-    { id: 2, account: "", debit: 0, credit: 0, desc: "" },
-    { id: 3, account: "", debit: 0, credit: 0, desc: "" },
-    { id: 4, account: "", debit: 0, credit: 0, desc: "" },
-    { id: 5, account: "", debit: 0, credit: 0, desc: "" },
-    { id: 6, account: "", debit: 0, credit: 0, desc: "" },
-    { id: 7, account: "", debit: 0, credit: 0, desc: "" },
-    { id: 8, account: "", debit: 0, credit: 0, desc: "" },
-  ]);
-
-  if (!isOpen) return null;
-
-  // Ids come from a monotonic counter rather than rows.length, so they can never
-  // collide after a line is cleared or removed. React keys built from array
-  // position make the wrong row keep a stale edit.
-  const addLine = () => {
-    setRows([...rows, { id: nextLineId, account: "", debit: 0, credit: 0, desc: "" }]);
-    setNextLineId(nextLineId + 1);
-  };
-
-  const clearLines = () => {
-    setRows(rows.map(r => ({ ...r, account: "", debit: 0, credit: 0, desc: "" })));
-  };
-
-  const totalDebits = rows.reduce((sum, r) => sum + (parseFloat(r.debit) || 0), 0);
-  const totalCredits = rows.reduce((sum, r) => sum + (parseFloat(r.credit) || 0), 0);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
-        {/* Modal Header */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <History size={16} className="text-gray-500" />
-            <h2 className="text-base font-bold text-gray-900">Journal Entry #1</h2>
-          </div>
-          <div className="flex items-center space-x-3 text-gray-500">
-            <button className="text-xs text-[#2ca01c] font-semibold hover:underline">Feedback</button>
-            <SettingsIcon size={16} className="cursor-pointer hover:text-gray-900" />
-            <HelpCircle size={16} className="cursor-pointer hover:text-gray-900" />
-            <button onClick={onClose} className="hover:text-gray-900"><X size={18} /></button>
-          </div>
-        </div>
-
-        {/* Modal Content */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Journal date</label>
-              <div className="flex items-center border border-green-600 rounded p-1.5 bg-white ring-1 ring-green-600">
-                <input 
-                  type="text" 
-                  value={date} 
-                  onChange={(e) => setDate(e.target.value)} 
-                  className="w-full text-xs outline-none" 
-                />
-                <Calendar size={14} className="text-gray-500" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Journal no.</label>
-              <input 
-                type="text" 
-                value={journalNo} 
-                onChange={(e) => setJournalNo(e.target.value)} 
-                className="w-full text-xs border border-gray-300 rounded p-1.5 focus:border-[#2ca01c] focus:outline-none" 
-              />
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="border border-gray-200 rounded-xl overflow-hidden text-xs">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-200">
-                <tr>
-                  <th className="p-2 w-8">#</th>
-                  <th className="p-2">ACCOUNT</th>
-                  <th className="p-2 text-right">DEBITS</th>
-                  <th className="p-2 text-right">CREDITS</th>
-                  <th className="p-2">DESCRIPTION</th>
-                  <th className="p-2 w-12"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {rows.map((row, idx) => (
-                  <tr key={row.id} className="hover:bg-gray-50">
-                    <td className="p-2 text-gray-400 text-center">{idx + 1}</td>
-                    <td className="p-2">
-                      <input 
-                        type="text" 
-                        placeholder="Select an account" 
-                        className="w-full border-b border-transparent focus:border-[#2ca01c] outline-none bg-transparent" 
-                      />
-                    </td>
-                    <td className="p-2 text-right">
-                      <input 
-                        type="number" 
-                        placeholder="0.00" 
-                        className="w-24 text-right border-b border-transparent focus:border-[#2ca01c] outline-none bg-transparent" 
-                        onChange={(e) => {
-                          const updated = [...rows];
-                          updated[idx].debit = e.target.value;
-                          setRows(updated);
-                        }}
-                      />
-                    </td>
-                    <td className="p-2 text-right">
-                      <input 
-                        type="number" 
-                        placeholder="0.00" 
-                        className="w-24 text-right border-b border-transparent focus:border-[#2ca01c] outline-none bg-transparent" 
-                        onChange={(e) => {
-                          const updated = [...rows];
-                          updated[idx].credit = e.target.value;
-                          setRows(updated);
-                        }}
-                      />
-                    </td>
-                    <td className="p-2">
-                      <input 
-                        type="text" 
-                        placeholder="Add description" 
-                        className="w-full border-b border-transparent focus:border-[#2ca01c] outline-none bg-transparent text-gray-600" 
-                      />
-                    </td>
-                    <td className="p-2 text-center text-gray-300 hover:text-red-500 cursor-pointer">
-                      <Trash2 size={13} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-gray-100 font-bold text-gray-900 border-t border-gray-200">
-                <tr>
-                  <td colSpan={2} className="p-2 text-right">Total</td>
-                  <td className="p-2 text-right">${totalDebits.toFixed(2)}</td>
-                  <td className="p-2 text-right">${totalCredits.toFixed(2)}</td>
-                  <td colSpan={2}></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <button 
-              onClick={addLine}
-              className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 font-medium"
-            >
-              Add lines
-            </button>
-            <button 
-              onClick={clearLines}
-              className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 font-medium text-gray-600"
-            >
-              Clear all lines
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200">
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Memo</label>
-              <textarea rows={3} className="w-full text-xs border border-gray-300 rounded p-2 focus:border-[#2ca01c] outline-none" />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">Attachments</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center bg-gray-50 hover:bg-gray-100 cursor-pointer">
-                <Paperclip size={18} className="mx-auto text-gray-400 mb-1" />
-                <div className="text-xs font-bold text-[#0077c5]">Add attachment</div>
-                <div className="text-[10px] text-gray-400">Max file size: 20 MB</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-          <button onClick={onClose} className="px-4 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200 rounded-full">
-            Cancel
-          </button>
-          <div className="flex items-center space-x-2">
-            <button className="px-4 py-1.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-full">
-              Save and new
-            </button>
-            <button onClick={onClose} className="px-5 py-1.5 text-xs font-bold text-white bg-[#108000] hover:bg-green-800 rounded-full shadow-xs">
-              Save and close
-            </button>
-            {onReview && (
-              <button
-                onClick={() => onReview()}
-                className="px-5 py-1.5 text-xs font-bold text-white bg-[#0077c5] hover:bg-blue-700 rounded-full shadow-xs"
-              >
-                Review and send
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+export { default as JournalEntryModal } from './JournalEntryModal';
 
 /* =========================================================
    7. SETUP / LAY THE GROUNDWORK DRAWER

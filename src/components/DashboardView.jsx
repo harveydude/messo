@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, Sliders, Eye, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react';
 import PillNav from './PillNav';
 import FeedCard from './FeedCard';
@@ -13,7 +13,8 @@ import AddWidgetsPlaceholderCard from './AddWidgetsPlaceholderCard';
 import AddWidgetsDrawer from './AddWidgetsDrawer';
 import WidgetEditWrapper from './WidgetEditWrapper';
 import PrivacyMask from './PrivacyMask';
-import dashboardData from '../data/dashboard.json';
+import defaultDashboardData from '../data/dashboard.json';
+import api from '../api/client';
 
 export default function DashboardView({ 
   onNavigate, 
@@ -21,8 +22,59 @@ export default function DashboardView({
   customizeMode: externalCustomizeMode,
   setCustomizeMode: externalSetCustomizeMode
 }) {
+  const [dashboardData, setDashboardData] = useState(defaultDashboardData);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchDashboard = () => {
+      Promise.allSettled([
+        api.getDashboardMetrics(),
+        api.getBusinessFeed()
+      ]).then(([metricsRes, feedRes]) => {
+        if (!active) return;
+        setDashboardData((prev) => {
+          let updated = { ...prev };
+          if (metricsRes.status === 'fulfilled' && metricsRes.value?.success) {
+            const val = metricsRes.value;
+            const m = val.metrics || {};
+            updated = {
+              ...updated,
+              pnl: { ...updated.pnl, ...m.pnl },
+              bank: { ...updated.bank, ...m.bank },
+              funnel: { ...updated.funnel, ...m.funnel },
+              accountsPayable: { ...updated.accountsPayable, ...m.accountsPayable },
+              cashflow: { ...updated.cashflow, ...m.cashflow },
+              expenses: { ...updated.expenses, ...(m.expenses || val.expenses) },
+            };
+          }
+          if (feedRes.status === 'fulfilled' && feedRes.value?.success && feedRes.value.items?.length > 0) {
+            updated.feed = feedRes.value.items.map(it => ({
+              id: it.id,
+              title: it.category === 'OVERDUE_INVOICE' ? 'Overdue Invoices' : it.category === 'CASH_FLOW_ALERT' ? 'Cash Runway' : 'Bank Feed Review',
+              body: it.summary_text,
+              link: it.action_label,
+              border: it.category === 'OVERDUE_INVOICE' ? 'gradient-blue' : 'gradient-green',
+              icon: it.category === 'OVERDUE_INVOICE' ? 'file-text' : 'receipt'
+            }));
+          }
+          return updated;
+        });
+      }).catch(() => {});
+    };
+
+    fetchDashboard();
+    window.addEventListener('qbo:data-mutated', fetchDashboard);
+
+    return () => {
+      active = false;
+      window.removeEventListener('qbo:data-mutated', fetchDashboard);
+    };
+  }, []);
+
   // Persisted privacy state from localStorage
   const [privacyEnabled, setPrivacyEnabled] = useState(() => {
+
     try {
       const saved = localStorage.getItem('qb_dashboard_privacy');
       return saved !== null ? JSON.parse(saved) : false;

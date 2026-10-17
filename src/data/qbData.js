@@ -1,11 +1,11 @@
-export const INITIAL_BANK_TRANSACTIONS = [
+﻿export const INITIAL_BANK_TRANSACTIONS = [
   { id: 1, date: "11/24/2025", description: "Books By Bessie", payee: "", category: "Uncategorized Income", spent: null, received: 55.00, matchStatus: null, action: "Add" },
   { id: 2, date: "10/25/2025", description: "A Rental", payee: "Cool Cars", category: "Uncategorized Income", spent: null, received: 200.00, matchStatus: null, action: "Add", memo: "A1 RENTAL BACKHOE DEPOSIT REFUND" },
   { id: 3, date: "10/25/2025", description: "A Rental", payee: "", category: "Uncategorized Expense", spent: 1200.00, received: null, matchStatus: null, action: "Add" },
   { id: 4, date: "10/02/2025", description: "A Rental", payee: "", category: "Uncategorized Expense", spent: 800.00, received: null, matchStatus: null, action: "Add" },
   { id: 5, date: "09/29/2025", description: "Pam Seitz", payee: "Pam Seitz", category: "Pam Seitz", spent: 75.00, received: null, matchStatus: "2 matches found", action: "View" },
-  { id: 6, date: "09/29/2025", description: "", payee: "", category: "Deposit", spent: null, received: 868.15, matchStatus: "1 match found", matchDetail: "Deposit 09/29/2025 $868.15", action: "Match" },
-  { id: 7, date: "09/29/2025", description: "Hicks Hardware", payee: "Hicks Hardware", category: "Check 75", spent: 228.75, received: null, matchStatus: "1 match found", matchDetail: "Check 75 09/29/2025 -$228.75 Hicks Hardware", action: "Match" },
+  { id: 6, date: "09/29/2025", description: "", payee: "", category: "Deposit", spent: null, received: 868.15, matchStatus: "1 match found", matchDetail: "Deposit 09/29/2025 ₹868.15", action: "Match" },
+  { id: 7, date: "09/29/2025", description: "Hicks Hardware", payee: "Hicks Hardware", category: "Check 75", spent: 228.75, received: null, matchStatus: "1 match found", matchDetail: "Check 75 09/29/2025 -₹228.75 Hicks Hardware", action: "Match" },
   { id: 8, date: "09/28/2025", description: "Pg E", payee: "", category: "Bill Payment 6", spent: 114.09, received: null, matchStatus: "1 match found", action: "Match" },
   { id: 9, date: "09/28/2025", description: "", payee: "", category: "Transfer", spent: null, received: 408.00, matchStatus: null, action: "Match" },
   { id: 10, date: "09/27/2025", description: "Travis Waldron", payee: "", category: "Payment", spent: 103.55, received: null, matchStatus: null, action: "Match" },

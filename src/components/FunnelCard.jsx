@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 
 /**
  * Sales funnel.
@@ -20,7 +20,19 @@ export default function FunnelCard({
   privacyEnabled = false,
   onRequestPayment
 }) {
-  const [period] = useState(funnelData?.period || 'This period');
+  const [selectedPeriod, setSelectedPeriod] = useState(funnelData?.period || 'This period');
+  const [showPeriodMenu, setShowPeriodMenu] = useState(false);
+
+  const periodRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (periodRef.current && !periodRef.current.contains(e.target)) setShowPeriodMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const formatAmount = (val) => {
     if (privacyEnabled) return "••••••";
@@ -28,6 +40,7 @@ export default function FunnelCard({
   };
 
   const stages = funnelData?.stages || [];
+  const periodOptions = ['This Week', 'This Month', 'This Quarter', 'This Year', 'Last Year'];
 
   return (
     <div className="bg-white border border-[#C7CBCE] rounded-[8px] p-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-between">
@@ -36,9 +49,29 @@ export default function FunnelCard({
         <h3 className="text-[13px] font-semibold text-[#393A3D] uppercase tracking-[0.08em]">
           SALES &amp; GET PAID FUNNEL
         </h3>
-        <div className="flex items-center space-x-1 text-[14px] text-[#393A3D] font-medium">
-          <span>{period}</span>
-          <ChevronDown size={14} />
+        {/* Period selector dropdown */}
+        <div className="relative" ref={periodRef}>
+          <button
+            onClick={() => setShowPeriodMenu(!showPeriodMenu)}
+            className="flex items-center space-x-1 text-[14px] text-[#393A3D] font-medium hover:text-[#0077C5] cursor-pointer"
+          >
+            <span>{selectedPeriod}</span>
+            <ChevronDown size={14} />
+          </button>
+          {showPeriodMenu && (
+            <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-[#D5D8DC] rounded-[6px] shadow-lg z-50 py-1">
+              {periodOptions.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => { setSelectedPeriod(opt); setShowPeriodMenu(false); }}
+                  className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left flex items-center justify-between"
+                >
+                  <span>{opt}</span>
+                  {selectedPeriod === opt && <Check size={14} className="text-[#2CA01C]" />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

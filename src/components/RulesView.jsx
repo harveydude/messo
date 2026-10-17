@@ -71,7 +71,7 @@ export default function RulesView({ onNavigate }) {
     'Invoices',
     'Sales orders',
     'Sales channels',
-    'QuickBooks payouts',
+    'Meso payouts',
     'Channel payouts',
     'Products & services'
   ];

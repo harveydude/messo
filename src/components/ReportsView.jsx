@@ -1,336 +1,469 @@
-import React, { useState, useMemo } from 'react';
-import { Star, MoreVertical, ChevronDown, ChevronRight, FileText, Search, Printer, X } from 'lucide-react';
-import { useStore, useLedger } from '../store';
-import { formatMoney } from '../money';
-import { REPORTS, REPORT_NAMES, runReport } from '../reports';
+import React, { useState, useEffect, useRef } from 'react';
+import StandardReportsHub from './StandardReportsHub';
+import ProfitLossReportView from './ProfitLossReportView';
+import BalanceSheetReportView from './BalanceSheetReportView';
+import CashFlowReportView from './CashFlowReportView';
+import BankTransactionsView from './BankTransactionsView';
+import ConnectAccountModal from './ConnectAccountModal';
+import CustomizeAppMenusModal from './CustomizeAppMenusModal';
+import { Layers, MousePointer, Eye, ArrowDown, ChevronRight, LayoutList } from 'lucide-react';
 
-/**
- * The Reports screen.
- *
- * It used to list thirty-one report names and produce three. The other
- * twenty-eight were text with a click handler that did nothing -- a menu that
- * spends your trust on labels and then answers none of them.
- *
- * Every name now maps to a function over the store in `src/reports.js`, and the
- * reader below renders any of them from one shape: columns and rows. Adding a
- * report means adding a function, not a screen.
- *
- * A name with no function still renders, but it says plainly that it has no
- * definition rather than pretending.
- */
-export default function ReportsView({ onNavigate }) {
-  const { state } = useStore();
-  const ledger = useLedger();
-
-  const [openGroups, setOpenGroups] = useState({ 'Business overview': true, 'Who owes you': true });
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState(null);
-  const [favorites, setFavorites] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('messo_favorite_reports') || '["Balance Sheet","Profit and Loss","Open Invoices"]');
-    } catch {
-      return ['Balance Sheet', 'Profit and Loss', 'Open Invoices'];
-    }
+export default function ReportsView({ onNavigate, initialReport = null }) {
+  // Current active single view ('hub', 'pnl', 'balance_sheet', 'cash_flows', 'banking', 'connect_bank', 'customize_menus')
+  const [activeReport, setActiveReport] = useState(() => {
+    if (initialReport === 'Profit and Loss') return 'pnl';
+    if (initialReport === 'Balance Sheet') return 'balance_sheet';
+    if (initialReport === 'Statement of Cash Flows') return 'cash_flows';
+    return 'hub';
   });
 
-  // The report engine reads the ledger off the state so that it stays pure and
-  // every report sees the same derived figures as every screen.
-  const ledgerState = useMemo(() => ({ ...state, __ledger: ledger }), [state, ledger]);
+  // View Mode: 'continuous' (connected long scrollable page of all 8 frames) or 'interactive' (standard Meso clickable flow)
+  const [viewMode, setViewMode] = useState('continuous');
 
-  const grouped = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const names = q ? REPORT_NAMES.filter((n) => n.toLowerCase().includes(q)) : REPORT_NAMES;
-    const out = {};
-    for (const name of names) {
-      const group = REPORTS[name].group;
-      (out[group] ||= []).push(name);
+  // Refs for smooth scrolling across all 8 connected frames
+  const frame1Ref = useRef(null);
+  const frame2Ref = useRef(null);
+  const frame3Ref = useRef(null);
+  const frame4Ref = useRef(null);
+  const frame5Ref = useRef(null);
+  const frame6Ref = useRef(null);
+  const frame7Ref = useRef(null);
+  const frame8Ref = useRef(null);
+
+  const scrollToFrame = (ref) => {
+    if (viewMode !== 'continuous') {
+      setViewMode('continuous');
+      setTimeout(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      ref.current?.scrollIntoView({ behavior: 'smooth' });
     }
-    return out;
-  }, [search]);
-
-  const result = useMemo(
-    () => (selected ? runReport(selected, ledgerState) : null),
-    [selected, ledgerState]
-  );
-
-  const toggleFavorite = (name) => {
-    const next = favorites.includes(name)
-      ? favorites.filter((n) => n !== name)
-      : [...favorites, name];
-    setFavorites(next);
-    try {
-      localStorage.setItem('messo_favorite_reports', JSON.stringify(next));
-    } catch { /* storage full or blocked: favourites are a convenience, not data */ }
   };
 
-  const favoriteRows = favorites.filter((n) => REPORT_NAMES.includes(n));
+  const handleSelectReport = (name) => {
+    if (name === 'Profit and Loss') {
+      if (viewMode === 'continuous') {
+        frame2Ref.current?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        setActiveReport('pnl');
+      }
+    } else if (name === 'Balance Sheet') {
+      if (viewMode === 'continuous') {
+        frame3Ref.current?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        setActiveReport('balance_sheet');
+      }
+    } else if (name === 'Statement of Cash Flows') {
+      if (viewMode === 'continuous') {
+        frame4Ref.current?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        setActiveReport('cash_flows');
+      }
+    } else {
+      if (viewMode === 'continuous') {
+        frame2Ref.current?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        setActiveReport('pnl');
+      }
+    }
+  };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Reports</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {REPORT_NAMES.length} reports. Every figure comes from your transactions.
-          </p>
-        </div>
-        <button
-          onClick={() => onNavigate?.('custom_reports')}
-          className="text-xs font-semibold text-[#0077c5] hover:underline"
-        >
-          Custom reports
-        </button>
-      </div>
+    <div className="w-full min-h-screen bg-[#f4f5f8] flex flex-col">
+      {/* Connected Flow / Mode Switcher Top Bar */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-6 py-2 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center space-x-3">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+            View Experience:
+          </span>
 
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="relative max-w-sm flex-1">
-          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search reports"
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2ca01c]"
-          />
-        </div>
-        <Printer size={15} className="text-gray-500 hover:text-gray-900 cursor-pointer" />
-      </div>
-
-      {/* Reader. Replaces the list while a report is open, the way a real one does. */}
-      {selected && (
-        <ReportReader
-          name={selected}
-          result={result}
-          favorite={favorites.includes(selected)}
-          onToggleFavorite={() => toggleFavorite(selected)}
-          onClose={() => setSelected(null)}
-        />
-      )}
-
-      {!selected && (
-        <>
-          {favoriteRows.length > 0 && (
-            <Group
-              title="Favorites"
-              open={openGroups.Favorites ?? true}
-              onToggle={() => setOpenGroups((g) => ({ ...g, Favorites: !(g.Favorites ?? true) }))}
+          <div className="inline-flex rounded-full border border-gray-300 p-0.5 bg-gray-50 text-xs">
+            <button
+              onClick={() => setViewMode('continuous')}
+              className={`px-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+                viewMode === 'continuous' 
+                  ? 'bg-[#393a3d] text-white shadow-xs' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
-              {favoriteRows.map((name) => (
-                <ReportRow
-                  key={name}
-                  name={name}
-                  favorite
-                  onOpen={() => setSelected(name)}
-                  onToggleFavorite={() => toggleFavorite(name)}
-                />
-              ))}
-            </Group>
-          )}
-
-          {Object.entries(grouped).map(([group, names]) => (
-            <Group
-              key={group}
-              title={group}
-              open={openGroups[group] ?? true}
-              onToggle={() => setOpenGroups((g) => ({ ...g, [group]: !(g[group] ?? true) }))}
+              <Layers size={13} />
+              <span>Connected Long Page (All 8 Frames Scrollable)</span>
+            </button>
+            <button
+              onClick={() => setViewMode('interactive')}
+              className={`px-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
+                viewMode === 'interactive' 
+                  ? 'bg-[#393a3d] text-white shadow-xs' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
             >
-              {names.map((name) => (
-                <ReportRow
-                  key={name}
-                  name={name}
-                  favorite={favorites.includes(name)}
-                  onOpen={() => setSelected(name)}
-                  onToggleFavorite={() => toggleFavorite(name)}
-                />
-              ))}
-            </Group>
-          ))}
-
-          {REPORT_NAMES.length === 0 && (
-            <p className="text-sm text-gray-500 py-10 text-center">No reports match "{search}".</p>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-/** One collapsible section. */
-function Group({ title, open, onToggle, children }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-xs">
-      <button
-        onClick={onToggle}
-        className="w-full p-4 flex items-center space-x-2 text-sm font-bold text-gray-900 bg-gray-50/70 border-b border-gray-200"
-      >
-        {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        <span>{title}</span>
-        <span className="text-xs font-normal text-gray-500 ml-1">
-          {Array.isArray(children) ? children.length : 1} report{Array.isArray(children) && children.length === 1 ? '' : 's'}
-        </span>
-      </button>
-      {open && (
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1.5">
-          {children}
+              <MousePointer size={13} />
+              <span>Standard Click Navigation</span>
+            </button>
+          </div>
         </div>
-      )}
-    </div>
-  );
-}
 
-/**
- * One report name. It is a link, not a button that may do nothing -- every name
- * here has a function behind it, and clicking always opens a report.
- */
-function ReportRow({ name, onOpen, onToggleFavorite, favorite }) {
-  return (
-    <div className="flex items-center justify-between p-1.5 hover:bg-gray-50 rounded transition group">
-      <button
-        onClick={onOpen}
-        className="flex items-center space-x-2 text-xs text-[#0077c5] font-semibold hover:underline text-left min-w-0"
-      >
-        <FileText size={14} className="text-[#0077c5] shrink-0" />
-        <span className="truncate">{name}</span>
-      </button>
-      <div className="flex items-center space-x-2 text-gray-300 shrink-0">
-        <button
-          onClick={onToggleFavorite}
-          title={favorite ? 'Remove from favorites' : 'Add to favorites'}
-          className="cursor-pointer"
-        >
-          <Star
-            size={13}
-            className={favorite ? 'fill-green-600 text-green-600' : 'hover:text-green-600'}
-          />
-        </button>
-        <MoreVertical size={13} className="hover:text-gray-600 cursor-pointer" />
-      </div>
-    </div>
-  );
-}
-
-/**
- * The report itself.
- *
- * Columns come from the report's own definition, so a report with three columns
- * gets three columns and one with six gets six. No card grid -- a report is a
- * table, and a table wrapped in rounded tiles stops reading as a table.
- */
-function ReportReader({ name, result, favorite, onToggleFavorite, onClose }) {
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50/70">
-        <div className="flex items-center gap-2 min-w-0">
-          <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded" title="Back to reports">
-            <X size={15} />
+        {/* Quick Frame Anchors for smooth sliding/scrolling across all 8 frames */}
+        <div className="flex items-center space-x-1.5 text-xs text-gray-600 overflow-x-auto py-1">
+          <span className="text-[11px] text-gray-400 font-medium mr-1">Jump to Frame:</span>
+          <button
+            onClick={() => {
+              if (viewMode !== 'continuous') setActiveReport('hub');
+              else scrollToFrame(frame1Ref);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded text-gray-800 font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            1. Reports Hub
           </button>
-          <h2 className="text-sm font-bold text-gray-900 truncate">{name}</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={onToggleFavorite} className="cursor-pointer" title="Favorite">
-            <Star size={14} className={favorite ? 'fill-green-600 text-green-600' : 'text-gray-400'} />
+          <button
+            onClick={() => {
+              if (viewMode !== 'continuous') setActiveReport('pnl');
+              else scrollToFrame(frame2Ref);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded text-gray-800 font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            2. Profit & Loss
           </button>
-          <Printer size={15} className="text-gray-500 hover:text-gray-900 cursor-pointer" />
+          <button
+            onClick={() => {
+              if (viewMode !== 'continuous') setActiveReport('balance_sheet');
+              else scrollToFrame(frame3Ref);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded text-gray-800 font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            3. Balance Sheet
+          </button>
+          <button
+            onClick={() => {
+              if (viewMode !== 'continuous') setActiveReport('cash_flows');
+              else scrollToFrame(frame4Ref);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded text-gray-800 font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            4. Cash Flows
+          </button>
+          <button
+            onClick={() => {
+              if (viewMode !== 'continuous') setActiveReport('banking');
+              else scrollToFrame(frame5Ref);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded text-gray-800 font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            5. Bank Accounts
+          </button>
+          <button
+            onClick={() => {
+              if (viewMode !== 'continuous') setActiveReport('banking');
+              else scrollToFrame(frame6Ref);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded text-gray-800 font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            6. Bank Table
+          </button>
+          <button
+            onClick={() => {
+              if (viewMode !== 'continuous') setActiveReport('connect_bank');
+              else scrollToFrame(frame7Ref);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded text-gray-800 font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            7. Bank Registration
+          </button>
+          <button
+            onClick={() => {
+              if (viewMode !== 'continuous') setActiveReport('customize_menus');
+              else scrollToFrame(frame8Ref);
+            }}
+            className="px-2.5 py-1 bg-white hover:bg-gray-100 border border-gray-200 rounded text-gray-800 font-medium transition cursor-pointer whitespace-nowrap"
+          >
+            8. Customize Menus
+          </button>
         </div>
-      </div>
+      </header>
 
-      {!result ? (
-        <p className="p-8 text-center text-sm text-gray-500">
-          This report has no definition yet.
-        </p>
+      {/* CONTINUOUS LONG PAGE VIEW MODE */}
+      {viewMode === 'continuous' ? (
+        <div className="flex-1 w-full space-y-12">
+          {/* Frame 1: Standard Reports Hub */}
+          <section ref={frame1Ref} className="scroll-mt-14 relative">
+            <div className="bg-gray-200/80 px-6 py-1.5 border-b border-gray-300 flex items-center justify-between text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+              <span>Frame 1: Standard Reports Hub</span>
+              <span className="text-gray-500 font-normal lowercase">Click any report below or scroll down</span>
+            </div>
+            <StandardReportsHub 
+              onSelectReport={handleSelectReport}
+              onNavigateSub={(sub) => onNavigate?.(sub)}
+            />
+          </section>
+
+          {/* Smooth Divider Banner */}
+          <div className="px-6 py-3 bg-[#0077c5] text-white flex items-center justify-between shadow-xs">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xs uppercase tracking-wider">Connected Flow:</span>
+              <span className="text-xs">From Standard Reports Hub ➔ Profit & Loss Statement (in ₹)</span>
+            </div>
+            <button 
+              onClick={() => scrollToFrame(frame2Ref)}
+              className="flex items-center space-x-1 text-xs underline font-semibold cursor-pointer"
+            >
+              <span>Scroll to Profit & Loss</span>
+              <ArrowDown size={14} />
+            </button>
+          </div>
+
+          {/* Frame 2: Profit and Loss Report (Screenshot 1) */}
+          <section ref={frame2Ref} className="scroll-mt-14 relative border-t border-gray-300">
+            <div className="bg-gray-200/80 px-6 py-1.5 border-b border-gray-300 flex items-center justify-between text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+              <span>Frame 2: Profit and Loss Report (in ₹)</span>
+              <button 
+                onClick={() => scrollToFrame(frame1Ref)} 
+                className="text-[#0077c5] hover:underline font-semibold capitalize cursor-pointer"
+              >
+                ↑ Back to standard reports hub
+              </button>
+            </div>
+            <ProfitLossReportView 
+              isEmbedded={true}
+              onBack={() => scrollToFrame(frame1Ref)}
+            />
+          </section>
+
+          {/* Smooth Divider Banner */}
+          <div className="px-6 py-3 bg-[#107c41] text-white flex items-center justify-between shadow-xs">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xs uppercase tracking-wider">Connected Flow:</span>
+              <span className="text-xs">From Profit & Loss ➔ Balance Sheet Report (in ₹)</span>
+            </div>
+            <button 
+              onClick={() => scrollToFrame(frame3Ref)}
+              className="flex items-center space-x-1 text-xs underline font-semibold cursor-pointer"
+            >
+              <span>Scroll to Balance Sheet</span>
+              <ArrowDown size={14} />
+            </button>
+          </div>
+
+          {/* Frame 3: Balance Sheet Report (Screenshot 3) */}
+          <section ref={frame3Ref} className="scroll-mt-14 relative border-t border-gray-300">
+            <div className="bg-gray-200/80 px-6 py-1.5 border-b border-gray-300 flex items-center justify-between text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+              <span>Frame 3: Balance Sheet Report (in ₹)</span>
+              <button 
+                onClick={() => scrollToFrame(frame1Ref)} 
+                className="text-[#0077c5] hover:underline font-semibold capitalize cursor-pointer"
+              >
+                ↑ Back to standard reports hub
+              </button>
+            </div>
+            <BalanceSheetReportView 
+              isEmbedded={true}
+              onBack={() => scrollToFrame(frame1Ref)}
+            />
+          </section>
+
+          {/* Smooth Divider Banner */}
+          <div className="px-6 py-3 bg-[#393a3d] text-white flex items-center justify-between shadow-xs">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xs uppercase tracking-wider">Connected Flow:</span>
+              <span className="text-xs">From Balance Sheet ➔ Statement of Cash Flows (in ₹)</span>
+            </div>
+            <button 
+              onClick={() => scrollToFrame(frame4Ref)}
+              className="flex items-center space-x-1 text-xs underline font-semibold cursor-pointer"
+            >
+              <span>Scroll to Statement of Cash Flows</span>
+              <ArrowDown size={14} />
+            </button>
+          </div>
+
+          {/* Frame 4: Statement of Cash Flows (Screenshot 4) */}
+          <section ref={frame4Ref} className="scroll-mt-14 relative border-t border-gray-300">
+            <div className="bg-gray-200/80 px-6 py-1.5 border-b border-gray-300 flex items-center justify-between text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+              <span>Frame 4: Statement of Cash Flows (in ₹)</span>
+              <button 
+                onClick={() => scrollToFrame(frame1Ref)} 
+                className="text-[#0077c5] hover:underline font-semibold capitalize cursor-pointer"
+              >
+                ↑ Back to standard reports hub
+              </button>
+            </div>
+            <CashFlowReportView 
+              isEmbedded={true}
+              onBack={() => scrollToFrame(frame1Ref)}
+            />
+          </section>
+
+          {/* Smooth Divider Banner */}
+          <div className="px-6 py-3 bg-[#0077c5] text-white flex items-center justify-between shadow-xs">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xs uppercase tracking-wider">Connected Flow:</span>
+              <span className="text-xs">From Cash Flows & My Apps &gt; Accounting ➔ Bank Transactions Page</span>
+            </div>
+            <button 
+              onClick={() => scrollToFrame(frame5Ref)}
+              className="flex items-center space-x-1 text-xs underline font-semibold cursor-pointer"
+            >
+              <span>Scroll to Bank Transactions</span>
+              <ArrowDown size={14} />
+            </button>
+          </div>
+
+          {/* Frame 5: Bank Transactions Cards & Overview (Screenshot af6fd77e) */}
+          <section ref={frame5Ref} className="scroll-mt-14 relative border-t border-gray-300">
+            <div className="bg-gray-200/80 px-6 py-1.5 border-b border-gray-300 flex items-center justify-between text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+              <span>Frame 5: Bank Transactions — Account Cards & Overview (in ₹)</span>
+              <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => scrollToFrame(frame6Ref)} 
+                  className="text-[#0077c5] hover:underline font-semibold cursor-pointer"
+                >
+                  Jump to Table ↓
+                </button>
+                <button 
+                  onClick={() => scrollToFrame(frame1Ref)} 
+                  className="text-gray-600 hover:underline font-semibold cursor-pointer"
+                >
+                  ↑ Top
+                </button>
+              </div>
+            </div>
+            <BankTransactionsView 
+              isEmbedded={true}
+              onNavigate={onNavigate}
+              tableRef={frame6Ref}
+            />
+          </section>
+
+          {/* Smooth Divider Banner */}
+          <div className="px-6 py-3 bg-[#2ca01c] text-white flex items-center justify-between shadow-xs">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xs uppercase tracking-wider">Connected Flow:</span>
+              <span className="text-xs">From Bank Transactions ➔ Indian Bank Account Registration Flow</span>
+            </div>
+            <button 
+              onClick={() => scrollToFrame(frame7Ref)}
+              className="flex items-center space-x-1 text-xs underline font-semibold cursor-pointer"
+            >
+              <span>Scroll to Bank Registration</span>
+              <ArrowDown size={14} />
+            </button>
+          </div>
+
+          {/* Frame 7: Indian Bank Registration Flow (Screenshot 750adeea) */}
+          <section ref={frame7Ref} className="scroll-mt-14 relative border-t border-gray-300 py-4 bg-[#f4f5f8]">
+            <div className="bg-gray-200/80 px-6 py-1.5 border-b border-gray-300 flex items-center justify-between text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-4">
+              <span>Frame 7: Indian Bank Account Registration Flow (Connect an Account)</span>
+              <button 
+                onClick={() => scrollToFrame(frame5Ref)} 
+                className="text-[#0077c5] hover:underline font-semibold cursor-pointer"
+              >
+                ↑ Back to Bank Transactions
+              </button>
+            </div>
+            <ConnectAccountModal
+              isOpen={true}
+              isEmbedded={true}
+              onClose={() => scrollToFrame(frame5Ref)}
+              onAccountConnected={(bank) => {
+                alert(`Account registered: ${bank.name} is now connected to Meso feeds!`);
+                scrollToFrame(frame5Ref);
+              }}
+            />
+          </section>
+
+          {/* Smooth Divider Banner */}
+          <div className="px-6 py-3 bg-[#393a3d] text-white flex items-center justify-between shadow-xs">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xs uppercase tracking-wider">Connected Flow:</span>
+              <span className="text-xs">From Bank Registration ➔ Customize App Menus & Reorder Navigation</span>
+            </div>
+            <button 
+              onClick={() => scrollToFrame(frame8Ref)}
+              className="flex items-center space-x-1 text-xs underline font-semibold cursor-pointer"
+            >
+              <span>Scroll to Customize Menus</span>
+              <ArrowDown size={14} />
+            </button>
+          </div>
+
+          {/* Frame 8: Customize App Menus (Screenshot 8f5a941a) */}
+          <section ref={frame8Ref} className="scroll-mt-14 relative border-t border-gray-300 py-4 bg-[#f4f5f8]">
+            <div className="bg-gray-200/80 px-6 py-1.5 border-b border-gray-300 flex items-center justify-between text-[11px] font-bold text-gray-600 uppercase tracking-wider mb-4">
+              <span>Frame 8: Customize App Menus (Reorder & Pin Apps)</span>
+              <button 
+                onClick={() => scrollToFrame(frame1Ref)} 
+                className="text-[#0077c5] hover:underline font-semibold cursor-pointer"
+              >
+                ↑ Back to Top
+              </button>
+            </div>
+            <CustomizeAppMenusModal
+              isOpen={true}
+              isEmbedded={true}
+              onClose={() => scrollToFrame(frame1Ref)}
+              onSave={(apps) => {
+                alert("App menu preferences saved successfully in Meso!");
+              }}
+            />
+          </section>
+        </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="bg-gray-50 text-gray-500 font-semibold border-b border-gray-200">
-              <tr>
-                {result.columns.map((col) => (
-                  <th key={col.key} className={`p-2.5 ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
-                    {col.header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {result.rows.map((row, i) => {
-                if (row.section) {
-                  return (
-                    <tr key={i} className="bg-gray-50/50">
-                      <td colSpan={result.columns.length} className={`px-2.5 py-1.5 font-bold text-gray-700 ${row.total ? 'border-t border-gray-300' : ''}`}>
-                        {row.section}
-                      </td>
-                    </tr>
-                  );
-                }
-                return (
-                  <tr key={i} className={`hover:bg-gray-50 ${row.total ? 'font-bold bg-gray-50/60' : ''} ${row.warn ? 'text-red-700' : ''}`}>
-                    {result.columns.map((col, ci) => (
-                      <td
-                        key={col.key}
-                        className={`px-2.5 py-1.5 tabular-nums ${col.align === 'right' ? 'text-right' : 'text-left'} ${ci === 0 ? 'text-gray-800' : ''}`}
-                      >
-                        {formatCell(row[col.key], row)}
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
-              {result.rows.length === 0 && (
-                <tr>
-                  <td colSpan={result.columns.length} className="p-8 text-center text-gray-500">
-                    Nothing to report yet. Record a transaction and this fills in.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-            {result.totalRow && (
-              <tfoot>
-                <tr className="border-t-2 border-gray-300 font-bold text-gray-900">
-                  <td className="px-2.5 py-2" colSpan={result.columns.length - 1}>
-                    {result.totalRow.label}
-                  </td>
-                  <td className="px-2.5 py-2 text-right tabular-nums">
-                    {result.totalRow.hours
-                      ? result.totalRow.value.toFixed(2)
-                      : formatMoney(result.totalRow.value)}
-                  </td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-      )}
+        /* STANDARD INTERACTIVE VIEW MODE */
+        <div className="flex-1 w-full">
+          {activeReport === 'hub' && (
+            <StandardReportsHub 
+              onSelectReport={handleSelectReport}
+              onNavigateSub={(sub) => onNavigate?.(sub)}
+            />
+          )}
 
-      {result?.check && (
-        <div className={`px-4 py-2.5 border-t text-sm font-medium ${
-          result.check.balanced
-            ? 'bg-green-50 text-green-800 border-green-200'
-            : 'bg-red-50 text-red-800 border-red-200'
-        }`}>
-          {result.check.message}
+          {activeReport === 'pnl' && (
+            <ProfitLossReportView 
+              onBack={() => setActiveReport('hub')}
+            />
+          )}
+
+          {activeReport === 'balance_sheet' && (
+            <BalanceSheetReportView 
+              onBack={() => setActiveReport('hub')}
+            />
+          )}
+
+          {activeReport === 'cash_flows' && (
+            <CashFlowReportView 
+              onBack={() => setActiveReport('hub')}
+            />
+          )}
+
+          {activeReport === 'banking' && (
+            <BankTransactionsView 
+              onNavigate={onNavigate}
+            />
+          )}
+
+          {activeReport === 'connect_bank' && (
+            <div className="py-8 bg-[#f4f5f8] min-h-screen">
+              <ConnectAccountModal
+                isOpen={true}
+                isEmbedded={true}
+                onClose={() => setActiveReport('banking')}
+                onAccountConnected={() => setActiveReport('banking')}
+              />
+            </div>
+          )}
+
+          {activeReport === 'customize_menus' && (
+            <div className="py-8 bg-[#f4f5f8] min-h-screen">
+              <CustomizeAppMenusModal
+                isOpen={true}
+                isEmbedded={true}
+                onClose={() => setActiveReport('hub')}
+                onSave={() => setActiveReport('hub')}
+              />
+            </div>
+          )}
         </div>
-      )}
-      {result?.note && !result.check && (
-        <p className="px-4 py-2.5 border-t border-gray-100 text-xs text-gray-600 bg-gray-50/60">
-          {result.note}
-        </p>
       )}
     </div>
   );
-}
-
-/**
- * A cell's formatting, decided by its value rather than its column.
- *
- * Counts stay integers, money gets the rupee formatter, and a per-row flag
- * wins over the column's alignment for anything categorical.
- */
-function formatCell(value, row) {
-  if (value === null || value === undefined || value === '—') return '—';
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  if (row.count) return String(value);
-  if (typeof value === 'number') {
-    // A key that already holds a formatted string (a percentage, a share) is
-    // not a number by the time it gets here.
-    return formatMoney(value);
-  }
-  return String(value);
 }

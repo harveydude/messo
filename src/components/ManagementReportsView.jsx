@@ -3,9 +3,9 @@ import { Plus, ChevronDown } from 'lucide-react';
 
 export default function ManagementReportsView() {
   const reports = [
-    { name: "Company Overview", createdBy: "QuickBooks", period: "This year" },
-    { name: "Sales Performance", createdBy: "QuickBooks", period: "This year" },
-    { name: "Expenses Performance", createdBy: "QuickBooks", period: "This year" },
+    { name: "Company Overview", createdBy: "Meso", period: "This year" },
+    { name: "Sales Performance", createdBy: "Meso", period: "This year" },
+    { name: "Expenses Performance", createdBy: "Meso", period: "This year" },
   ];
 
   return (
@@ -39,7 +39,7 @@ export default function ManagementReportsView() {
                     <div className="flex items-center space-x-2">
                       <span className="font-bold text-gray-900">{r.name}</span>
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500 text-white uppercase tracking-wider">
-                        QUICKBOOKS REPORT
+                        MESO REPORT
                       </span>
                     </div>
                   </td>

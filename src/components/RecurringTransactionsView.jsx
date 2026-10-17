@@ -190,7 +190,7 @@ export default function RecurringTransactionsView({ onNavigate }) {
                 Sales channels
               </button>
               <button className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer">
-                QuickBooks payouts
+                Meso payouts
               </button>
               <button className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer">
                 Channel payouts

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Money formatting.
  *
  * Messo is India-first: the ledger is in rupees and figures are grouped the way
@@ -54,7 +54,7 @@ export function formatMoneyShort(amount, { symbol = '₹' } = {}) {
 /**
  * Parse anything into a number, or null.
  *
- * Handles the string amounts the sample data uses ("$1,861.55" as a bare
+ * Handles the string amounts the sample data uses ("₹1,861.55" as a bare
  * "1861.55"), rejects NaN and Infinity, and refuses to invent a zero from an
  * absent value.
  */

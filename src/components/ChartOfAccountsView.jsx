@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Search, Printer, Settings, Pencil, MessageSquare, Info, ArrowLeftRight, Check, Sliders, Gem } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { ChevronDown, ChevronLeft, ChevronRight, Search, Printer, Settings, Pencil, MessageSquare, Info, ArrowLeftRight, Check, Sliders, Gem, X } from 'lucide-react';
 import { useLedger } from '../store';
 import { formatMoney } from '../money';
 import { CHART_OF_ACCOUNTS, ACCOUNT_TYPE_FILTERS } from '../data/chartOfAccounts';
+import api from '../api/client';
 
 /**
  * Chart of Accounts.
@@ -17,7 +18,7 @@ import { CHART_OF_ACCOUNTS, ACCOUNT_TYPE_FILTERS } from '../data/chartOfAccounts
  * derived from the transaction history by `useLedger()`. Editing anything moves
  * it here.
  *
- * The filter menu offers the type labels QuickBooks uses ("Accounts receivable
+ * The filter menu offers the type labels Meso uses ("Accounts receivable
  * (A/R)") while the reports bucket on canonical types, so the two never have to
  * be spelled the same way.
  *
@@ -36,6 +37,74 @@ export default function ChartOfAccountsView({ onNavigate }) {
   const [selected, setSelected] = useState({});
   const [openRowId, setOpenRowId] = useState(null);
   const [accountingNavOpen, setAccountingNavOpen] = useState(true);
+  const [backendAccounts, setBackendAccounts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showNewAccountModal, setShowNewAccountModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newAccount, setNewAccount] = useState({
+    code: '',
+    name: '',
+    accountType: 'BANK',
+    subType: 'Checking',
+    initialBalanceInr: 0,
+    statementGroup: 'BALANCE_SHEET',
+  });
+
+  const loadAccounts = async () => {
+    try {
+      setLoading(true);
+      const res = await api.getChartOfAccounts();
+      if (res && res.success && Array.isArray(res.accounts)) {
+        setBackendAccounts(res.accounts);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch chart of accounts from backend:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAccounts();
+    const handleMutation = () => {
+      loadAccounts();
+    };
+    window.addEventListener('qbo:data-mutated', handleMutation);
+    return () => window.removeEventListener('qbo:data-mutated', handleMutation);
+  }, []);
+
+  const handleSaveAccount = async (e) => {
+    e.preventDefault();
+    if (!newAccount.name || !newAccount.code) {
+      alert('Please fill in Account Name and Account Code/Number');
+      return;
+    }
+    try {
+      setSaving(true);
+      await api.createAccount({
+        code: newAccount.code,
+        name: newAccount.name,
+        statementGroup: newAccount.statementGroup || (['INCOME', 'COGS', 'EXPENSE'].includes(newAccount.accountType) ? 'PROFIT_AND_LOSS' : 'BALANCE_SHEET'),
+        accountType: newAccount.accountType,
+        subType: newAccount.subType,
+        initialBalanceInr: Number(newAccount.initialBalanceInr) || 0,
+      });
+      setShowNewAccountModal(false);
+      setNewAccount({
+        code: '',
+        name: '',
+        accountType: 'BANK',
+        subType: 'Checking',
+        initialBalanceInr: 0,
+        statementGroup: 'BALANCE_SHEET',
+      });
+      await loadAccounts();
+    } catch (err) {
+      alert('Error creating account: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Close dropdowns on click outside
   const typeRef = useRef(null);
@@ -53,9 +122,47 @@ export default function ChartOfAccountsView({ onNavigate }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // The one account list, with balances attached from the ledger and the
-  // QuickBooks display label in place of the canonical type.
-  const accounts = CHART_OF_ACCOUNTS.map((a) => ({ ...a, balance: ledger.balanceOf(a.id) }));
+  const TYPE_LABEL_MAP = {
+    'BANK': 'Bank',
+    'ASSET': 'Other Current Assets',
+    'OTHER_CURRENT_ASSET': 'Other Current Assets',
+    'ACCOUNTS_RECEIVABLE': 'Accounts receivable (A/R)',
+    'FIXED_ASSET': 'Fixed Assets',
+    'ACCOUNTS_PAYABLE': 'Accounts payable (A/P)',
+    'CREDIT_CARD': 'Credit Card',
+    'LIABILITY': 'Other Current Liabilities',
+    'OTHER_CURRENT_LIABILITY': 'Other Current Liabilities',
+    'TAX_PAYABLE': 'Other Current Liabilities',
+    'EQUITY': 'Equity',
+    'INCOME': 'Income',
+    'COGS': 'Cost of Goods Sold',
+    'EXPENSE': 'Expense',
+  };
+
+  // The one account list, with balances attached from PostgreSQL database when available
+  const accounts = useMemo(() => {
+    if (backendAccounts && backendAccounts.length > 0) {
+      return backendAccounts.map(a => {
+        const typeLabel = TYPE_LABEL_MAP[a.account_type] || a.account_type;
+        const balance = a.balance_inr !== undefined ? Number(a.balance_inr) : (Number(a.cached_balance_paise || 0) / 100);
+        const isBank = a.account_type === 'BANK' || a.account_type === 'CREDIT_CARD';
+        const isRegister = isBank || a.account_type === 'ACCOUNTS_RECEIVABLE' || a.account_type === 'ACCOUNTS_PAYABLE';
+        return {
+          id: a.id,
+          code: a.code,
+          name: a.name,
+          type: a.account_type,
+          typeLabel,
+          detail: a.sub_type || a.name,
+          badge: a.statement_group === 'PROFIT_AND_LOSS' ? 'P&L' : 'BAL',
+          bank: isBank,
+          balance,
+          action: isRegister ? 'View register' : 'Run report'
+        };
+      });
+    }
+    return CHART_OF_ACCOUNTS.map((a) => ({ ...a, balance: ledger.balanceOf(a.id) }));
+  }, [backendAccounts, ledger]);
 
   // Filter accounts
   let list = accounts.filter((r) => {
@@ -261,11 +368,17 @@ export default function ChartOfAccountsView({ onNavigate }) {
 
                 {/* Split New Account button */}
                 <div className="flex h-[38px] rounded-[4px] overflow-hidden shadow-xs">
-                  <button className="bg-[#2CA01C] text-white px-[16px] text-[15px] font-semibold hover:bg-[#25900F] active:scale-[0.98] transition cursor-pointer">
+                  <button 
+                    onClick={() => setShowNewAccountModal(true)}
+                    className="bg-[#2CA01C] text-white px-[16px] text-[15px] font-semibold hover:bg-[#25900F] active:scale-[0.98] transition cursor-pointer"
+                  >
                     New account
                   </button>
                   <div className="w-px bg-[#1E7A14]" />
-                  <button className="bg-[#2CA01C] text-white w-[42px] flex items-center justify-center hover:bg-[#25900F] transition cursor-pointer">
+                  <button 
+                    onClick={() => setShowNewAccountModal(true)}
+                    className="bg-[#2CA01C] text-white w-[42px] flex items-center justify-center hover:bg-[#25900F] transition cursor-pointer"
+                  >
                     <ChevronDown size={16} />
                   </button>
                 </div>
@@ -567,6 +680,130 @@ export default function ChartOfAccountsView({ onNavigate }) {
             })}
           </div>
         </div>
+        {/* New Account Modal */}
+        {showNewAccountModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg border border-[#D5D8DC] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-[#E3E5E8] bg-[#F4F5F8]">
+                <h2 className="text-[18px] font-bold text-[#393A3D]">New Account</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowNewAccountModal(false)}
+                  className="text-[#6B6C72] hover:text-[#393A3D] p-1 rounded-md hover:bg-[#E3E5E8] transition cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveAccount} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#393A3D] mb-1">
+                    Account Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={newAccount.accountType}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const isPL = ['INCOME', 'COGS', 'EXPENSE'].includes(val);
+                      setNewAccount(prev => ({
+                        ...prev,
+                        accountType: val,
+                        statementGroup: isPL ? 'PROFIT_AND_LOSS' : 'BALANCE_SHEET',
+                      }));
+                    }}
+                    className="w-full h-[38px] px-3 border border-[#8D9096] rounded-[4px] text-[14px] text-[#393A3D] focus:outline-none focus:border-[#2CA01C]"
+                  >
+                    <option value="BANK">Bank (Checking, Savings, Cash)</option>
+                    <option value="ACCOUNTS_RECEIVABLE">Accounts Receivable (A/R)</option>
+                    <option value="OTHER_CURRENT_ASSET">Other Current Asset / Inventory</option>
+                    <option value="FIXED_ASSET">Fixed Asset (Machinery, Equipment)</option>
+                    <option value="ACCOUNTS_PAYABLE">Accounts Payable (A/P)</option>
+                    <option value="CREDIT_CARD">Credit Card</option>
+                    <option value="LIABILITY">Other Current Liability / Taxes</option>
+                    <option value="EQUITY">Equity (Owner Equity, Retained Earnings)</option>
+                    <option value="INCOME">Income (Revenue, Sales)</option>
+                    <option value="COGS">Cost of Goods Sold (Job Materials)</option>
+                    <option value="EXPENSE">Expense (Operating, Rent, Utilities)</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[13px] font-semibold text-[#393A3D] mb-1">
+                      Account Number / Code <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 1025"
+                      value={newAccount.code}
+                      onChange={(e) => setNewAccount(prev => ({ ...prev, code: e.target.value }))}
+                      className="w-full h-[38px] px-3 border border-[#8D9096] rounded-[4px] text-[14px] text-[#393A3D] focus:outline-none focus:border-[#2CA01C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[13px] font-semibold text-[#393A3D] mb-1">
+                      Detail / Sub-Type
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Checking, Software"
+                      value={newAccount.subType}
+                      onChange={(e) => setNewAccount(prev => ({ ...prev, subType: e.target.value }))}
+                      className="w-full h-[38px] px-3 border border-[#8D9096] rounded-[4px] text-[14px] text-[#393A3D] focus:outline-none focus:border-[#2CA01C]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#393A3D] mb-1">
+                    Account Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Axis Bank Operating Account"
+                    value={newAccount.name}
+                    onChange={(e) => setNewAccount(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full h-[38px] px-3 border border-[#8D9096] rounded-[4px] text-[14px] text-[#393A3D] focus:outline-none focus:border-[#2CA01C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[13px] font-semibold text-[#393A3D] mb-1">
+                    Initial / Starting Balance (₹)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={newAccount.initialBalanceInr}
+                    onChange={(e) => setNewAccount(prev => ({ ...prev, initialBalanceInr: e.target.value }))}
+                    className="w-full h-[38px] px-3 border border-[#8D9096] rounded-[4px] text-[14px] text-[#393A3D] focus:outline-none focus:border-[#2CA01C]"
+                  />
+                  <p className="text-[12px] text-[#6B6C72] mt-1">Starting ledger balance credited to opening equity.</p>
+                </div>
+
+                <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#E3E5E8]">
+                  <button
+                    type="button"
+                    onClick={() => setShowNewAccountModal(false)}
+                    className="h-[38px] px-4 rounded-[4px] border border-[#8D9096] text-[#393A3D] text-[14px] font-semibold hover:bg-[#F4F5F8] transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="h-[38px] px-6 rounded-[4px] bg-[#2CA01C] text-white text-[14px] font-semibold hover:bg-[#25900F] active:scale-[0.98] transition cursor-pointer disabled:opacity-50"
+                  >
+                    {saving ? 'Saving...' : 'Save and Close'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

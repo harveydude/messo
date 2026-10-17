@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Search, ChevronDown, Download, Printer, Settings, X } from 'lucide-react';
+import api from '../api/client';
 
 /**
  * Sample audit log.
@@ -74,16 +75,16 @@ export const INITIAL_AUDIT_LOGS = [
     timestamp: new Date('2025-10-24T13:45:00+11:00').getTime() - 1000,
     user: 'Craig Carlson',
     userRole: 'Company Admin',
-    event: 'Added Currency CAD',
+    event: 'Added Currency INR',
     eventType: 'Currency changes',
     hasView: true,
     historyDetails: {
       action: 'Add Currency',
-      target: 'Canadian Dollar (CAD - $)',
+      target: 'Indian Rupee (INR - ₹)',
       changes: [
-        { field: 'Currency Code', before: '(None)', after: 'CAD' },
-        { field: 'Exchange Rate Source', before: '(None)', after: 'Wall Street Journal (Live)' },
-        { field: 'Current Exchange Rate', before: '(None)', after: '1 AUD = 0.9015 CAD' }
+        { field: 'Currency Code', before: '(None)', after: 'INR' },
+        { field: 'Exchange Rate Source', before: '(None)', after: 'RBI Reference Rate (Live)' },
+        { field: 'Current Exchange Rate', before: '(None)', after: '1 USD = 83.50 INR' }
       ]
     }
   },
@@ -149,7 +150,7 @@ export const INITIAL_AUDIT_LOGS = [
       changes: [
         { field: 'Customer/Project', before: 'Cool Cars (General)', after: "Amy's Bird Sanctuary (Landscaping)" },
         { field: 'Billable Hours', before: '4.50 hrs', after: '6.00 hrs' },
-        { field: 'Pay Rate', before: '$32.00/hr', after: '$35.00/hr' },
+        { field: 'Pay Rate', before: '₹32.00/hr', after: '₹35.00/hr' },
         { field: 'Taxable', before: 'No', after: 'Yes' }
       ]
     }
@@ -172,7 +173,7 @@ export const INITIAL_AUDIT_LOGS = [
       changes: [
         { field: 'Customer/Project', before: '(None)', after: 'Bill’s Windsurf Shop' },
         { field: 'Billable Hours', before: '(None)', after: '8.00 hrs' },
-        { field: 'Pay Rate', before: '(None)', after: '$28.50/hr' },
+        { field: 'Pay Rate', before: '(None)', after: '₹28.50/hr' },
         { field: 'Taxable', before: '(None)', after: 'Yes' }
       ]
     }
@@ -195,6 +196,34 @@ export default function AuditLogView({ onNavigate }) {
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [tableDensity, setTableDensity] = useState('regular'); // 'regular' | 'compact'
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [liveLogs, setLiveLogs] = useState([]);
+
+  useEffect(() => {
+    api.getAuditLogs().then(res => {
+      if (res?.logs && Array.isArray(res.logs)) {
+        const formatted = res.logs.map((l, idx) => ({
+          id: `live_${l.id || idx}`,
+          date: l.created_at ? new Date(l.created_at).toLocaleString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true
+          }) + ' ' + (l.timezone_label || 'Australian Eastern Daylight Time') : 'Just now',
+          timestamp: l.created_at ? new Date(l.created_at).getTime() : Date.now(),
+          user: l.user_display_name || 'Craig Carlson',
+          userRole: 'Company Admin',
+          event: l.event_summary || `${l.action} on ${l.entity_type} (#${l.entity_id})`,
+          eventType: l.entity_type === 'SETTINGS' ? 'Settings changes' : 'Transaction changes',
+          hasView: !!(l.before_json || l.after_json),
+          historyDetails: (l.before_json || l.after_json) ? {
+            action: `${l.action} ${l.entity_type}`,
+            target: `${l.entity_type} #${l.entity_id}`,
+            changes: [
+              { field: 'Details', before: JSON.stringify(l.before_json || {}), after: JSON.stringify(l.after_json || {}) }
+            ]
+          } : null
+        }));
+        setLiveLogs(formatted);
+      }
+    }).catch(() => {});
+  }, []);
 
   // The date window, anchored to the newest entry rather than to wall-clock
   // time. This screen ships with a fixed sample log, so anchoring to "now" would
@@ -202,12 +231,10 @@ export default function AuditLogView({ onNavigate }) {
   // live log the newest entry IS now, so the same code behaves identically --
   // this only matters for the static data.
   const dateAnchor = useMemo(() => {
-    const newest = Math.max(0, ...INITIAL_AUDIT_LOGS.map((r) => Number(r.timestamp) || 0));
-    // Read once at module load rather than during render: calling Date.now()
-    // here would make the render impure (it changes on every call), which the
-    // linter correctly refuses. The fallback only matters if the log is empty.
+    const all = [...liveLogs, ...INITIAL_AUDIT_LOGS];
+    const newest = Math.max(0, ...all.map((r) => Number(r.timestamp) || 0));
     return newest || LOADED_AT;
-  }, []);
+  }, [liveLogs]);
 
   // True when `timestamp` falls inside the window named by `dateFilter`.
   const inDateWindow = useCallback(
@@ -238,7 +265,7 @@ export default function AuditLogView({ onNavigate }) {
 
   // Filtered and sorted rows
   const filteredRows = useMemo(() => {
-    let rows = [...INITIAL_AUDIT_LOGS];
+    let rows = [...liveLogs, ...INITIAL_AUDIT_LOGS];
 
     // Date range. This dropdown previously changed nothing -- it updated state
     // that no filter ever read, so choosing "Last Month" silently showed the

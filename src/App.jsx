@@ -17,9 +17,13 @@ import {
 } from './components/Modals';
 import AssistantDrawer from './components/AssistantDrawer';
 import InvoiceReview from './components/InvoiceReview';
+import InvoiceEditorModal from './components/InvoiceEditorModal';
+import ExpenseModal from './components/ExpenseModal';
 import BankCategorize from './components/BankCategorize';
 import Reconcile from './components/Reconcile';
 import ReportsMath from './components/ReportsMath';
+import CustomizeBookmarksModal from './components/CustomizeBookmarksModal';
+import UniversalCreateWorkflowModal from './components/UniversalCreateWorkflowModal';
 import { StoreProvider } from './store';
 
 /*
@@ -41,6 +45,7 @@ const RulesView = lazy(() => import('./components/RulesView'));
 const ProductsAndServicesView = lazy(() => import('./components/ProductsAndServicesView'));
 const RecurringTransactionsView = lazy(() => import('./components/RecurringTransactionsView'));
 const SalesTransactionsView = lazy(() => import('./components/SalesTransactionsView'));
+const InvoicesView = lazy(() => import('./components/InvoicesView'));
 const ExpensesView = lazy(() => import('./components/ExpensesView'));
 const CustomersView = lazy(() => import('./components/CustomersView'));
 const VendorsView = lazy(() => import('./components/VendorsView'));
@@ -169,7 +174,7 @@ const SETTINGS_ROUTES = {
  */
 const CREATE_TARGETS = {
   // Customers
-  Invoice: 'sales_transactions',
+  Invoice: { modal: 'invoiceEditor' },
   'Receive payment': 'sales_transactions',
   Statement: 'standard_reports',
   Estimate: 'estimates',
@@ -184,7 +189,7 @@ const CREATE_TARGETS = {
   'Add customer': 'customers_list',
 
   // Vendors
-  Expense: 'expense_transactions',
+  Expense: { modal: 'expenseModal' },
   Check: 'expense_transactions',
   Bill: 'expense_transactions',
   'Pay bills': 'expense_transactions',
@@ -203,6 +208,7 @@ const CREATE_TARGETS = {
   'Add contractor': 'team',
 
   // Other
+  Task: 'dashboard',
   'Bank deposit': 'bank_transactions',
   Transfer: 'bank_transactions',
   'Journal entry': { modal: 'journal' },
@@ -224,7 +230,7 @@ const CREATE_ACTION_TARGETS = {
 export default function App() {
   const { viewId, query, navigate, routeLabel } = useRoute();
 
-  const [companyName, setCompanyName] = useState('Sample Company. 7-8-25');
+  const [companyName, setCompanyName] = useState("Karan's Landscaping Services");
   const [searchQuery, setSearchQuery] = useState(query.q || '');
 
   // Modals & drawers
@@ -237,28 +243,90 @@ export default function App() {
   const [setupDrawerOpen, setSetupDrawerOpen] = useState(false);
   const [customizeMode, setCustomizeMode] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [invoiceEditorOpen, setInvoiceEditorOpen] = useState(false);
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [universalWorkflow, setUniversalWorkflow] = useState(null);
+  const [pinnedItems, setPinnedItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meso_pinned_items');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
 
-  // The tab title follows the screen. It said "quickbook-app" everywhere.
+  const handlePinnedChange = useCallback((newPins) => {
+    setPinnedItems(newPins);
+    localStorage.setItem('meso_pinned_items', JSON.stringify(newPins));
+  }, []);
+
+  // The tab title follows the screen.
   useEffect(() => {
     document.title = routeLabel === 'Dashboard'
-      ? 'Messo'
-      : `${routeLabel} · Messo`;
+      ? 'Meso'
+      : `${routeLabel} · Meso`;
   }, [routeLabel]);
 
-  // `/` is the near-universal "jump to search" key and this app was hijacking it
-  // to open an info popup that Escape could not close. `?` keeps that behaviour.
+  // Auto fullscreen on first load so users get the full view.
+  useEffect(() => {
+    const tryFullscreen = async () => {
+      try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        }
+      } catch (e) {
+        // Browsers block fullscreen without user gesture; silently ignore.
+      }
+    };
+    // Attempt after a brief delay to let the page settle.
+    const timer = setTimeout(tryFullscreen, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ── Keyboard shortcuts ──
+  // Matches every shortcut listed in the Additional Information modal.
+  // Main-page shortcuts activate only when no input/textarea/select is focused.
   useEffect(() => {
     const handleKeyDown = (e) => {
       const tag = document.activeElement?.tagName?.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-      if (e.key === '?') {
+      const inField = tag === 'input' || tag === 'textarea' || tag === 'select';
+      if (inField) return;
+
+      // Ctrl/Cmd + . = toggle Zen Mode (show/hide chrome) — not implemented yet
+      if ((e.ctrlKey || e.metaKey) && e.key === '.') {
+        e.preventDefault();
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      // ? or / → open shortcuts/additional-info dialog
+      if (e.key === '?' || e.key === '/') {
         e.preventDefault();
         setAdditionalInfoOpen(true);
+        return;
+      }
+
+      switch (key) {
+        case 'i': e.preventDefault(); setInvoiceEditorOpen(true); break;
+        case 'w': e.preventDefault(); navigate('expense_transactions'); break; // Check
+        case 'e': e.preventDefault(); navigate('estimates'); break;
+        case 'x': e.preventDefault(); setExpenseModalOpen(true); break;
+        case 'r': e.preventDefault(); navigate('sales_transactions'); break; // Receive payment
+        case 'j': e.preventDefault(); setJournalModalOpen(true); break;
+        case 'c': e.preventDefault(); navigate('customers_list'); break;
+        case 'u': e.preventDefault(); navigate('payroll'); break;
+        case 'v': e.preventDefault(); navigate('vendors'); break;
+        case 'a': e.preventDefault(); navigate('chart_of_accounts'); break;
+        case 'l': e.preventDefault(); navigate('all_lists'); break;
+        case 'h': e.preventDefault(); setAssistantOpen(true); break;
+        case 'f': e.preventDefault(); document.querySelector('[data-search-input]')?.focus(); break;
+        case 'd': e.preventDefault(); document.querySelector('[aria-label="Main navigation"]')?.focus(); break;
+        default: break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [navigate]);
 
   const handleSearch = useCallback((q) => {
     if (q && q.trim()) {
@@ -290,11 +358,21 @@ export default function App() {
       setCreateMenuOpen(true);
       return;
     }
+    if (target.modal === 'invoiceEditor') {
+      setInvoiceEditorOpen(true);
+      return;
+    }
+    if (target.modal === 'expenseModal') {
+      setExpenseModalOpen(true);
+      return;
+    }
     if (target.modal === 'journal') {
       setJournalModalOpen(true);
       return;
     }
-    navigate(target);
+
+    // Open Universal Creation Modal for all remaining workflows
+    setUniversalWorkflow(action);
   }, [navigate]);
 
   /**
@@ -328,13 +406,15 @@ export default function App() {
     if (except !== 'additionalInfo') setAdditionalInfoOpen(false);
     if (except !== 'customizeMenus') setCustomizeMenusOpen(false);
     if (except !== 'journal') setJournalModalOpen(false);
+    if (except !== 'invoiceEditor') setInvoiceEditorOpen(false);
+    if (except !== 'expenseModal') setExpenseModalOpen(false);
     if (except !== 'setup') setSetupDrawerOpen(false);
     if (except !== 'assistant') setAssistantOpen(false);
   }, []);
 
   useEscape(() => closeAllOverlays(), Object.values({
     createMenuOpen, settingsMenuOpen, accountSettingsOpen, additionalInfoOpen,
-    customizeMenusOpen, journalModalOpen, setupDrawerOpen, assistantOpen,
+    customizeMenusOpen, journalModalOpen, setupDrawerOpen, assistantOpen, invoiceEditorOpen, expenseModalOpen,
   }).some(Boolean));
 
   const renderScreen = () => {
@@ -391,10 +471,18 @@ export default function App() {
       case 'orders':
       case 'purchase_orders':
       case 'credit_memos':
-      case 'bills':
         return (
           <SalesDocumentsView
             kind={viewId}
+            onNavigate={(v) => navigate(v)}
+          />
+        );
+
+      case 'bills':
+        return (
+          <ExpensesView
+            initialTab="bills"
+            onOpenExpenseModal={() => handleQuickCreateAction('Expense')}
             onNavigate={(v) => navigate(v)}
           />
         );
@@ -403,10 +491,48 @@ export default function App() {
         return <NotBuiltYet feature={query.feature || query.label || 'That screen'} />;
       case 'bookmarks':
         return (
-          <DashboardView
-            onNavigate={(v) => navigate(v)}
-            onOpenCreateModal={handleQuickCreateAction}
-          />
+          <>
+            <DashboardView
+              onNavigate={(v) => navigate(v)}
+              onOpenCreateModal={handleQuickCreateAction}
+            />
+            <CustomizeBookmarksModal
+              isOpen={true}
+              onClose={() => navigate('dashboard')}
+              onSave={(savedItems) => {
+                // Convert saved bookmarks into sidebar pins
+                const PIN_MAP = {
+                  bank_transactions: { label: 'Accounting', color: '#107c41', iconKey: 'activity' },
+                  expense_transactions: { label: 'Expenses', color: '#00897b', iconKey: 'creditcard' },
+                  sales_transactions: { label: 'Sales', color: '#0077c5', iconKey: 'barchart' },
+                  invoices: { label: 'Invoices', color: '#0077c5', iconKey: 'default' },
+                  vendors: { label: 'Vendors', color: '#00897b', iconKey: 'default' },
+                  bills: { label: 'Bills', color: '#00897b', iconKey: 'creditcard' },
+                  customers_list: { label: 'Customers', color: '#009688', iconKey: 'default' },
+                  dashboard: { label: 'Dashboard', color: '#393A3D', iconKey: 'default' },
+                  feed: { label: 'Feed', color: '#6366f1', iconKey: 'default' },
+                  standard_reports: { label: 'Reports', color: '#0077C5', iconKey: 'barchart' },
+                  custom_reports: { label: 'Custom Reports', color: '#7C3AED', iconKey: 'default' },
+                  management_reports: { label: 'Mgmt Reports', color: '#0d47a1', iconKey: 'default' },
+                  financial_planning: { label: 'Cash Flow', color: '#00897b', iconKey: 'default' },
+                  budgets: { label: 'Budgets', color: '#2CA01C', iconKey: 'default' },
+                  integration_transactions: { label: 'Integrations', color: '#f57f17', iconKey: 'default' },
+                };
+                if (savedItems && Array.isArray(savedItems)) {
+                  const pins = savedItems
+                    .filter(it => it.enabled)
+                    .map(it => ({
+                      id: it.id,
+                      label: PIN_MAP[it.id]?.label || it.name,
+                      color: PIN_MAP[it.id]?.color || '#6B6C72',
+                      iconKey: PIN_MAP[it.id]?.iconKey || 'default',
+                    }));
+                  handlePinnedChange(pins);
+                }
+                navigate('dashboard');
+              }}
+            />
+          </>
         );
       case 'bank_transactions':
         return (
@@ -427,10 +553,20 @@ export default function App() {
       case 'recurring_transactions':
         return <RecurringTransactionsView onNavigate={(v) => navigate(v)} />;
       case 'sales_transactions':
-      case 'invoices':
         return <SalesTransactionsView onOpenInvoiceModal={() => handleQuickCreateAction('Invoice')} onNavigate={(v) => navigate(v)} />;
+      case 'invoices':
+      case 'sales_invoices':
+        return <InvoicesView onOpenInvoiceModal={() => setInvoiceEditorOpen(true)} onNavigate={(v) => navigate(v)} />;
+      case 'invoice_editor':
+        return <InvoiceEditorModal isOpen={true} onClose={() => navigate('sales_transactions')} />;
       case 'expense_transactions':
-        return <ExpensesView onOpenExpenseModal={() => handleQuickCreateAction('Expense')} />;
+        return (
+          <ExpensesView
+            initialTab="overview"
+            onOpenExpenseModal={() => handleQuickCreateAction('Expense')}
+            onNavigate={(v) => navigate(v)}
+          />
+        );
       case 'customers_list':
         return (
           <CustomersView
@@ -440,7 +576,13 @@ export default function App() {
           />
         );
       case 'vendors':
-        return <VendorsView onNavigate={(v) => navigate(v)} />;
+        return (
+          <ExpensesView
+            initialTab="vendors"
+            onOpenExpenseModal={() => handleQuickCreateAction('Expense')}
+            onNavigate={(v) => navigate(v)}
+          />
+        );
       case 'customer_hub':
         return <CustomerHubView onNavigate={(v) => navigate(v)} />;
       case 'custom_reports':
@@ -462,7 +604,7 @@ export default function App() {
       // Previously unreachable: the Audit log menu item opened Reports instead,
       // and this 551-line screen was never imported by anything.
       case 'audit_log':
-        return <AuditLogView />;
+        return <AuditLogView onNavigate={(v) => navigate(v)} />;
       case 'reconcile':
         // Reconciliation is now a full workflow overlay (Reconcile.jsx).
         // The trigger lives in the bank screen and the settings menu; this
@@ -486,7 +628,14 @@ export default function App() {
           </div>
         );
       case 'feed':
-        return <BusinessFeedView />;
+        return (
+          <BusinessFeedView
+            onNavigate={(v) => navigate(v)}
+            onOpenInvoiceModal={() => setInvoiceEditorOpen(true)}
+            onOpenExpenseModal={() => setExpenseModalOpen(true)}
+            onOpenReviewInvoice={(inv) => setInvoiceReview(inv)}
+          />
+        );
       case 'mileage':
         return <MileageView onNavigate={(v) => navigate(v)} />;
       case 'time_entries':
@@ -538,7 +687,7 @@ export default function App() {
   return (
     /* The outer boundary covers the chrome. It used to sit around <main> only,
        so a throw in the top bar, sidebar or a popup blanked the entire app. */
-    <ErrorBoundary title="Messo could not start">
+    <ErrorBoundary title="Meso could not start">
       <StoreProvider>
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F6F7F8] antialiased">
         <TopBar
@@ -558,10 +707,11 @@ export default function App() {
             setCurrentView={(v) => navigate(v)}
             onOpenCreate={() => { closeAllOverlays('create'); setCreateMenuOpen(true); }}
             onToggleCustomize={() => {
-              navigate('dashboard');
-              setCustomizeMode((prev) => !prev);
+              setCustomizeMenusOpen(true);
             }}
-            isCustomizing={customizeMode && viewId === 'dashboard'}
+            isCustomizing={customizeMenusOpen}
+            pinnedItems={pinnedItems}
+            onPinnedChange={handlePinnedChange}
           />
 
           <main className="flex-1 overflow-y-auto bg-[#F6F7F8]">
@@ -616,6 +766,23 @@ export default function App() {
         <JournalEntryModal
           isOpen={journalModalOpen}
           onClose={() => setJournalModalOpen(false)}
+        />
+        <InvoiceEditorModal
+          isOpen={invoiceEditorOpen}
+          onClose={() => setInvoiceEditorOpen(false)}
+        />
+        <ExpenseModal
+          isOpen={expenseModalOpen}
+          onClose={() => setExpenseModalOpen(false)}
+        />
+        <UniversalCreateWorkflowModal
+          isOpen={!!universalWorkflow}
+          workflowType={universalWorkflow}
+          onClose={() => setUniversalWorkflow(null)}
+          onSuccess={() => {
+            const target = CREATE_TARGETS[universalWorkflow];
+            if (typeof target === 'string') navigate(target);
+          }}
         />
 
         {/* New workflow overlays */}

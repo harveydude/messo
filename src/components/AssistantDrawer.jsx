@@ -11,7 +11,7 @@ export default function AssistantDrawer({ isOpen, onClose }) {
 
   const suggestions = dashboardData.assistant?.suggestions || [
     "How can I manually upload transactions?",
-    "How can I import data to QuickBooks Online?",
+    "How can I import data to Meso?",
     "How can I format CSV files for bank transactions?",
     "How do I connect my bank and credit card accounts?"
   ];
@@ -45,7 +45,7 @@ export default function AssistantDrawer({ isOpen, onClose }) {
       <div className="h-[85px] w-full bg-[#0077C5] px-6 flex items-center justify-between shrink-0">
         <div className="text-white font-semibold text-[18px] flex items-center space-x-2.5">
           <Sparkles size={20} className="text-[#80D0FF]" />
-          <span>Intuit Assistant</span>
+          <span>Meso Assistant</span>
         </div>
 
         <button 
@@ -171,7 +171,7 @@ export default function AssistantDrawer({ isOpen, onClose }) {
             Search Assistant
           </h3>
           <p className="text-[14px]">
-            Search QuickBooks help articles and documentation topics.
+            Search Meso help articles and documentation topics.
           </p>
         </div>
       )}

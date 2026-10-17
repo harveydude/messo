@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useMemo, useCallback } from 'react';
 import { CHART_OF_ACCOUNTS } from './data/chartOfAccounts';
 import { deriveLedger, accountsOfType } from './ledger';
 import { SEED } from './data/seed';
+import api from './api/client';
 
 /**
  * Central store with localStorage persistence.
@@ -347,16 +348,170 @@ function reducer(state, action) {
 const StoreContext = createContext();
 
 export function StoreProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, SEED);
+  const [state, rawDispatch] = useReducer(reducer, SEED);
+
+  // Background API dispatcher that keeps local state and backend PostgreSQL synced
+  const dispatch = useCallback((action) => {
+    rawDispatch(action);
+
+    // Asynchronously sync mutations with backend
+    try {
+      if (action.type === 'ADD_INVOICE') {
+        const inv = action.payload;
+        api.createInvoice({
+          customerId: inv.customerId ? `cust_${inv.customerId}` : 'cust_1',
+          invoiceNumber: inv.no ? String(inv.no).replace(/^INV-/, '') : undefined,
+          dueDate: inv.dueDate,
+          items: (inv.lines || []).map(l => ({
+            name: l.desc || 'Services',
+            desc: l.desc || '',
+            qty: Number(l.qty || 1),
+            rate: Number(l.rate || 0),
+          })),
+        }).catch(err => console.warn('[Meso Sync] Invoice backend sync notice:', err.message));
+      } else if (action.type === 'ADD_EXPENSE') {
+        const exp = action.payload;
+        api.createExpense({
+          payeeName: exp.payeeName || 'Vendor',
+          paymentDate: exp.date,
+          memo: exp.memo,
+          lines: exp.lines,
+        }).catch(err => console.warn('[Meso Sync] Expense backend sync notice:', err.message));
+      } else if (action.type === 'ADD_CUSTOMER') {
+        const c = action.payload;
+        api.createCustomer({
+          displayName: c.displayName,
+          firstName: c.first,
+          lastName: c.last,
+          email: c.email,
+          phone: c.phone,
+          billingAddress: c.billingAddress,
+          gstin: c.gstin,
+          pan: c.pan,
+        }).catch(err => console.warn('[Meso Sync] Customer backend sync notice:', err.message));
+      } else if (action.type === 'ADD_VENDOR') {
+        const v = action.payload;
+        api.createVendor({
+          displayName: v.displayName,
+          companyName: v.company,
+          email: v.email,
+          phone: v.phone,
+          address: v.address,
+          gstin: v.gstin,
+          pan: v.pan,
+        }).catch(err => console.warn('[Meso Sync] Vendor backend sync notice:', err.message));
+      } else if (action.type === 'UPDATE_BANK_TXN') {
+        const tx = action.payload;
+        if (tx.matched) {
+          api.matchBankTransaction(tx.id).catch(err => console.warn('[Meso Sync] Match bank transaction notice:', err.message));
+        } else {
+          api.categorizeBankTransaction(tx.id).catch(err => console.warn('[Meso Sync] Categorize bank transaction notice:', err.message));
+        }
+      }
+    } catch (e) {
+      console.warn('[Meso Sync] Dispatch sync handler:', e);
+    }
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        dispatch({ type: 'HYDRATE', payload: { ...SEED, ...parsed } });
+        rawDispatch({ type: 'HYDRATE', payload: { ...SEED, ...parsed } });
       } catch { /* ignore corrupt data */ }
     }
+
+    // Hydrate live data from Meso PostgreSQL / Supabase
+    async function syncFromBackend() {
+      try {
+        const [invRes, custRes, vendRes, bankRes, bmRes] = await Promise.allSettled([
+          api.getInvoices(),
+          api.getCustomers(),
+          api.getVendors(),
+          api.getBankTransactions(),
+          api.getBookmarks(),
+        ]);
+
+        const patch = {};
+
+        if (invRes.status === 'fulfilled' && invRes.value?.invoices?.length > 0) {
+          patch.invoices = invRes.value.invoices.map((inv) => ({
+            id: inv.id,
+            no: inv.invoice_number ? `INV-${inv.invoice_number}` : inv.id,
+            customerId: inv.customer_id,
+            customerName: inv.customer_name,
+            customerEmail: inv.customer_email,
+            date: inv.issue_date?.split('T')[0],
+            dueDate: inv.due_date?.split('T')[0],
+            status: inv.status === 'SENT' ? 'Sent' : inv.status === 'OVERDUE' ? 'Overdue' : inv.status === 'PAID' ? 'Paid' : 'Open',
+            total: Number(inv.total_inr || (Number(inv.total_paise || 0) / 100)),
+            lines: [{ desc: 'Professional Services', qty: 1, rate: Number(inv.total_inr || 0), taxable: false }],
+          }));
+        }
+
+        if (custRes.status === 'fulfilled' && custRes.value?.customers?.length > 0) {
+          patch.customers = custRes.value.customers.map((c) => ({
+            id: c.id,
+            displayName: c.display_name,
+            first: c.first_name,
+            last: c.last_name,
+            company: c.company_name,
+            email: c.email,
+            phone: c.phone,
+            billingAddress: c.billing_address,
+            gstin: c.gstin,
+            pan: c.pan,
+            terms: c.terms || 'Net 30',
+            balance: Number(c.open_balance_inr || 0),
+          }));
+        }
+
+        if (vendRes.status === 'fulfilled' && vendRes.value?.vendors?.length > 0) {
+          patch.vendors = vendRes.value.vendors.map((v) => ({
+            id: v.id,
+            displayName: v.display_name,
+            company: v.company_name,
+            email: v.email,
+            phone: v.phone,
+            address: v.address,
+            gstin: v.gstin,
+            pan: v.pan,
+            balance: Number(v.open_balance_inr || 0),
+          }));
+        }
+
+        if (bankRes.status === 'fulfilled' && bankRes.value?.transactions?.length > 0) {
+          patch.bankTxns = bankRes.value.transactions.map((tx) => ({
+            id: tx.id,
+            date: tx.date?.split('T')[0],
+            desc: tx.description,
+            payee: tx.payee,
+            spent: tx.spent_inr ? Number(tx.spent_inr) : 0,
+            received: tx.received_inr ? Number(tx.received_inr) : 0,
+            status: tx.status,
+            matched: tx.status === 'MATCHED',
+          }));
+        }
+
+        if (bmRes.status === 'fulfilled' && bmRes.value?.bookmarks?.length > 0) {
+          patch.bookmarks = bmRes.value.bookmarks.map((bm) => ({
+            id: bm.page_id,
+            name: bm.name,
+            enabled: bm.enabled,
+            sortOrder: bm.sort_order,
+          }));
+        }
+
+        if (Object.keys(patch).length > 0) {
+          rawDispatch({ type: 'HYDRATE', payload: { ...SEED, ...(saved ? JSON.parse(saved) : {}), ...patch } });
+        }
+      } catch (err) {
+        console.warn('Backend sync warning:', err);
+      }
+    }
+
+    syncFromBackend();
   }, []);
 
   useEffect(() => {

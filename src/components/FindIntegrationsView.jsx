@@ -85,7 +85,7 @@ function AppCard({ app, hasGreenTopBar = true }) {
 
         {/* Description */}
         <p className="text-[15px] text-[#6B6C72] leading-snug line-clamp-2">
-          {app.desc || "Easily connect and sync transactions with QuickBooks Online."}
+          {app.desc || "Easily connect and sync transactions with Meso."}
         </p>
       </div>
 

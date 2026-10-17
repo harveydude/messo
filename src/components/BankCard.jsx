@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CreditCard, ChevronDown, Settings, MoreVertical } from 'lucide-react';
 
 /**
  * Bank accounts.
  *
  * This card was three hardcoded blocks: Checking showing -3,621.93 against
- * 1,201.00 "in QuickBooks", Mastercard 304.96 against 157.72, and "25 to
+ * 1,201.00 "in Meso", Mastercard 304.96 against 157.72, and "25 to
  * review" as a literal. None of it moved when anything happened, and it named
  * a Mastercard account that the app's own bank feed does not even contain.
  *
@@ -21,6 +21,16 @@ export default function BankCard({
   onOpenRegisters
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const moreRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (moreRef.current && !moreRef.current.contains(e.target)) setShowMoreMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const formatAmount = (val) => {
     if (privacyEnabled) return "••••••";
@@ -124,12 +134,40 @@ export default function BankCard({
         </button>
 
         <div className="flex items-center space-x-3 text-[#393A3D]">
-          <button className="hover:text-black p-1 cursor-pointer">
+          <button onClick={() => alert('Bank account settings')} className="hover:text-black p-1 cursor-pointer" title="Bank settings">
             <Settings size={20} />
           </button>
-          <button className="hover:text-black p-1 cursor-pointer">
-            <MoreVertical size={20} />
-          </button>
+          <div className="relative" ref={moreRef}>
+            <button
+              onClick={() => setShowMoreMenu(!showMoreMenu)}
+              className="hover:text-black p-1 cursor-pointer"
+              title="More options"
+            >
+              <MoreVertical size={20} />
+            </button>
+            {showMoreMenu && (
+              <div className="absolute right-0 bottom-full mb-1 w-48 bg-white border border-[#D5D8DC] rounded-[6px] shadow-lg z-50 py-1">
+                <button
+                  onClick={() => { onOpenRegisters && onOpenRegisters(); setShowMoreMenu(false); }}
+                  className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
+                >
+                  Go to registers
+                </button>
+                <button
+                  onClick={() => { alert('Connect another bank account'); setShowMoreMenu(false); }}
+                  className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
+                >
+                  Connect bank
+                </button>
+                <button
+                  onClick={() => { alert('Widget removed'); setShowMoreMenu(false); }}
+                  className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
+                >
+                  Remove widget
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

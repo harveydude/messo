@@ -1,9 +1,9 @@
-/**
+﻿/**
  * The dashboard, derived.
  *
  * Every card on the home screen was fed from `data/dashboard.json` -- 382 lines
- * of plausible fiction: net profit $1,393 "up 673% from prior month", spending
- * $1,117 "down 81%", $8,347 of income with "8 to review", a donut chart split
+ * of plausible fiction: net profit ₹1,393 "up 673% from prior month", spending
+ * ₹1,117 "down 81%", ₹8,347 of income with "8 to review", a donut chart split
  * between Cost of Goods Sold, Legal & Professional Fees and Automobile, none of
  * which had anything to do with the transactions in the app. The percentages
  * were typed in. The trend figures were typed in. The comparison to a "prior
@@ -20,7 +20,7 @@
 
 import { CHART_OF_ACCOUNTS } from './data/chartOfAccounts.js';
 
-/** Donut slice colours, in the order QuickBooks uses them. */
+/** Donut slice colours, in the order Meso uses them. */
 const SLICE_COLORS = ['#0077C5', '#00A699', '#1E3A8A', '#F97316', '#7C3AED', '#0AA574', '#E5346B'];
 
 const pct = (part, whole) => (whole > 0 ? Math.round((part / whole) * 100) : 0);

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ChevronDown, ArrowRight } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, ArrowRight, Check } from 'lucide-react';
 
 export default function CashFlowCard({ 
   cashflowData, 
@@ -7,7 +7,19 @@ export default function CashFlowCard({
   onNavigate 
 }) {
   const [activeTab, setActiveTab] = useState('Cash balance');
-  const [period] = useState('12 months');
+  const [selectedPeriod, setSelectedPeriod] = useState('12 months');
+  const [showPeriodMenu, setShowPeriodMenu] = useState(false);
+
+  const periodRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (periodRef.current && !periodRef.current.contains(e.target)) setShowPeriodMenu(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const formatAmount = (val) => {
     if (privacyEnabled) return "••••••";
@@ -19,6 +31,8 @@ export default function CashFlowCard({
     'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 
     'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
   ];
+
+  const periodOptions = ['30 days', '90 days', '6 months', '12 months', '18 months'];
 
   // SVG Chart Dimensions
   const svgWidth = 720;
@@ -153,10 +167,30 @@ export default function CashFlowCard({
             </button>
           </div>
 
-          <button className="flex items-center space-x-1 text-[13px] text-[#393A3D] hover:text-[#0077C5] cursor-pointer">
-            <span>{period}</span>
-            <ChevronDown size={14} />
-          </button>
+          {/* Period selector dropdown */}
+          <div className="relative" ref={periodRef}>
+            <button
+              onClick={() => setShowPeriodMenu(!showPeriodMenu)}
+              className="flex items-center space-x-1 text-[13px] text-[#393A3D] hover:text-[#0077C5] cursor-pointer"
+            >
+              <span>{selectedPeriod}</span>
+              <ChevronDown size={14} />
+            </button>
+            {showPeriodMenu && (
+              <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-[#D5D8DC] rounded-[6px] shadow-lg z-50 py-1">
+                {periodOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => { setSelectedPeriod(opt); setShowPeriodMenu(false); }}
+                    className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left flex items-center justify-between"
+                  >
+                    <span>{opt}</span>
+                    {selectedPeriod === opt && <Check size={14} className="text-[#2CA01C]" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Chart Canvas */}
@@ -168,12 +202,12 @@ export default function CashFlowCard({
             >
               {/* Horizontal Grid lines and Y-axis labels */}
               {[
-                { label: '$1K', y: y1K },
-                { label: '$0', y: y0, isZero: true },
-                { label: '-$1K', y: yNeg1K },
-                { label: '-$2K', y: yNeg2K },
-                { label: '-$3K', y: yNeg3K },
-                { label: '-$4K', y: yNeg4K },
+                { label: '₹1K', y: y1K },
+                { label: '₹0', y: y0, isZero: true },
+                { label: '-₹1K', y: yNeg1K },
+                { label: '-₹2K', y: yNeg2K },
+                { label: '-₹3K', y: yNeg3K },
+                { label: '-₹4K', y: yNeg4K },
               ].map((tick, i) => (
                 <g key={i}>
                   <text 

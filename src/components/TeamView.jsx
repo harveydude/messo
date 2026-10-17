@@ -10,7 +10,7 @@ import { formatMoney } from '../money';
  * what they cost per hour.
  *
  * Two fields that were previously one: `role` is the job title and `access` is
- * the QuickBooks permission level. Collapsing them was a real defect -- a
+ * the Meso permission level. Collapsing them was a real defect -- a
  * bookkeeper and an administrator are different things, and only one of them
  * decides what the person can see and change. The column is called ACCESS LEVEL
  * for that reason, and it is the one with consequences.
@@ -27,7 +27,7 @@ import { formatMoney } from '../money';
  * Every rupee figure on this screen is derived from those two lists.
  */
 
-/** The QuickBooks permission levels, and what each one actually permits. */
+/** The Meso permission levels, and what each one actually permits. */
 const ACCESS = {
   Admin: {
     pill: 'bg-[#EAF6EA] text-[#1B5E20]',

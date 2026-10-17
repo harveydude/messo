@@ -112,7 +112,7 @@ export function BalanceSheet() {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles size={16} className="text-blue-600" />
-          <span className="text-sm font-semibold text-blue-900">Intuit Assist</span>
+          <span className="text-sm font-semibold text-blue-900">Meso Assist</span>
         </div>
         <p className="text-sm text-blue-800">
           Cash is {formatMoney(ledger.cash.total)}. Receivables are{' '}
@@ -202,7 +202,7 @@ export function ProfitLoss() {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles size={16} className="text-blue-600" />
-          <span className="text-sm font-semibold text-blue-900">Intuit Assist</span>
+          <span className="text-sm font-semibold text-blue-900">Meso Assist</span>
         </div>
         <p className="text-sm text-blue-800">
           {data.totalIncome > 0
