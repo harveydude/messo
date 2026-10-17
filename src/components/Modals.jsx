@@ -14,102 +14,111 @@ import api from '../api/client';
    Matching Screenshot 025237
 ========================================================= */
 export function QuickCreateMenu({ isOpen, onClose, onActionSelect }) {
+  const [hoveredItem, setHoveredItem] = useState(null);
+
   if (!isOpen) return null;
 
-  const categories = [
+  const columns = [
     {
       title: 'Customers',
       items: [
-        { key: 'Invoice', label: 'GST Tax Invoice', icon: FileText, desc: 'Bill client with GST auto-computation' },
-        { key: 'Receive payment', label: 'Receive Payment', icon: CreditCard, desc: 'Record incoming UPI, NEFT or cheque' },
-        { key: 'Estimate', label: 'Quotation / Estimate', icon: FileText, desc: 'Send project estimate' },
-        { key: 'Sales receipt', label: 'Cash Sales Receipt', icon: Receipt, desc: 'Direct sale with instantaneous payment' },
-        { key: 'Credit memo', label: 'Credit Note / Memo', icon: Truck, desc: 'Return adjustment' },
-        { key: 'Add customer', label: 'Add New Customer', icon: UserCheck, desc: 'Create client profile' },
-      ]
+        'Invoice',
+        'Receive payment',
+        'Estimate',
+        'Sales receipt',
+        'Credit memo',
+        'Sales order',
+        'Statement',
+        'Refund receipt',
+        'Delayed credit',
+        'Delayed charge',
+        'Add customer',
+      ],
     },
     {
-      title: 'Vendors / Suppliers',
+      title: 'Vendors',
       items: [
-        { key: 'Expense', label: 'Direct Expense', icon: DollarSign, desc: 'Already paid debit / UPI transaction' },
-        { key: 'Bill', label: 'Vendor Bill (AP)', icon: Receipt, desc: 'Supplier tax invoice with TDS withholding' },
-        { key: 'Pay bills', label: 'Pay Vendor Bills', icon: CreditCard, desc: 'Batch settlement of accounts payable' },
-        { key: 'Vendor credit', label: 'Debit Note / Credit', icon: Truck, desc: 'Supplier adjustment note' },
-        { key: 'Add vendor', label: 'Add New Vendor', icon: UserCheck, desc: 'Add supplier with PAN/GSTIN' },
-      ]
+        'Expense',
+        'Check',
+        'Bill',
+        'Pay bills',
+        'Purchase order',
+        'Vendor credit',
+        'Credit card credit',
+        'Print checks',
+        'Add vendor',
+      ],
     },
     {
-      title: 'Employees & Payroll',
+      title: 'Employees',
       items: [
-        { key: 'Payroll', label: 'Monthly Payroll Run', icon: UserCheck, desc: 'Execute salary with EPF, ESI & PT' },
-        { key: 'Single time activity', label: 'Salary Voucher', icon: DollarSign, desc: 'Individual employee voucher' },
-        { key: 'Weekly timesheet', label: 'Weekly Timesheet', icon: Calendar, desc: 'Attendance & billable hours' },
-        { key: 'Add employee', label: 'Add Employee', icon: UserCheck, desc: 'Enroll staff for payroll' },
-      ]
+        'Payroll',
+        'Single time activity',
+        'Weekly timesheet',
+        'Add employee',
+        'Add contractor',
+      ],
     },
     {
-      title: 'Other / Ledger',
+      title: 'Other',
       items: [
-        { key: 'Bank deposit', label: 'Bank Deposit', icon: UploadCloud, desc: 'Group cash / cheques into bank' },
-        { key: 'Transfer', label: 'Contra Fund Transfer', icon: ArrowLeftRight, desc: 'Transfer between HDFC and ICICI' },
-        { key: 'Journal entry', label: 'General Journal Entry', icon: BookOpen, desc: 'Manual adjusting debit/credit voucher' },
-        { key: 'Inventory qty adjustment', label: 'Inventory Adjustment', icon: Store, desc: 'Stock count write-off' },
-      ]
-    }
+        'Bank deposit',
+        'Transfer',
+        'Journal entry',
+        'Inventory qty adjustment',
+        'Pay down credit card',
+        'Add product/service',
+        'Task',
+      ],
+    },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/20" onClick={onClose}>
+    <div className="fixed inset-0 z-[100]" onClick={onClose}>
       <div
-        className="absolute bg-white rounded-lg select-none"
+        className="absolute bg-white rounded-[8px] py-5 px-6 select-none shadow-[0_16px_48px_rgba(9,30,66,0.22)] border border-[#E3E5E8] animate-in fade-in duration-150"
         style={{
           left: 88,
-          top: 68,
+          top: 56,
           width: 780,
-          boxShadow: '0 16px 48px rgba(9, 30, 66, 0.25)',
-          border: '1px solid #dfe1e6',
-          padding: '20px 24px',
           zIndex: 1100,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '20px'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {categories.map((col, idx) => (
-          <div key={idx} className="flex flex-col">
-            <h4 className="text-[12px] uppercase tracking-[0.6px] text-[#5e6c84] font-bold mb-3 pb-1.5 border-b border-[#ebecf0]">
-              {col.title}
-            </h4>
-            <div className="flex flex-col gap-1">
-              {col.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => {
-                      onActionSelect(item.key);
-                      onClose();
-                    }}
-                    className="flex flex-col p-2 rounded-md text-left transition hover:bg-[#f4f5f8] group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon size={14} className="text-[#007755] shrink-0 group-hover:scale-110 transition" />
-                      <span className="text-[13px] text-[#172b4d] font-medium leading-tight">
-                        {item.label}
-                      </span>
-                    </div>
-                    {item.desc && (
-                      <span className="text-[10.5px] text-[#5e6c84] mt-0.5 pl-5.5 leading-snug line-clamp-1">
-                        {item.desc}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+        <div className="grid grid-cols-4 gap-4">
+          {columns.map((col, ci) => (
+            <div key={ci} className="flex flex-col">
+              <h4 className="text-[13px] font-bold text-[#393A3D] uppercase tracking-[0.06em] mb-2.5 pb-1.5 border-b border-[#E3E5E8]">
+                {col.title}
+              </h4>
+              <ul className="space-y-0.5">
+                {col.items.map((item, ii) => {
+                  const itemKey = `${ci}-${ii}`;
+                  const isHovered = hoveredItem === itemKey;
+
+                  return (
+                    <li key={ii}>
+                      <button
+                        type="button"
+                        onMouseEnter={() => setHoveredItem(itemKey)}
+                        onMouseLeave={() => setHoveredItem(null)}
+                        onClick={() => {
+                          onActionSelect(item);
+                          onClose();
+                        }}
+                        className={`w-full text-left h-[32px] px-2.5 rounded-[4px] text-[13.5px] text-[#393A3D] hover:text-black flex items-center transition-colors cursor-pointer ${
+                          isHovered ? 'bg-[#F4F5F8] font-medium' : ''
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

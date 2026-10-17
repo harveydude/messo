@@ -788,7 +788,7 @@ export default function App() {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onSearch={handleSearch}
-          onOpenSettings={() => { closeAllOverlays('settings'); setAccountSettingsOpen(true); }}
+          onOpenSettings={() => { closeAllOverlays('settings'); setSettingsMenuOpen(prev => !prev); }}
           onOpenShortcuts={() => { closeAllOverlays('additionalInfo'); setAdditionalInfoOpen(true); }}
           onOpenAssistant={() => { closeAllOverlays('assistant'); setAssistantOpen(true); }}
           onNavigateApps={() => navigate('apps')}
