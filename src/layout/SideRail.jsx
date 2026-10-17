@@ -246,8 +246,28 @@ export default function SideRail({
   pinnedItems,
   onPinnedChange,
 }) {
-  // Global sidebar collapse state (expanded by default, collapsible anytime)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Determine if user is currently inside an active app view (Accounting, Expenses, Sales, etc.)
+  const isAppTabActive = Boolean(
+    currentView && 
+    currentView !== 'dashboard' && 
+    currentView !== 'onboarding' && 
+    currentView !== 'bookmarks' && 
+    currentView !== 'feed'
+  );
+
+  // Manual toggle state: null = follow isAppTabActive automatically
+  const [manualSidebarState, setManualSidebarState] = useState(null);
+
+  // When returning to dashboard, reset manual state so sidebar stays collapsed on dashboard
+  useEffect(() => {
+    if (currentView === 'dashboard') {
+      setManualSidebarState(false);
+    } else if (isAppTabActive && manualSidebarState === null) {
+      setManualSidebarState(true);
+    }
+  }, [currentView, isAppTabActive]);
+
+  const isSidebarOpen = manualSidebarState !== null ? manualSidebarState : isAppTabActive;
 
   // Track accordion state for each group (Accounting, Expenses, Sales expanded by default)
   const [openGroups, setOpenGroups] = useState({
@@ -287,9 +307,11 @@ export default function SideRail({
   const isRailActive = (id) => {
     if (id === 'dashboard') return currentView === 'dashboard';
     if (id === 'feed') return currentView === 'feed';
-    if (id === 'reports') return currentView === 'reports' || currentView.startsWith('report_');
+    if (id === 'standard_reports' || id === 'reports') {
+      return currentView === 'standard_reports' || currentView === 'reports' || currentView.startsWith('report_');
+    }
     if (id === 'bookmarks') return currentView === 'bookmarks';
-    if (id === 'apps') return !sidebarCollapsed;
+    if (id === 'apps') return isSidebarOpen;
     return currentView === id;
   };
 
@@ -351,8 +373,8 @@ export default function SideRail({
 
         <RailItem
           label="Reports"
-          onClick={() => setCurrentView('reports')}
-          active={isRailActive('reports')}
+          onClick={() => setCurrentView('standard_reports')}
+          active={isRailActive('standard_reports') || isRailActive('reports')}
         >
           <TrendingUp size={18} />
         </RailItem>
@@ -360,8 +382,8 @@ export default function SideRail({
         {/* My Apps Button (toggles the unified sidebar open/closed) */}
         <RailItem
           label="My apps"
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          active={!sidebarCollapsed}
+          onClick={() => setManualSidebarState(!isSidebarOpen)}
+          active={isSidebarOpen}
           boxed
         >
           <Grid size={18} />
@@ -387,7 +409,7 @@ export default function SideRail({
                 key={pin.id}
                 label={pin.label}
                 onClick={() => {
-                  setSidebarCollapsed(false);
+                  setManualSidebarState(true);
                   if (pin.label === 'Accounting') {
                     setCurrentView('bank_transactions');
                     setOpenGroups(prev => ({ ...prev, accounting: true }));
@@ -404,15 +426,15 @@ export default function SideRail({
                 active={currentView === pin.id}
               >
                 {imgUrl ? (
-                  <span className="w-[24px] h-[24px] rounded-full overflow-hidden flex items-center justify-center shadow-xs border border-black/10 bg-gray-900">
+                  <span className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center shadow-xs border border-black/10 bg-gray-950">
                     <img src={imgUrl} alt={pin.label} className="w-full h-full object-cover" />
                   </span>
                 ) : (
                   <span
-                    className="w-[22px] h-[22px] rounded-md flex items-center justify-center text-white shadow-xs"
+                    className="w-[24px] h-[24px] rounded-md flex items-center justify-center text-white shadow-xs"
                     style={{ backgroundColor: pin.color || '#6B6C72' }}
                   >
-                    {iconFn(12)}
+                    {iconFn(14)}
                   </span>
                 )}
               </RailItem>
@@ -433,7 +455,7 @@ export default function SideRail({
       </aside>
 
       {/* ── 2. UNIFIED GLOBAL SECONDARY SIDEBAR (263px, #F4F5F8, exact Chart of Accounts styling) ── */}
-      {!sidebarCollapsed && (
+      {isSidebarOpen && (
         <aside 
           className="w-[263px] shrink-0 bg-[#F4F5F8] border-r border-[#E3E5E8] flex flex-col pt-[18px] overflow-y-auto z-10 transition-all duration-150"
           style={{ scrollbarWidth: 'thin' }}
@@ -455,7 +477,7 @@ export default function SideRail({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSidebarCollapsed(true)}
+                  onClick={() => setManualSidebarState(false)}
                   className="text-[#6B6C72] hover:text-[#393A3D] p-1 rounded transition cursor-pointer"
                   title="Collapse sidebar"
                 >
@@ -487,12 +509,12 @@ export default function SideRail({
                         className="flex-1 h-full flex items-center text-left cursor-pointer min-w-0"
                       >
                         {grp.iconUrl ? (
-                          <span className="w-[22px] h-[22px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-900">
+                          <span className="w-[26px] h-[26px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-950">
                             <img src={grp.iconUrl} alt={grp.label} className="w-full h-full object-cover" />
                           </span>
                         ) : (
                           <span 
-                            className="w-[20px] h-[20px] rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
+                            className="w-[22px] h-[22px] rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
                             style={{ backgroundColor: grp.badgeBg, color: grp.badgeText }}
                           >
                             {grp.letter}

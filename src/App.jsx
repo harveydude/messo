@@ -310,20 +310,37 @@ export default function App() {
     return () => window.removeEventListener('qbo:version-conflict', handleConflict);
   }, []);
 
-  // Auto fullscreen on first load so users get the full view.
+  // Always prioritize onboarding wizard on initial visit until completed
   useEffect(() => {
-    const tryFullscreen = async () => {
+    const isCompleted = localStorage.getItem('meso_onboarding_completed') === 'true';
+    if (!isCompleted && viewId === 'dashboard') {
+      navigate('onboarding');
+    }
+  }, [viewId, navigate]);
+
+  // Auto fullscreen on landing & first interaction so page fits full screen automatically
+  useEffect(() => {
+    const tryFullscreen = () => {
       try {
         if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-          await document.documentElement.requestFullscreen();
+          document.documentElement.requestFullscreen().catch(() => {});
         }
-      } catch (e) {
-        // Browsers block fullscreen without user gesture; silently ignore.
-      }
+      } catch (e) {}
     };
-    // Attempt after a brief delay to let the page settle.
-    const timer = setTimeout(tryFullscreen, 500);
-    return () => clearTimeout(timer);
+
+    // Attempt immediately on mount
+    tryFullscreen();
+    const timer = setTimeout(tryFullscreen, 300);
+
+    // Also trigger on first user gesture (click or keydown) to satisfy browser security policies
+    window.addEventListener('click', tryFullscreen, { once: true });
+    window.addEventListener('keydown', tryFullscreen, { once: true });
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('click', tryFullscreen);
+      window.removeEventListener('keydown', tryFullscreen);
+    };
   }, []);
 
   // ── Keyboard shortcuts ──
@@ -660,6 +677,7 @@ export default function App() {
         return <TeamView onNavigate={(v) => navigate(v)} />;
       case 'payroll':
         return <PayrollView onNavigate={(v) => navigate(v)} />;
+      case 'reports':
       case 'standard_reports':
         return <ReportsView onOpenBalanceSheet={() => navigate('balance_sheet')} onNavigate={(v, q) => navigate(v, q)} />;
       case 'report_profit_loss':
@@ -730,6 +748,7 @@ export default function App() {
         return (
           <SearchResultsView
             query={searchQuery || query.q || 'Show me open invoices for the last 30 days'}
+            onNavigate={(v) => navigate(v)}
           />
         );
       case 'pricing':
@@ -853,6 +872,8 @@ export default function App() {
           <CustomizeAppMenusModal
             isOpen={customizeMenusOpen}
             onClose={() => setCustomizeMenusOpen(false)}
+            pinnedItems={pinnedItems}
+            onSave={handlePinnedChange}
           />
         )}
         <JournalEntryModal

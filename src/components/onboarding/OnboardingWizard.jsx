@@ -232,6 +232,9 @@ export default function OnboardingWizard({ onComplete, onExit }) {
       try {
         localStorage.setItem('meso_business_profile', JSON.stringify(formData));
         localStorage.setItem('meso_onboarding_completed', 'true');
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
       } catch (e) {}
       if (onComplete) onComplete(formData);
     }
@@ -546,7 +549,14 @@ function Screen0Welcome({ onStart }) {
         </p>
 
         <button
-          onClick={onStart}
+          onClick={() => {
+            try {
+              if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+              }
+            } catch (e) {}
+            onStart();
+          }}
           className="h-[44px] px-8 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14.5px] rounded-[6px] shadow-sm cursor-pointer transition transform active:scale-[0.98]"
         >
           Let's get started

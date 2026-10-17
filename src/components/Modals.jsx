@@ -1623,85 +1623,181 @@ export function AdditionalInfoModal({ isOpen, onClose }) {
    5. CUSTOMIZE APP MENUS MODAL
    Matching Screenshot 031713
 ========================================================= */
-const DEFAULT_APPS = [
-  { name: "Accounting", pinned: true },
-  { name: "Expenses & Pay Bills", pinned: true },
-  { name: "Sales & Get Paid", pinned: true },
-  { name: "Customer Hub", pinned: false },
-  { name: "Team", pinned: false },
-  { name: "Time", pinned: false },
-  { name: "Project Management", pinned: false },
-  { name: "Inventory", pinned: false },
-  { name: "Sales Tax", pinned: false },
-  { name: "Business Tax", pinned: false },
-  { name: "Lending", pinned: false }
+const CUSTOMIZE_MASTER_APPS = [
+  { id: 'bank_transactions', name: 'Accounting', iconUrl: '/app-icons/accounting.png', color: '#107C41' },
+  { id: 'expense_transactions', name: 'Expenses & Pay Bills', iconUrl: '/app-icons/expenses.png', color: '#008927' },
+  { id: 'sales_transactions', name: 'Sales & Get Paid', iconUrl: '/app-icons/sales.png', color: '#0077C5' },
+  { id: 'sales_tax', name: 'GST Returns', iconUrl: '/app-icons/gst.jpg', color: '#E5346B' },
+  { id: 'business_tax', name: 'TDS & Direct Tax', iconUrl: '/app-icons/gst.jpg', color: '#83243F' },
+  { id: 'bills', name: 'Bills & MSME Pays', iconUrl: '/app-icons/bills.png', color: '#107C41' },
+  { id: 'customers_list', name: 'Customers', iconUrl: '/app-icons/customers.png', color: '#00828A' },
+  { id: 'standard_reports', name: 'Reports', iconUrl: '/app-icons/reports.jpg', color: '#0077C5' },
+  { id: 'customer_hub', name: 'Customer Hub', iconUrl: '/app-icons/customer_hub.jpg', color: '#2E9E5B' },
+  { id: 'team', name: 'Team', iconUrl: '/app-icons/team.jpg', color: '#12A489' },
+  { id: 'time_entries', name: 'Time Tracking', iconUrl: '/app-icons/time.jpg', color: '#00352C' },
+  { id: 'lending', name: 'Lending', iconUrl: '/app-icons/tag_marketing.jpg', color: '#0AA574' }
 ];
 
-export function CustomizeAppMenusModal({ isOpen, onClose }) {
-  // Hooks run unconditionally; the closed-check sits below them. Previously the
-  // check came first, which made this useState conditional.
-  //
-  // The parent mounts this component only while it is open, so the list reseeds
-  // naturally on every open. That is why there is no "reset on open" effect:
-  // writing state inside an effect during mount is a cascade of extra renders,
-  // and a mount-when-open component gets the same behaviour for free.
-  const [apps, setApps] = useState(DEFAULT_APPS);
+export function CustomizeAppMenusModal({ isOpen, onClose, pinnedItems = [], onSave }) {
+  const [apps, setApps] = useState(() => {
+    const pinnedIds = new Set((pinnedItems && pinnedItems.length > 0 ? pinnedItems : [
+      { id: 'bank_transactions' },
+      { id: 'expense_transactions' },
+      { id: 'sales_transactions' }
+    ]).map(p => p.id));
+    return CUSTOMIZE_MASTER_APPS.map(a => ({
+      ...a,
+      pinned: pinnedIds.has(a.id)
+    }));
+  });
 
   if (!isOpen) return null;
 
   const togglePin = (index) => {
-    const updated = [...apps];
-    updated[index].pinned = !updated[index].pinned;
-    setApps(updated);
+    setApps(prev => prev.map((a, i) => i === index ? { ...a, pinned: !a.pinned } : a));
+  };
+
+  const moveApp = (fromIndex, toIndex) => {
+    if (toIndex < 0 || toIndex >= apps.length) return;
+    setApps(prev => {
+      const copy = [...prev];
+      const [moved] = copy.splice(fromIndex, 1);
+      copy.splice(toIndex, 0, moved);
+      return copy;
+    });
+  };
+
+  const handleReset = () => {
+    setApps(CUSTOMIZE_MASTER_APPS.map(a => ({
+      ...a,
+      pinned: a.id === 'bank_transactions' || a.id === 'expense_transactions' || a.id === 'sales_transactions'
+    })));
+  };
+
+  const handleSave = () => {
+    const newPins = apps.filter(a => a.pinned).map(a => {
+      let shortLabel = a.name;
+      if (a.id === 'bank_transactions') shortLabel = 'Accounting';
+      else if (a.id === 'expense_transactions') shortLabel = 'Expenses';
+      else if (a.id === 'sales_transactions') shortLabel = 'Sales';
+      else if (a.id === 'sales_tax') shortLabel = 'GST Returns';
+      else if (a.id === 'business_tax') shortLabel = 'TDS';
+      else if (a.id === 'bills') shortLabel = 'Bills';
+      else if (a.id === 'customers_list') shortLabel = 'Customers';
+      else if (a.id === 'standard_reports') shortLabel = 'Reports';
+      else if (a.id === 'customer_hub') shortLabel = 'Hub';
+      else if (a.id === 'team') shortLabel = 'Team';
+      else if (a.id === 'time_entries') shortLabel = 'Time';
+      else if (a.id === 'lending') shortLabel = 'Lending';
+      return {
+        id: a.id,
+        label: shortLabel,
+        iconUrl: a.iconUrl,
+        color: a.color
+      };
+    });
+    if (onSave) onSave(newPins);
+    if (onClose) onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-150">
       <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-lg p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-gray-200 pb-3">
           <div>
             <h2 className="text-base font-bold text-gray-900">Customize your app menus</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Drag and drop to reorder apps and pin your top 3 for easy access.</p>
+            <p className="text-xs text-gray-500 mt-0.5">Toggle pins to customize your quick access bar on the left rail.</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-900">
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="text-gray-400 hover:text-gray-900 cursor-pointer p-1"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="space-y-1 max-h-80 overflow-y-auto pr-1">
+        <div className="space-y-1.5 max-h-[380px] overflow-y-auto pr-1">
           {apps.map((app, idx) => (
             <div 
-              key={idx}
-              className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 border border-gray-100 text-xs"
+              key={app.id}
+              className={`flex items-center justify-between p-2.5 rounded-xl border transition ${
+                app.pinned 
+                  ? 'bg-emerald-50/40 border-emerald-300' 
+                  : 'bg-white hover:bg-gray-50 border-gray-100'
+              }`}
             >
-              <div className="flex items-center space-x-3">
-                <GripVertical size={14} className="text-gray-400 cursor-grab" />
+              <div className="flex items-center space-x-3 min-w-0">
                 <button 
+                  type="button"
                   onClick={() => togglePin(idx)}
-                  className={`p-1 rounded hover:bg-gray-200 ${app.pinned ? 'text-gray-900' : 'text-gray-300'}`}
+                  title={app.pinned ? "Click to unpin" : "Click to pin"}
+                  className={`p-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 ${
+                    app.pinned 
+                      ? 'bg-emerald-600 text-white shadow-xs' 
+                      : 'bg-gray-100 text-gray-400 hover:text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  <Pin size={14} className={app.pinned ? "fill-gray-900" : ""} />
+                  <Pin size={14} className={app.pinned ? "fill-white rotate-45" : ""} />
                 </button>
-                <span className="font-semibold text-gray-800">{app.name}</span>
+
+                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-950">
+                  <img src={app.iconUrl} alt={app.name} className="w-full h-full object-cover" />
+                </div>
+
+                <div className="min-w-0">
+                  <span className="text-[13px] font-semibold text-gray-900 truncate block">
+                    {app.name}
+                  </span>
+                  <span className="text-[10px] text-gray-500">
+                    {app.pinned ? "Pinned to sidebar" : "Not pinned"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Order Controls */}
+              <div className="flex items-center space-x-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => moveApp(idx, idx - 1)}
+                  disabled={idx === 0}
+                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 cursor-pointer text-xs"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveApp(idx, idx + 1)}
+                  disabled={idx === apps.length - 1}
+                  className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-20 cursor-pointer text-xs"
+                >
+                  ▼
+                </button>
               </div>
             </div>
           ))}
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-          <button className="text-xs text-[#0077c5] hover:underline font-semibold">
+          <button 
+            type="button"
+            onClick={handleReset}
+            className="text-xs text-[#0077c5] hover:underline font-semibold cursor-pointer"
+          >
             Reset to default
           </button>
           <div className="flex items-center space-x-2">
             <button 
+              type="button"
               onClick={onClose}
-              className="px-4 py-1.5 text-xs font-semibold text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50"
+              className="px-4 py-1.5 text-xs font-semibold text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 cursor-pointer"
             >
               Cancel
             </button>
             <button 
-              onClick={onClose}
-              className="px-5 py-1.5 text-xs font-bold text-white bg-[#108000] rounded-full hover:bg-green-800 shadow-xs"
+              type="button"
+              onClick={handleSave}
+              className="px-5 py-1.5 text-xs font-bold text-white bg-[#008927] hover:bg-[#00701F] rounded-full shadow-xs cursor-pointer transition active:scale-95"
             >
               Save
             </button>

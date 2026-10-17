@@ -3,9 +3,10 @@ import { Printer, Share2, Sliders, X, Filter, Calendar, ChevronDown, HelpCircle,
 import api from '../api/client';
 
 export default function SearchResultsView({ 
-  query = "Show me open invoices for the last 30 days" 
+  query = "Show me open invoices for the last 30 days",
+  onNavigate
 }) {
-  const [activeTab, setActiveTab] = useState("transactions");
+  const [activeTab, setActiveTab] = useState("all");
   const [showInfoBanner, setShowInfoBanner] = useState(true);
   const [liveResults, setLiveResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -72,11 +73,17 @@ export default function SearchResultsView({
         </div>
 
         <div className="flex items-center space-x-2 text-[14px]">
-          <button className="text-[#0077C5] hover:underline cursor-pointer font-medium">
+          <button 
+            onClick={() => onNavigate ? onNavigate('sales_transactions') : (window.location.hash = '#/sales')}
+            className="text-[#0077C5] hover:underline cursor-pointer font-medium"
+          >
             Go to all transactions
           </button>
           <span className="text-[#6B6C72]">or</span>
-          <button className="text-[#0077C5] hover:underline cursor-pointer font-medium">
+          <button 
+            onClick={() => onNavigate ? onNavigate('feedback') : (window.location.hash = '#/feedback')}
+            className="text-[#0077C5] hover:underline cursor-pointer font-medium"
+          >
             Send us feedback
           </button>
         </div>
@@ -107,14 +114,25 @@ export default function SearchResultsView({
         </button>
 
         <button
-          onClick={() => setActiveTab("help")}
+          onClick={() => setActiveTab("contacts")}
           className={`pb-3 font-medium transition cursor-pointer ${
-            activeTab === 'help'
+            activeTab === 'contacts'
               ? 'text-[#393A3D] font-semibold border-b-[3px] border-[#2CA01C] -mb-[2px]'
               : 'text-[#6B6C72] hover:text-[#393A3D]'
           }`}
         >
-          Help
+          Contacts
+        </button>
+
+        <button
+          onClick={() => setActiveTab("reports")}
+          className={`pb-3 font-medium transition cursor-pointer ${
+            activeTab === 'reports'
+              ? 'text-[#393A3D] font-semibold border-b-[3px] border-[#2CA01C] -mb-[2px]'
+              : 'text-[#6B6C72] hover:text-[#393A3D]'
+          }`}
+        >
+          Reports
         </button>
       </div>
 
@@ -279,56 +297,123 @@ export default function SearchResultsView({
         )}
       </div>
 
-      {/* 6. Results Table */}
-      <div className="w-full overflow-x-auto">
-        <div className="min-w-[1200px]">
-          {/* Table Header Row */}
-          <div className="grid grid-cols-[144px_144px_144px_415px_170px_148px_115px_294px_1fr] items-center text-[12.5px] font-semibold text-[#393A3D] uppercase tracking-[0.04em] pb-3 border-b border-[#D4D7DC]">
-            <div className="flex items-center space-x-1 cursor-pointer hover:text-black">
-              <span>DATE</span>
-              <ArrowDown size={14} className="stroke-[2.5]" />
-            </div>
-            <div>TYPE</div>
-            <div className="flex items-center space-x-1">
-              <span>REF NO.</span>
-              <HelpCircle size={14} className="text-[#0077C5]" />
-            </div>
-            <div className="flex items-center space-x-1">
-              <span>CONTACT</span>
-              <HelpCircle size={14} className="text-[#0077C5]" />
-            </div>
-            <div>DUE DATE</div>
-            <div>BALANCE</div>
-            <div>AMOUNT</div>
-            <div>MEMO/DESCRIPTION</div>
-            <div>LAST MODIFIED DATE</div>
-          </div>
-
-          {/* Table Data Rows */}
-          <div className="divide-y divide-[#E3E5E8]">
-            {transactions.map((row, idx) => (
-              <div
-                key={idx}
-                className="grid grid-cols-[144px_144px_144px_415px_170px_148px_115px_294px_1fr] items-center h-[56px] text-[15px] text-[#393A3D] hover:bg-[#F6F7F8] transition"
-              >
-                <div>{row.date}</div>
-                <div>{row.type}</div>
-                <div>{row.refNo}</div>
-                <div>
-                  <button className="text-[#0077C5] hover:underline font-medium text-left cursor-pointer truncate max-w-[390px]">
-                    {row.contact}
-                  </button>
-                </div>
-                <div>{row.dueDate}</div>
-                <div>{row.balance}</div>
-                <div>{row.amount}</div>
-                <div className="text-[#6B6C72]">{row.memo || "—"}</div>
-                <div className="text-[#6B6C72] text-[14px]">{row.lastModified}</div>
+      {/* 6. Reports View */}
+      {activeTab === 'reports' && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Matching Reports</h2>
+          {(liveResults?.reports?.length > 0 ? liveResults.reports : [
+            { title: 'Profit and Loss', subtitle: 'Standard statement of revenue and expenses', route: 'report_profit_loss' },
+            { title: 'Balance Sheet', subtitle: 'Statement of assets, liabilities and equity', route: 'balance_sheet' },
+            { title: 'Statement of Cash Flows', subtitle: 'Cash receipts and disbursements breakdown', route: 'cash_flow' },
+            { title: 'Standard Reports Hub', subtitle: 'Comprehensive statutory reporting hub', route: 'standard_reports' }
+          ]).map((r, idx) => (
+            <div
+              key={idx}
+              onClick={() => onNavigate ? onNavigate(r.route) : (window.location.hash = '#' + r.route)}
+              className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition cursor-pointer"
+            >
+              <div>
+                <h3 className="text-base font-bold text-gray-900">{r.title}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{r.subtitle}</p>
               </div>
-            ))}
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                Open Report →
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 7. Contacts View */}
+      {activeTab === 'contacts' && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-bold text-gray-900 mb-2">Matching Contacts & Customers</h2>
+          {(liveResults?.contacts?.length > 0 ? liveResults.contacts : [
+            { title: 'Sonnenschein Family Store', subtitle: 'Customer • Retail & Wholesale', type: 'CUSTOMER' },
+            { title: 'Geeta Kalapatapu', subtitle: 'Customer • Direct Accounts', type: 'CUSTOMER' },
+            { title: 'Mark Cho', subtitle: 'Customer • Regular Client', type: 'CUSTOMER' }
+          ]).map((c, idx) => (
+            <div
+              key={idx}
+              onClick={() => onNavigate ? onNavigate('customers_list') : (window.location.hash = '#/customers')}
+              className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition cursor-pointer"
+            >
+              <div>
+                <h3 className="text-base font-bold text-gray-900">{c.title}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">{c.subtitle}</p>
+              </div>
+              <span className="text-xs font-semibold text-[#0077C5] bg-blue-50 px-3 py-1 rounded-full">
+                View Customer →
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 8. Results Table (Transactions or All) */}
+      {(activeTab === 'transactions' || activeTab === 'all') && (
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-[1200px]">
+            {/* Table Header Row */}
+            <div className="grid grid-cols-[144px_144px_144px_415px_170px_148px_115px_294px_1fr] items-center text-[12.5px] font-semibold text-[#393A3D] uppercase tracking-[0.04em] pb-3 border-b border-[#D4D7DC]">
+              <div className="flex items-center space-x-1 cursor-pointer hover:text-black">
+                <span>DATE</span>
+                <ArrowDown size={14} className="stroke-[2.5]" />
+              </div>
+              <div>TYPE</div>
+              <div className="flex items-center space-x-1">
+                <span>REF NO.</span>
+                <HelpCircle size={14} className="text-[#0077C5]" />
+              </div>
+              <div className="flex items-center space-x-1">
+                <span>CONTACT</span>
+                <HelpCircle size={14} className="text-[#0077C5]" />
+              </div>
+              <div>DUE DATE</div>
+              <div>BALANCE</div>
+              <div>AMOUNT</div>
+              <div>MEMO/DESCRIPTION</div>
+              <div>LAST MODIFIED DATE</div>
+            </div>
+
+            {/* Table Data Rows */}
+            <div className="divide-y divide-[#E3E5E8]">
+              {transactions.map((row, idx) => (
+                <div
+                  key={idx}
+                  className="grid grid-cols-[144px_144px_144px_415px_170px_148px_115px_294px_1fr] items-center h-[56px] text-[15px] text-[#393A3D] hover:bg-[#F6F7F8] transition"
+                >
+                  <div>{row.date}</div>
+                  <div>{row.type}</div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate ? onNavigate('invoices') : (window.location.hash = '#/invoices')}
+                      className="text-[#0077C5] hover:underline font-semibold cursor-pointer"
+                    >
+                      {row.refNo}
+                    </button>
+                  </div>
+                  <div>
+                    <button 
+                      type="button"
+                      onClick={() => onNavigate ? onNavigate('customers_list') : (window.location.hash = '#/customers')}
+                      className="text-[#0077C5] hover:underline font-medium text-left cursor-pointer truncate max-w-[390px]"
+                    >
+                      {row.contact}
+                    </button>
+                  </div>
+                  <div>{row.dueDate}</div>
+                  <div>{row.balance}</div>
+                  <div className="font-semibold text-gray-900">{row.amount}</div>
+                  <div className="text-[#6B6C72]">{row.memo || "—"}</div>
+                  <div className="text-[#6B6C72] text-[14px]">{row.lastModified}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

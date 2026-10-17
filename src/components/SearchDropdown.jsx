@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, Link2, Plus, Search, Sparkles, FileText, User } from 'lucide-react';
+import { History, Link2, Plus, Search, Sparkles, FileText, User, TrendingUp } from 'lucide-react';
 import api from '../api/client';
 import dashboardData from '../data/dashboard.json';
 
@@ -118,12 +118,41 @@ export default function SearchDropdown({
                 {smartData.transactions.map((t, idx) => (
                   <div
                     key={idx}
-                    onClick={() => onSelectResult && onSelectResult(t.title)}
+                    onClick={() => {
+                      if (t.link) window.location.hash = '#' + t.link;
+                      else if (onSelectResult) onSelectResult(t.title);
+                    }}
                     className="flex items-center gap-3 h-[42px] px-2 rounded hover:bg-[#F6F7F8] cursor-pointer text-[14px] text-[#393A3D]"
                   >
                     <FileText size={16} className="text-[#2CA01C]" />
                     <span className="font-semibold">{t.title}</span>
                     <span className="text-xs text-[#6B6C72]">{t.subtitle}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Reports */}
+            {smartData.reports?.length > 0 && (
+              <div>
+                <div className="text-[13px] font-semibold text-[#6B6C72] mb-1 px-2 uppercase tracking-wider">
+                  Reports & Statements
+                </div>
+                {smartData.reports.map((r, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      if (r.route) {
+                        window.location.hash = `#/${r.route}`;
+                      } else if (onSelectResult) {
+                        onSelectResult(r.title);
+                      }
+                    }}
+                    className="flex items-center gap-3 h-[42px] px-2 rounded hover:bg-[#F6F7F8] cursor-pointer text-[14px] text-[#393A3D]"
+                  >
+                    <TrendingUp size={16} className="text-[#0077C5]" />
+                    <span className="font-semibold">{r.title}</span>
+                    <span className="text-xs text-[#6B6C72]">{r.subtitle}</span>
                   </div>
                 ))}
               </div>

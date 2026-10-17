@@ -231,41 +231,69 @@ export async function smartSearchAndQA(query = '') {
   }
 
   // MODE 3: GLOBAL ENTITY SEARCH MODE
+  const isCustomerSearch = q.includes('customer');
+  const isVendorSearch = q.includes('vendor');
+  const isInvoiceSearch = q.includes('invoice');
+  const isReportSearch = q.includes('report');
+
   const contacts = await db.query(`
     SELECT id, display_name, type, email
     FROM contacts
-    WHERE LOWER(display_name) LIKE $1 OR LOWER(email) LIKE $1
-    LIMIT 5
-  `, [`%${q}%`]);
+    WHERE LOWER(display_name) LIKE $1 
+       OR LOWER(email) LIKE $1
+       OR ($2 = true AND type = 'CUSTOMER')
+       OR ($3 = true AND type = 'VENDOR')
+    LIMIT 10
+  `, [`%${q}%`, isCustomerSearch, isVendorSearch]);
 
   const invoices = await db.query(`
-    SELECT id, invoice_number, total_paise, status
-    FROM invoices
-    WHERE LOWER(invoice_number) LIKE $1
-    LIMIT 5
-  `, [`%${q}%`]);
+    SELECT i.id, i.invoice_number, i.total_paise, i.balance_due_paise, i.status, i.issue_date, i.due_date,
+           c.display_name as customer_name
+    FROM invoices i
+    LEFT JOIN contacts c ON i.customer_id = c.id
+    WHERE LOWER(i.invoice_number) LIKE $1 
+       OR LOWER(c.display_name) LIKE $1
+       OR $2 = true
+    ORDER BY i.created_at DESC
+    LIMIT 10
+  `, [`%${q}%`, isInvoiceSearch]);
 
   const accounts = await db.query(`
     SELECT id, code, name, account_type
     FROM chart_of_accounts
     WHERE LOWER(name) LIKE $1 OR code LIKE $1
-    LIMIT 5
+    LIMIT 10
   `, [`%${q}%`]);
 
-  const reportsList = [
+  const allReports = [
     { title: 'Profit and Loss', subtitle: 'Standard statement of revenue and expenses', route: 'report_profit_loss' },
     { title: 'Balance Sheet', subtitle: 'Statement of assets, liabilities and equity', route: 'balance_sheet' },
     { title: 'Statement of Cash Flows', subtitle: 'Cash receipts and disbursements breakdown', route: 'cash_flow' },
     { title: 'Accounts Payable Aging Summary', subtitle: 'Open vendor bills grouped by aging buckets', route: 'ap_aging' },
     { title: 'Accounts Receivable Aging Summary', subtitle: 'Open customer invoices grouped by aging buckets', route: 'ar_aging' },
-    { title: 'Bank Transactions', subtitle: 'Live feeds and reconciliation', route: 'bank_transactions' }
-  ].filter(r => r.title.toLowerCase().includes(q));
+    { title: 'Bank Transactions', subtitle: 'Live feeds and reconciliation', route: 'bank_transactions' },
+    { title: 'Standard Reports Hub', subtitle: 'Comprehensive statutory reporting hub', route: 'standard_reports' }
+  ];
+
+  const reportsList = isReportSearch 
+    ? allReports 
+    : allReports.filter(r => r.title.toLowerCase().includes(q) || r.subtitle.toLowerCase().includes(q));
 
   const txns = invoices.rows.map(i => ({
     id: i.id,
+    doc_number: i.invoice_number,
+    invoice_number: i.invoice_number,
+    customer_name: i.customer_name || 'Customer',
+    contact_name: i.customer_name || 'Customer',
     title: `Invoice #${i.invoice_number}`,
-    subtitle: `₹${(Number(i.total_paise)/100).toFixed(2)} - ${i.status}`,
-    type: 'INVOICE'
+    subtitle: `₹${(Number(i.total_paise || 0)/100).toFixed(2)} - ${i.status} (${i.customer_name || 'Customer'})`,
+    total_inr: (Number(i.total_paise || 0)/100).toFixed(2),
+    balance_inr: (Number(i.balance_due_paise || i.total_paise || 0)/100).toFixed(2),
+    status: i.status,
+    date: i.issue_date ? String(i.issue_date).split('T')[0] : '10/24/2025',
+    dueDate: i.due_date ? String(i.due_date).split('T')[0] : '11/24/2025',
+    type: 'Invoice',
+    link: `/sales/invoices/${i.id}`
   }));
 
   return {

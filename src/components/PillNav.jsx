@@ -1,24 +1,18 @@
 import React, { useRef } from 'react';
-import {
-  Activity,
-  CreditCard,
-  BarChart2,
-  Users,
-  Clock,
-  FileText,
-  ChevronRight,
-  Landmark,
-} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 const PILLS = [
-  { id: 'bank_transactions', label: 'Accounting', color: '#2CA01C', icon: Activity },
-  { id: 'expense_transactions', label: 'Expenses & Pay Bills', color: '#107C41', icon: CreditCard },
-  { id: 'sales_transactions', label: 'Sales & Get Paid', color: '#0E9F9F', icon: BarChart2 },
-  { id: 'sales_tax', label: 'GST Returns (GSTR-1/3B)', color: '#7C3AED', icon: Landmark },
-  { id: 'business_tax', label: 'TDS & Direct Tax', color: '#D97706', icon: FileText },
-  { id: 'bills', label: 'Bills & MSME Pay', color: '#0077C5', icon: CreditCard },
-  { id: 'customers_list', label: 'Customers', color: '#0E9F9F', icon: Users },
-  { id: 'standard_reports', label: 'Reports', color: '#E5446D', icon: FileText },
+  { id: 'bank_transactions', label: 'Accounting', iconUrl: '/app-icons/accounting.png' },
+  { id: 'expense_transactions', label: 'Expenses & Pay Bills', iconUrl: '/app-icons/expenses.png' },
+  { id: 'sales_transactions', label: 'Sales & Get Paid', iconUrl: '/app-icons/sales.png' },
+  { id: 'sales_tax', label: 'GST Returns (GSTR-1/3B)', iconUrl: '/app-icons/gst.jpg' },
+  { id: 'business_tax', label: 'TDS & Direct Tax', iconUrl: '/app-icons/gst.jpg' },
+  { id: 'bills', label: 'Bills & MSME Pay', iconUrl: '/app-icons/bills.png' },
+  { id: 'customers_list', label: 'Customers', iconUrl: '/app-icons/customers.png' },
+  { id: 'standard_reports', label: 'Reports', iconUrl: '/app-icons/reports.jpg' },
+  { id: 'customer_hub', label: 'Customer Hub', iconUrl: '/app-icons/customer_hub.jpg' },
+  { id: 'team', label: 'Team', iconUrl: '/app-icons/team.jpg' },
+  { id: 'time_entries', label: 'Time Tracking', iconUrl: '/app-icons/time.jpg' },
 ];
 
 const SCROLL_STEP = 300;
@@ -37,28 +31,28 @@ export default function PillNav({ onNavigate }) {
         className="flex items-center space-x-[12px] overflow-x-auto no-scrollbar scroll-smooth max-w-full px-2"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {PILLS.map((pill) => {
-          const Icon = pill.icon;
-          return (
-            <button
-              key={pill.id}
-              type="button"
-              onClick={() => onNavigate?.(pill.id)}
-              className="h-[52px] px-[20px] rounded-full bg-white border border-[#C7CBCE] hover:border-[#8D9096] hover:shadow-xs flex items-center shrink-0 cursor-pointer transition select-none focus-visible:outline-2 focus-visible:outline-[#2CA01C] focus-visible:outline-offset-2"
+        {PILLS.map((pill) => (
+          <button
+            key={pill.id}
+            type="button"
+            onClick={() => onNavigate?.(pill.id)}
+            className="h-[52px] px-[18px] rounded-full bg-white border border-[#C7CBCE] hover:border-[#8D9096] hover:shadow-xs flex items-center shrink-0 cursor-pointer transition select-none focus-visible:outline-2 focus-visible:outline-[#2CA01C] focus-visible:outline-offset-2 group"
+          >
+            <span
+              className="w-[32px] h-[32px] rounded-full overflow-hidden flex items-center justify-center mr-[10px] shrink-0 shadow-xs border border-black/10 bg-gray-950 group-hover:scale-105 transition"
+              aria-hidden="true"
             >
-              <span
-                className="w-[32px] h-[32px] rounded-full flex items-center justify-center text-white mr-[8px] shrink-0 shadow-2xs"
-                style={{ backgroundColor: pill.color }}
-                aria-hidden="true"
-              >
-                <Icon size={16} strokeWidth={2.2} />
-              </span>
-              <span className="text-[15px] font-medium text-[#393A3D] whitespace-nowrap">
-                {pill.label}
-              </span>
-            </button>
-          );
-        })}
+              <img
+                src={pill.iconUrl}
+                alt={pill.label}
+                className="w-full h-full object-cover"
+              />
+            </span>
+            <span className="text-[15px] font-medium text-[#393A3D] whitespace-nowrap group-hover:text-black">
+              {pill.label}
+            </span>
+          </button>
+        ))}
 
         <button
           type="button"

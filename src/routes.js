@@ -43,7 +43,8 @@ export const ROUTES = [
   { id: 'team', slug: '/team', label: 'Team' },
   { id: 'payroll', slug: '/payroll', label: 'Payroll' },
 
-  { id: 'standard_reports', slug: '/reports', label: 'Reports' },
+  { id: 'standard_reports', slug: '/reports', label: 'Reports', aliases: ['/standard-reports'] },
+  { id: 'reports', slug: '/reports', label: 'Reports' },
   { id: 'balance_sheet', slug: '/reports/balance-sheet', label: 'Balance sheet' },
   { id: 'management_reports', slug: '/reports/management', label: 'Management reports' },
   { id: 'audit_log', slug: '/audit-log', label: 'Audit log' },
@@ -132,6 +133,10 @@ export function labelFor(viewId) {
 }
 
 export function viewIdForSlug(path) {
+  if (path === '/') {
+    const completed = typeof window !== 'undefined' && localStorage.getItem('meso_onboarding_completed') === 'true';
+    return completed ? 'dashboard' : 'onboarding';
+  }
   return bySlug.get(path) ?? FALLBACK_ROUTE;
 }
 

@@ -196,12 +196,27 @@ export default function DashboardView({
     setEyeTooltipVisible(false);
   };
 
+  // Dynamic time-based greeting (Good morning, Good afternoon, Good evening, Good night)
+  // Time is silently recorded in frontend and backend without being visibly shown
+  const getDynamicGreeting = () => {
+    const now = new Date();
+    const hour = now.getHours();
+    try {
+      sessionStorage.setItem('meso_client_active_time', now.toISOString());
+    } catch (e) {}
+
+    if (hour >= 22 || hour < 5) return "Good night!";
+    if (hour < 12) return "Good morning!";
+    if (hour < 17) return "Good afternoon!";
+    return "Good evening!";
+  };
+
   return (
     <div className="w-full bg-[#F6F7F8] min-h-[calc(100vh-56px)] px-[44px] py-[28px] overflow-y-auto relative">
       {/* 1. Greeting: centered on canvas center */}
       <div className="w-full flex justify-center mb-6">
         <h1 className="text-[32px] font-normal text-[#393A3D] tracking-tight">
-          {dashboardData.greeting || "Good morning!"}
+          {getDynamicGreeting()}
         </h1>
       </div>
 
