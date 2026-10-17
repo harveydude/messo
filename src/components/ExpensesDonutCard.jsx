@@ -76,7 +76,7 @@ export default function ExpensesDonutCard({
   const activePeriod = selectedPeriod || data.period;
 
   return (
-    <div className="bg-white border border-[#C7CBCE] rounded-[8px] p-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-between">
+    <div className="bg-white border border-[#C7CBCE] rounded-[8px] p-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-between overflow-hidden">
       <div>
         {/* Header Row */}
         <div className="flex items-center justify-between mb-3">
@@ -110,15 +110,15 @@ export default function ExpensesDonutCard({
         </div>
 
         {/* Subtitle & Spending */}
-        <div className="text-[14px] text-[#6B6C72]">
+        <div className="text-[14px] text-[#6B6C72] truncate">
           {data.subtitle}
         </div>
 
-        <div className="flex items-center space-x-2 mt-1 mb-1">
-          <span className="text-[28px] font-semibold text-[#393A3D] tracking-tight">
+        <div className="flex items-center flex-wrap gap-2 mt-1 mb-1 min-w-0">
+          <span className="text-[26px] font-semibold text-[#393A3D] tracking-tight truncate">
             {formatAmount(data.amount)}
           </span>
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <button 
               onMouseEnter={() => setShowTooltip(true)}
               onMouseLeave={() => setShowTooltip(false)}
@@ -132,19 +132,19 @@ export default function ExpensesDonutCard({
               </div>
             )}
           </div>
-          <span className="px-2 py-0.5 bg-[#F0F1F3] text-[#393A3D] text-[12px] font-medium rounded-full">
+          <span className="px-2 py-0.5 bg-[#F0F1F3] text-[#393A3D] text-[12px] font-medium rounded-full flex-shrink-0">
             {data.percentBadge}
           </span>
         </div>
 
         {/* Trend Indicator */}
-        <div className="flex items-center space-x-1 text-[#C2410C] text-[13px] font-medium mb-4">
-          <ArrowDown size={14} className="stroke-[2.5]" />
-          <span>{data.trendText}</span>
+        <div className="flex items-center space-x-1 text-[#C2410C] text-[13px] font-medium mb-3 truncate">
+          <ArrowDown size={14} className="stroke-[2.5] flex-shrink-0" />
+          <span className="truncate">{data.trendText}</span>
         </div>
 
         {/* Donut Chart and Legend Row */}
-        <div className="flex items-center justify-between gap-3 pt-1">
+        <div className="flex items-center justify-between gap-3 pt-1 min-w-0">
           {/* Donut Chart SVG */}
           <div className="relative w-[124px] h-[124px] flex-shrink-0">
             <svg
@@ -172,26 +172,28 @@ export default function ExpensesDonutCard({
           </div>
 
           {/* Legend, from the same data the ring is drawn from. */}
-          <div className="flex-1 space-y-1.5 text-[12px] text-[#393A3D]">
+          <div className="flex-1 min-w-0 space-y-1.5 text-[12px] text-[#393A3D]">
             {donutSlices.length === 0 ? (
-              <p className="text-gray-500">No expenses recorded yet.</p>
+              <p className="text-gray-500 text-xs">No expenses recorded yet.</p>
             ) : (
               donutSlices.map((slice, i) => (
-                <div key={i} className="flex items-center space-x-2">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: slice.color }}
-                  />
-                  <span className="truncate">{slice.name}</span>
-                  <span className="ml-auto text-gray-500 tabular-nums">{slice.percent}%</span>
+                <div key={i} className="flex items-center justify-between gap-1.5 min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: slice.color }}
+                    />
+                    <span className="truncate text-[#393A3D] font-medium" title={slice.name}>{slice.name}</span>
+                  </div>
+                  <span className="text-gray-500 tabular-nums flex-shrink-0 text-right font-medium">{slice.percent}%</span>
                 </div>
               ))
             )}
-            <div className="flex items-center space-x-2 pt-0.5">
+            <div className="flex items-center space-x-2 pt-0.5 min-w-0">
               <span className="w-2.5 h-2.5 rounded-full bg-[#9E9E9E] flex-shrink-0" />
               <button
                 onClick={() => onNavigate && onNavigate('expense_transactions')}
-                className="text-[#0077C5] hover:underline font-medium cursor-pointer"
+                className="text-[#0077C5] hover:underline font-medium cursor-pointer truncate"
               >
                 {data.reviewText}
               </button>

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Plus, 
   Upload, 
@@ -482,7 +482,7 @@ export default function InvoicesView({ onOpenInvoiceModal, onNavigate }) {
                   <td className="px-3 font-medium">Cool Cars</td>
                   <td className="px-3 text-[#6b6c72]">{inv.date || '10/24/2025'}</td>
                   <td className="px-3 text-[#6b6c72]">{inv.dueDate || '11/23/2025'}</td>
-                  <td className="px-3 text-right font-semibold">${inv.total ? inv.total.toFixed(2) : '194.40'}</td>
+                  <td className="px-3 text-right font-semibold">₹{inv.total ? inv.total.toFixed(2) : '194.40'}</td>
                   <td className="px-3 text-center">
                     <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#e6f4ea] text-[#137333]">
                       {inv.status || 'Open'}

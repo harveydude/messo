@@ -112,11 +112,11 @@ export default function TopBar({
               </span>
               <ChevronDown size={12} className="text-[#5e6c84] shrink-0" />
             </div>
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-[9px] font-semibold px-1 py-0.2 rounded bg-[#e6f4ea] text-[#005f43] tracking-wider font-mono">
+            {activeGstin && (
+              <div className="text-[11px] text-[#5e6c84] font-normal tracking-tight truncate max-w-[170px] mt-0.5">
                 GSTIN: {activeGstin}
-              </span>
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -147,12 +147,16 @@ export default function TopBar({
               }`}
             />
 
-            {/* Clear Button */}
-            {searchQuery && (
+            {/* Clear and dismiss button */}
+            {(searchQuery || isSearchFocused) && (
               <button 
-                onClick={() => setSearchQuery && setSearchQuery('')}
-                className="absolute right-3 text-[#5e6c84] hover:text-[#172b4d] p-1 cursor-pointer transition"
-                title="Clear search"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (setSearchQuery) setSearchQuery('');
+                  setIsSearchFocused(false);
+                }}
+                className="absolute right-2.5 text-[#5e6c84] hover:text-[#172b4d] p-1 cursor-pointer transition rounded-full hover:bg-gray-200"
+                title="Clear and close search"
               >
                 <X size={14} />
               </button>

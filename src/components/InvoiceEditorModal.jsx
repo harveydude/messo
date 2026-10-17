@@ -852,7 +852,7 @@ export default function InvoiceEditorModal({ isOpen = true, onClose }) {
             <div className="ml-auto w-[427px] text-[15px] text-[#393A3D]">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{money(subtotal)}</span>
               </div>
 
               {/* Discount row */}
@@ -892,7 +892,7 @@ export default function InvoiceEditorModal({ isOpen = true, onClose }) {
 
               <div className="mt-[24px] flex justify-between">
                 <span>Taxable subtotal</span>
-                <span>${taxableSubtotal.toFixed(2)}</span>
+                <span>{money(taxableSubtotal)}</span>
               </div>
 
               <p className="mt-[26px]">Select sales tax rate</p>
@@ -902,7 +902,7 @@ export default function InvoiceEditorModal({ isOpen = true, onClose }) {
 
               <div className="mt-[22px] flex justify-between items-center">
                 <span className="flex items-center gap-[8px]">Sales tax <InfoQIcon /></span>
-                <span>${salesTax.toFixed(2)}</span>
+                <span>{money(salesTax)}</span>
               </div>
 
               <div className="mt-[14px] text-right">

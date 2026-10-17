@@ -1,4 +1,4 @@
-﻿import { CHART_OF_ACCOUNTS } from './chartOfAccounts.js';
+import { CHART_OF_ACCOUNTS } from './chartOfAccounts.js';
 import { INDIA_TAX_SEED } from './indiaTaxSeed.js';
 
 /**
@@ -29,7 +29,7 @@ export const SEED = {
   settings: {
     accountingMethod: 'Accrual',
     multicurrency: false,
-    currency: 'USD',
+    currency: 'INR',
     plan: 'Plus',
     firstDayOfWeek: 'Monday',
     salesToggles: { deliveryMethod: 'Email', customTxnNums: false, serviceDate: true, discount: true, deposit: false, tips: false, tags: false },

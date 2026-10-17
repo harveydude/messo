@@ -1,140 +1,149 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   Bookmark,
   LayoutGrid,
-  Sparkles,
   TrendingUp,
   Grid,
   Activity,
   CreditCard,
   BarChart2,
   Sliders,
-  ChevronRight,
-  Clock,
+  ChevronDown,
+  ChevronUp,
   Diamond,
-  Search,
-  Users,
-  Percent,
-  Briefcase,
-  IndianRupee,
+  SlidersHorizontal,
+  Landmark,
+  X,
+  Lock,
 } from 'lucide-react';
 
-/* ── Sub-menu definitions for each app ─────────────────────────────────── */
-const APP_SUBMENUS = {
-  accounting: {
-    title: 'Accounting',
+/* ── App category definitions with full sub-tabs matching Screenshots 1 & 2 ── */
+const APP_CATEGORIES = [
+  {
+    key: 'accounting',
+    label: 'Accounting',
+    letter: 'A',
+    color: '#107C41',
+    defaultView: 'bank_transactions',
     items: [
-      { label: 'Bank transactions', view: 'bank_transactions' },
-      { label: 'Chart of accounts', view: 'chart_of_accounts' },
-      { label: 'Reconcile', view: 'reconcile' },
-      { label: 'Rules', view: 'rules' },
+      { id: 'bank_transactions', label: 'Bank transactions', view: 'bank_transactions' },
+      { id: 'integration_transactions', label: 'Integration transactions', view: 'find_integrations' },
+      { id: 'receipts', label: 'Receipts', view: 'expense_transactions' },
+      { id: 'reconcile', label: 'Reconcile', view: 'reconcile' },
+      { id: 'rules', label: 'Rules', view: 'rules' },
+      { id: 'chart_of_accounts', label: 'Chart of accounts', view: 'chart_of_accounts' },
+      { id: 'recurring_transactions', label: 'Recurring transactions', view: 'recurring_transactions' },
+      { id: 'my_accountant', label: 'My accountant', view: 'accountant' },
     ],
   },
-  expenses: {
-    title: 'Expenses',
+  {
+    key: 'expenses',
+    label: 'Expenses & Bills',
+    letter: 'E',
+    color: '#008927',
+    defaultView: 'expense_transactions',
     items: [
-      { label: 'Expenses', view: 'expense_transactions' },
-      { label: 'Vendors', view: 'vendors' },
-      { label: 'Bills', view: 'bills' },
-      { label: 'Mileage', view: 'mileage' },
-      { label: 'Contractors', view: 'team' },
+      { id: 'expense_transactions', label: 'Expense transactions', view: 'expense_transactions' },
+      { id: 'vendors', label: 'Vendors', view: 'vendors' },
+      { id: 'bills', label: 'Bills', view: 'bills' },
+      { id: 'bill_payments', label: 'Bill payments', view: 'bills' },
+      { id: 'mileage', label: 'Mileage', view: 'mileage' },
+      { id: 'contractors', label: 'Contractors', view: 'team' },
+      { id: '1099s', label: '1099s', view: 'business_tax' },
     ],
   },
-  sales: {
-    title: 'Sales',
+  {
+    key: 'sales',
+    label: 'Sales & Get Paid',
+    letter: 'S',
+    color: '#0077C5',
+    defaultView: 'sales_transactions',
     items: [
-      { label: 'Overview', view: 'sales_transactions' },
-      { label: 'All sales', view: 'sales_transactions' },
-      { label: 'Invoices', view: 'invoices' },
-      { label: 'Customers', view: 'customers_list' },
-      { label: 'Estimates', view: 'estimates' },
-      { label: 'Products & services', view: 'products_services' },
+      { id: 'overview', label: 'Overview', view: 'sales_transactions' },
+      { id: 'sales_transactions', label: 'Sales transactions', view: 'sales_transactions' },
+      { id: 'invoices', label: 'Invoices', view: 'invoices' },
+      { id: 'estimates', label: 'Estimates', view: 'estimates' },
+      { id: 'recurring_payments', label: 'Recurring payments', view: 'recurring_transactions' },
+      { id: 'orders', label: 'Sales orders', view: 'orders' },
+      { id: 'sales_channels', label: 'Sales channels', view: 'find_integrations' },
+      { id: 'messo_payouts', label: 'MESSO payouts', view: 'sales_transactions' },
+      { id: 'channel_payouts', label: 'Channel payouts', view: 'sales_transactions' },
+      { id: 'products_services', label: 'Products & services', view: 'products_services' },
     ],
   },
-  customer_hub: {
-    title: 'Customer Hub',
+  {
+    key: 'customer_hub',
+    label: 'Customer Hub',
+    letter: 'C',
+    color: '#673AB7',
+    defaultView: 'customer_hub',
     items: [
-      { label: 'Overview', view: 'customer_hub' },
-      { label: 'Customers', view: 'customers_list' },
-      { label: 'Estimates', view: 'estimates' },
+      { id: 'hub_overview', label: 'Overview', view: 'customer_hub' },
+      { id: 'customers_list', label: 'Customers', view: 'customers_list' },
+      { id: 'hub_estimates', label: 'Estimates', view: 'estimates' },
+      { id: 'reviews', label: 'Reviews', view: 'customer_hub' },
     ],
   },
-  team: {
-    title: 'Team',
+  {
+    key: 'taxes',
+    label: 'Taxes',
+    letter: '%',
+    color: '#D81B60',
+    defaultView: 'sales_tax',
     items: [
-      { label: 'Employees', view: 'team' },
-      { label: 'Contractors', view: 'team' },
-      { label: "Workers' comp", view: 'workers_comp' },
+      { id: 'sales_tax', label: 'Sales Tax (GST)', view: 'sales_tax' },
+      { id: 'business_tax', label: 'Business Tax (Direct / TDS)', view: 'business_tax' },
     ],
   },
-  time: {
-    title: 'Time',
+  {
+    key: 'time',
+    label: 'Time',
+    letter: '⏱',
+    color: '#006064',
+    defaultView: 'time_entries',
     items: [
-      { label: 'Time entries', view: 'time_entries' },
+      { id: 'time_entries', label: 'Time entries', view: 'time_entries' },
+      { id: 'time_schedule', label: 'Schedule', view: 'time_entries' },
     ],
   },
-  sales_tax: {
-    title: 'Sales Tax (GST)',
+  {
+    key: 'team',
+    label: 'Team',
+    letter: 'T',
+    color: '#1976D2',
+    defaultView: 'team',
     items: [
-      { label: 'GST overview', view: 'sales_tax' },
+      { id: 'employees', label: 'Employees', view: 'team' },
+      { id: 'team_contractors', label: 'Contractors', view: 'team' },
+      { id: 'workers_comp', label: "Workers' Compensation", view: 'team' },
     ],
   },
-  business_tax: {
-    title: 'Business Tax',
+  {
+    key: 'lending',
+    label: 'Lending',
+    letter: '₹',
+    color: '#2E7D32',
+    defaultView: 'lending',
     items: [
-      { label: 'TDS & Direct Tax', view: 'business_tax' },
+      { id: 'lending_overview', label: 'Overview', view: 'lending' },
+      { id: 'term_loan', label: 'Term Loan', view: 'lending' },
+      { id: 'credit_line', label: 'Credit Line', view: 'lending' },
     ],
   },
-  lending: {
-    title: 'Lending',
-    items: [
-      { label: 'Overview', view: 'lending' },
-    ],
-  },
-};
-
-const APPS = [
-  { key: 'accounting', label: 'Accounting', color: '#107c41', letter: 'A', defaultView: 'bank_transactions' },
-  { key: 'expenses', label: 'Expenses & Bills', color: '#00897b', letter: 'E', defaultView: 'expense_transactions' },
-  { key: 'sales', label: 'Sales & Get Paid', color: '#0077c5', letter: 'S', defaultView: 'sales_transactions' },
-  { key: 'customer_hub', label: 'Customer Hub', color: '#009688', letter: 'C', defaultView: 'customer_hub' },
-  { key: 'team', label: 'Teams', color: '#1976d2', letter: 'T', defaultView: 'team' },
-  { key: 'time', label: 'Time', color: '#006064', letter: '⏱', defaultView: 'time_entries', useIcon: true },
-  { key: 'sales_tax', label: 'Sales Tax', color: '#d81b60', letter: '%', defaultView: 'sales_tax' },
-  { key: 'business_tax', label: 'Business Tax', color: '#4a148c', letter: 'B', defaultView: 'business_tax' },
-  { key: 'lending', label: 'Lending', color: '#2e7d32', letter: '₹', defaultView: 'lending' },
 ];
 
-const PREMIUM_APPS = [
-  { key: 'payroll', label: 'Payroll', color: '#0d47a1', letter: 'P', defaultView: 'payroll' },
-  { key: 'marketing', label: 'Marketing', color: '#f57f17', letter: 'M', defaultView: 'marketing' },
+/* ── Premium features gated behind upgrade modal ── */
+const PREMIUM_MODULES = [
+  { key: 'payroll', label: 'Payroll', desc: 'Automated multi-state payroll, PF/ESI filing, and direct bank disbursement.' },
+  { key: 'marketing', label: 'Marketing', desc: 'Automated email/SMS campaign automation, lead capture, and ROI analytics.' },
 ];
 
 const DEFAULT_PINS = [
-  { id: 'bank_transactions', label: 'Accounting', color: '#107c41', iconKey: 'activity' },
-  { id: 'expense_transactions', label: 'Expenses', color: '#00897b', iconKey: 'creditcard' },
-  { id: 'sales_transactions', label: 'Sales', color: '#0077c5', iconKey: 'barchart' },
+  { id: 'bank_transactions', label: 'Accounting', color: '#107C41', iconKey: 'activity' },
+  { id: 'expense_transactions', label: 'Expenses', color: '#008927', iconKey: 'creditcard' },
+  { id: 'sales_transactions', label: 'Sales', color: '#0077C5', iconKey: 'barchart' },
 ];
-
-const PIN_TO_APP = {
-  bank_transactions: 'accounting',
-  accounting: 'accounting',
-  expense_transactions: 'expenses',
-  expenses: 'expenses',
-  bills: 'expenses',
-  vendors: 'expenses',
-  sales_transactions: 'sales',
-  sales: 'sales',
-  invoices: 'sales',
-  customer_hub: 'customer_hub',
-  customers_list: 'customer_hub',
-  team: 'team',
-  time_entries: 'time',
-  sales_tax: 'sales_tax',
-  business_tax: 'business_tax',
-  lending: 'lending',
-};
 
 const PIN_ICONS = {
   activity: (sz) => <Activity size={sz} />,
@@ -143,7 +152,7 @@ const PIN_ICONS = {
   default: (sz) => <LayoutGrid size={sz} />,
 };
 
-const FONT = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const FONT = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
 export default function SideRail({
   currentView = 'dashboard',
@@ -154,407 +163,387 @@ export default function SideRail({
   pinnedItems,
   onPinnedChange,
 }) {
-  const [myAppsOpen, setMyAppsOpen] = useState(false);
-  const [hoveredApp, setHoveredApp] = useState(null);
-  const [hoveredAppTop, setHoveredAppTop] = useState(180);
-  const [appSearch, setAppSearch] = useState('');
-
-  // Rail item hover flyout for pinned items
-  const [railFlyoutApp, setRailFlyoutApp] = useState(null);
-  const [railFlyoutTop, setRailFlyoutTop] = useState(0);
-  const railFlyoutTimer = useRef(null);
-
-  const flyoutRef = useRef(null);
-  const subMenuRef = useRef(null);
-  const myAppsIconRef = useRef(null);
-  const [flyoutTop, setFlyoutTop] = useState(180);
-
-  const pins = (pinnedItems && pinnedItems.length > 0) ? pinnedItems : DEFAULT_PINS;
-  const isActive = (id) => currentView === id;
-
-  // Position My Apps flyout aligned with My Apps icon
-  useEffect(() => {
-    if (myAppsOpen && myAppsIconRef.current) {
-      const rect = myAppsIconRef.current.getBoundingClientRect();
-      setFlyoutTop(Math.max(10, Math.min(rect.top, window.innerHeight - 450)));
-    }
-  }, [myAppsOpen]);
-
-  // Close flyouts when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      const inFlyout = flyoutRef.current && flyoutRef.current.contains(e.target);
-      const inSubMenu = subMenuRef.current && subMenuRef.current.contains(e.target);
-      const inMyAppsBtn = myAppsIconRef.current && myAppsIconRef.current.contains(e.target);
-
-      if (!inFlyout && !inSubMenu && !inMyAppsBtn) {
-        setMyAppsOpen(false);
-        setHoveredApp(null);
+  // Determine if the current view belongs to any category
+  const activeCategoryKey = useMemo(() => {
+    for (const cat of APP_CATEGORIES) {
+      if (cat.items.some(it => it.view === currentView || it.id === currentView)) {
+        return cat.key;
       }
-    };
-    if (myAppsOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [myAppsOpen]);
+    // Direct matches
+    if (['chart_of_accounts', 'bank_transactions', 'reconcile', 'rules', 'recurring_transactions'].includes(currentView)) return 'accounting';
+    if (['expense_transactions', 'vendors', 'bills', 'mileage'].includes(currentView)) return 'expenses';
+    if (['sales_transactions', 'invoices', 'estimates', 'orders', 'products_services'].includes(currentView)) return 'sales';
+    if (['customer_hub', 'customers_list'].includes(currentView)) return 'customer_hub';
+    if (['sales_tax', 'business_tax'].includes(currentView)) return 'taxes';
+    if (['time_entries'].includes(currentView)) return 'time';
+    if (['team'].includes(currentView)) return 'team';
+    if (['lending'].includes(currentView)) return 'lending';
+    return null;
+  }, [currentView]);
 
-  const handleNavigateApp = useCallback((viewId) => {
-    setCurrentView(viewId);
-    setMyAppsOpen(false);
-    setHoveredApp(null);
-    setRailFlyoutApp(null);
-  }, [setCurrentView]);
+  // Secondary sidebar drawer open state
+  // Open by default if in any app section, or if user toggled it
+  const [drawerOpen, setDrawerOpen] = useState(true);
 
-  const handleSubAction = useCallback((item) => {
-    if (item.view) {
-      handleNavigateApp(item.view);
-    } else if (item.action) {
-      alert(item.action);
-      setMyAppsOpen(false);
-      setHoveredApp(null);
-      setRailFlyoutApp(null);
+  // Accordion expanded state for each category
+  const [expandedCategories, setExpandedCategories] = useState({
+    accounting: true,
+    expenses: true,
+    sales: true,
+    customer_hub: false,
+    taxes: false,
+    time: false,
+    team: false,
+    lending: false,
+  });
+
+  // Premium modal state
+  const [premiumModalModule, setPremiumModalModule] = useState(null);
+
+  // Whenever user navigates to an app section, ensure that category is expanded and drawer is open
+  useEffect(() => {
+    if (activeCategoryKey) {
+      setExpandedCategories(prev => ({
+        ...prev,
+        [activeCategoryKey]: true,
+      }));
+      setDrawerOpen(true);
     }
-  }, [handleNavigateApp]);
+  }, [activeCategoryKey]);
 
-  // Handle rail pinned item hover with debounce
-  const handleRailItemMouseEnter = (e, pin) => {
-    if (railFlyoutTimer.current) clearTimeout(railFlyoutTimer.current);
-    const appKey = PIN_TO_APP[pin.id] || (pin.label ? PIN_TO_APP[pin.label.toLowerCase()] : null);
-    if (appKey && APP_SUBMENUS[appKey]) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setRailFlyoutTop(Math.max(10, Math.min(rect.top, window.innerHeight - 380)));
-      setRailFlyoutApp(appKey);
-    } else {
-      setRailFlyoutApp(null);
-    }
+  const toggleCategory = (key) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
-  const handleRailItemMouseLeave = () => {
-    railFlyoutTimer.current = setTimeout(() => {
-      setRailFlyoutApp(null);
-    }, 200);
+  const pins = pinnedItems && pinnedItems.length > 0 ? pinnedItems : DEFAULT_PINS;
+
+  const isRailActive = (id) => {
+    if (id === 'dashboard') return currentView === 'dashboard';
+    if (id === 'feed') return currentView === 'feed';
+    if (id === 'reports') return currentView === 'reports' || currentView.startsWith('report_');
+    if (id === 'bookmarks') return currentView === 'bookmarks';
+    if (id === 'apps') return drawerOpen;
+    return currentView === id;
   };
 
-  // Filter apps by search
-  const filteredApps = APPS.filter(app => {
-    if (!appSearch.trim()) return true;
-    const q = appSearch.toLowerCase();
-    if (app.label.toLowerCase().includes(q)) return true;
-    const sub = APP_SUBMENUS[app.key];
-    if (sub && sub.items.some(it => it.label.toLowerCase().includes(q))) return true;
+  const isSubActive = (sub) => {
+    if (sub.view === currentView || sub.id === currentView) return true;
+    if (sub.view === 'sales_transactions' && (currentView === 'sales' || currentView === 'sales_transactions')) return true;
+    if (sub.view === 'expense_transactions' && (currentView === 'expenses' || currentView === 'expense_transactions')) return true;
     return false;
-  });
-
-  const filteredPremium = PREMIUM_APPS.filter(app => {
-    if (!appSearch.trim()) return true;
-    return app.label.toLowerCase().includes(appSearch.toLowerCase());
-  });
+  };
 
   return (
-    <aside
-      aria-label="Main navigation"
-      className="w-[84px] bg-white border-r border-[#E3E5E8] flex flex-col justify-between items-center py-2 select-none shrink-0 h-[calc(100vh-56px)] overflow-y-auto relative z-30"
-      style={{ fontFamily: FONT }}
-    >
-      <div className="w-full flex flex-col items-center">
-        {/* Create Transaction Trigger Button (Section B Spec: 60x46, #007755) */}
+    <div className="flex h-full shrink-0 select-none" style={{ fontFamily: FONT }}>
+      {/* ── 1. PRIMARY LEFT RAIL (84px wide) ── */}
+      <aside 
+        className="w-[84px] bg-white border-r border-[#E3E5E8] flex flex-col items-center py-3 px-1 shrink-0 z-20 h-full overflow-y-auto"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {/* Create Button */}
         <button
           type="button"
           onClick={onOpenCreate}
-          className="w-[60px] h-[46px] rounded-[23px] bg-[#007755] hover:bg-[#005f43] border border-white/20 flex flex-col items-center justify-center text-white mb-3 shadow-[0_2px_8px_rgba(0,119,85,0.35)] transition cursor-pointer select-none"
-          title="Create transaction"
+          className="group flex flex-col items-center mb-3 cursor-pointer"
+          title="Create new transaction or entry"
         >
-          <Plus size={18} strokeWidth={2.6} />
-          <span className="text-[9.5px] font-bold mt-0.5 leading-none">Create</span>
+          <div className="w-[30px] h-[30px] rounded-full bg-[#008927] hover:bg-[#00701F] text-white flex items-center justify-center shadow-xs transition group-hover:scale-105 active:scale-95">
+            <Plus size={16} strokeWidth={2.8} />
+          </div>
+          <span className="text-[10px] font-semibold text-[#008927] mt-1 group-hover:underline">
+            Create
+          </span>
         </button>
 
-        {/* Bookmarks */}
-        <RailItem label="Bookmarks" onClick={() => setCurrentView('bookmarks')} active={isActive('bookmarks')}>
-          <Bookmark size={16} aria-hidden="true" />
+        {/* Navigation Rail Items */}
+        <RailItem
+          label="Bookmarks"
+          onClick={() => {
+            setCurrentView('bookmarks');
+            setDrawerOpen(false);
+          }}
+          active={isRailActive('bookmarks')}
+        >
+          <Bookmark size={18} />
         </RailItem>
 
-        {/* Dashboard */}
         <RailItem
           label="Dashboard"
-          onClick={() => setCurrentView('dashboard')}
-          active={isActive('dashboard')}
+          onClick={() => {
+            setCurrentView('dashboard');
+            setDrawerOpen(false);
+          }}
+          active={isRailActive('dashboard')}
           boxed
         >
-          <LayoutGrid size={16} aria-hidden="true" />
+          <LayoutGrid size={18} />
         </RailItem>
 
-        {/* Feed */}
-        <RailItem label="Feed" onClick={() => setCurrentView('feed')} active={isActive('feed')}>
-          <Sparkles size={16} aria-hidden="true" />
+        <RailItem
+          label="Feed"
+          onClick={() => {
+            setCurrentView('feed');
+            setDrawerOpen(false);
+          }}
+          active={isRailActive('feed')}
+        >
+          <Activity size={18} />
         </RailItem>
 
-        {/* Reports */}
         <RailItem
           label="Reports"
-          onClick={() => setCurrentView('standard_reports')}
-          active={isActive('standard_reports') || isActive('balance_sheet') || isActive('management_reports')}
+          onClick={() => {
+            setCurrentView('reports');
+            setDrawerOpen(false);
+          }}
+          active={isRailActive('reports')}
         >
-          <TrendingUp size={16} aria-hidden="true" />
+          <TrendingUp size={18} />
         </RailItem>
 
-        {/* ── My Apps with dynamic flyout ── */}
-        <div className="relative w-full flex justify-center" ref={myAppsIconRef}>
-          <RailItem
-            label="My apps"
-            onClick={() => {
-              setMyAppsOpen(!myAppsOpen);
-              setHoveredApp(null);
-              setRailFlyoutApp(null);
-            }}
-            active={isActive('apps') || myAppsOpen}
-            boxed
-          >
-            <Grid size={16} aria-hidden="true" />
-          </RailItem>
+        {/* My Apps Button (toggles secondary drawer) */}
+        <RailItem
+          label="My apps"
+          onClick={() => setDrawerOpen(!drawerOpen)}
+          active={drawerOpen}
+          boxed
+        >
+          <Grid size={18} />
+        </RailItem>
 
-          {/* Primary My Apps Panel */}
-          {myAppsOpen && (
-            <div
-              ref={flyoutRef}
-              className="fixed left-[84px] w-[216px] bg-white border border-gray-200 rounded-lg shadow-2xl py-2 px-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
-              style={{
-                top: flyoutTop,
-                fontFamily: FONT,
-                maxHeight: 'calc(100vh - 60px)',
-                overflowY: 'auto',
-                overflowX: 'visible',
-              }}
+        {/* PINNED Section */}
+        <div className="w-full pt-3 mt-1 border-t border-[#E3E5E8] flex flex-col items-center">
+          <div className="w-full flex items-center justify-between px-2 mb-2">
+            <span className="text-[9px] font-bold text-[#6B778C] uppercase tracking-wider">PINNED</span>
+            <button
+              onClick={onToggleCustomize}
+              className="text-[9px] font-semibold text-[#008927] hover:underline cursor-pointer"
             >
-              {/* Header with Title and Search */}
-              <div className="px-2 pb-1.5 text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
-                <span>MY APPS</span>
-                <span className="text-[9px] text-gray-400 font-normal">MESSO Hub</span>
-              </div>
+              Edit
+            </button>
+          </div>
 
-              {/* Search input in My Apps */}
-              <div className="px-1.5 pb-2">
-                <div className="flex items-center px-2 py-1 bg-gray-50 rounded border border-gray-200 focus-within:border-[#2CA01C] focus-within:bg-white transition">
-                  <Search size={11} className="text-gray-400 mr-1.5 shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Search apps..."
-                    value={appSearch}
-                    onChange={(e) => setAppSearch(e.target.value)}
-                    autoFocus
-                    className="w-full bg-transparent text-[11px] outline-none text-gray-800 placeholder-gray-400 leading-tight"
-                  />
-                  {appSearch && (
-                    <button onClick={() => setAppSearch('')} className="text-gray-400 hover:text-gray-600 text-[10px] ml-1">✕</button>
+          {pins.map((pin) => {
+            const iconFn = PIN_ICONS[pin.iconKey] || PIN_ICONS.default;
+            return (
+              <RailItem
+                key={pin.id}
+                label={pin.label}
+                onClick={() => {
+                  setCurrentView(pin.id);
+                  setDrawerOpen(true);
+                }}
+                active={currentView === pin.id || activeCategoryKey === pin.label.toLowerCase()}
+              >
+                <span
+                  className="w-[22px] h-[22px] rounded-md flex items-center justify-center text-white shadow-xs"
+                  style={{ backgroundColor: pin.color }}
+                >
+                  {iconFn(12)}
+                </span>
+              </RailItem>
+            );
+          })}
+        </div>
+
+        {/* Customize button at bottom */}
+        <div className="mt-auto pt-2 w-full flex justify-center">
+          <RailItem
+            label="Customize"
+            onClick={onToggleCustomize}
+            active={isCustomizing}
+          >
+            <Sliders size={18} />
+          </RailItem>
+        </div>
+      </aside>
+
+      {/* ── 2. DOCKED SECONDARY MY APPS SIDEBAR (Matches Screenshots 1 & 2 1:1) ── */}
+      {drawerOpen && (
+        <aside 
+          className="w-[230px] bg-white border-r border-[#E3E5E8] flex flex-col shrink-0 select-none h-full z-10 animate-in fade-in slide-in-from-left-2 duration-150"
+        >
+          {/* Header (MY APPS title + Customize/Filter icon, NO SEARCH BAR) */}
+          <div className="h-[48px] px-4 flex items-center justify-between border-b border-[#F0F2F5] shrink-0">
+            <span className="text-[12px] font-bold text-[#6B778C] uppercase tracking-wider">
+              MY APPS
+            </span>
+            <button
+              type="button"
+              onClick={onToggleCustomize}
+              title="Customize menu sequence"
+              className="p-1 rounded hover:bg-gray-100 text-[#6B778C] hover:text-[#172B4D] transition cursor-pointer"
+            >
+              <SlidersHorizontal size={14} />
+            </button>
+          </div>
+
+          {/* Accordion Categories List */}
+          <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1">
+            {APP_CATEGORIES.map((cat) => {
+              const isExpanded = !!expandedCategories[cat.key];
+              const isCurrentCatActive = activeCategoryKey === cat.key;
+
+              return (
+                <div key={cat.key} className="rounded-[6px]">
+                  {/* Category Header Row */}
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(cat.key)}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-[6px] hover:bg-[#F4F5F8] transition cursor-pointer text-left ${
+                      isCurrentCatActive ? 'bg-[#F9FAFB]' : ''
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2.5 truncate">
+                      <span
+                        className="w-[20px] h-[20px] rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+                        style={{ backgroundColor: cat.color }}
+                      >
+                        {cat.letter}
+                      </span>
+                      <span className="text-[13px] font-semibold text-[#172B4D] truncate">
+                        {cat.label}
+                      </span>
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUp size={13} className="text-[#6B778C] shrink-0 ml-1" />
+                    ) : (
+                      <ChevronDown size={13} className="text-[#6B778C] shrink-0 ml-1" />
+                    )}
+                  </button>
+
+                  {/* Sub-items list under this category */}
+                  {isExpanded && (
+                    <div className="pl-6 pr-1 pt-0.5 pb-1 space-y-0.5">
+                      {cat.items.map((sub) => {
+                        const active = isSubActive(sub);
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            onClick={() => {
+                              if (sub.view === 'accountant') {
+                                alert("Accountant View: Switched to trial balance and chart verification tools.");
+                              } else {
+                                setCurrentView(sub.view);
+                              }
+                            }}
+                            className={`w-full text-left px-3 py-1.5 text-[13px] rounded-[6px] transition cursor-pointer truncate ${
+                              active
+                                ? 'bg-[#E8ECEF] font-semibold text-[#172B4D]'
+                                : 'text-[#393A3D] font-normal hover:bg-[#F4F5F8] hover:text-[#172B4D]'
+                            }`}
+                          >
+                            {sub.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
+              );
+            })}
+
+            {/* Premium Divider & Section */}
+            <div className="pt-3 pb-1 px-2.5 border-t border-[#F0F2F5] mt-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-bold text-[#6B778C] uppercase tracking-wider">
+                  PREMIUM MODULES
+                </span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#FEF3C7] text-[#92400E]">
+                  UPGRADE
+                </span>
               </div>
 
-              <div className="space-y-0.5">
-                {filteredApps.map((app) => (
-                  <div
-                    key={app.key}
-                    className="relative"
-                    onMouseEnter={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setHoveredAppTop(rect.top);
-                      setHoveredApp(app.key);
-                    }}
-                  >
-                    <button
-                      onClick={() => {
-                        if (APP_SUBMENUS[app.key]) {
-                          setHoveredApp(hoveredApp === app.key ? null : app.key);
-                        } else {
-                          handleNavigateApp(app.defaultView);
-                        }
-                      }}
-                      className={`w-full flex items-center justify-between px-2 py-[5px] rounded text-gray-800 hover:bg-gray-100 transition cursor-pointer text-left ${
-                        hoveredApp === app.key ? 'bg-gray-100 font-semibold' : ''
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 truncate">
-                        <span
-                          className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
-                          style={{ backgroundColor: app.color }}
-                        >
-                          {app.useIcon ? <Clock size={10} /> : app.letter}
-                        </span>
-                        <span className="text-[11px] font-medium truncate">{app.label}</span>
-                      </div>
-                      {APP_SUBMENUS[app.key] && (
-                        <ChevronRight size={11} className="text-gray-400 shrink-0 ml-1" />
-                      )}
-                    </button>
-                  </div>
-                ))}
-
-                {/* Divider */}
-                {filteredPremium.length > 0 && (
-                  <>
-                    <div className="my-1 border-t border-gray-100" />
-                    <div className="px-2 py-0.5 text-[9px] font-semibold text-gray-400 uppercase tracking-wider">
-                      Premium
-                    </div>
-                  </>
-                )}
-
-                {/* Premium apps */}
-                {filteredPremium.map((app) => (
-                  <button
-                    key={app.key}
-                    onClick={() => handleNavigateApp(app.defaultView)}
-                    className="w-full flex items-center justify-between px-2 py-[5px] rounded text-gray-800 hover:bg-gray-100 transition cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span
-                        className="w-[18px] h-[18px] rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0"
-                        style={{ backgroundColor: app.color }}
-                      >
-                        {app.letter}
-                      </span>
-                      <span className="text-[11px] font-medium">{app.label}</span>
-                    </div>
-                    <Diamond size={11} className="text-amber-500 shrink-0" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── Sub-menu rendered FIXED side-by-side to prevent ANY clipping ── */}
-          {myAppsOpen && hoveredApp && APP_SUBMENUS[hoveredApp] && (
-            <div
-              ref={subMenuRef}
-              className="fixed w-[205px] bg-white border border-gray-200 rounded-lg shadow-2xl py-1.5 px-1.5 z-[70] animate-in fade-in duration-75 before:content-[''] before:absolute before:-left-3 before:top-0 before:w-3 before:h-full"
-              style={{
-                left: 300,
-                top: Math.max(10, Math.min(hoveredAppTop - 10, window.innerHeight - 380)),
-                fontFamily: FONT,
-              }}
-              onMouseEnter={() => setHoveredApp(hoveredApp)}
-              onMouseLeave={() => setHoveredApp(null)}
-            >
-              <div className="px-2 py-1 mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 flex items-center justify-between">
-                <span>{APP_SUBMENUS[hoveredApp].title}</span>
-                <span className="text-[8px] px-1 py-0.5 bg-gray-100 text-gray-600 rounded">Options</span>
-              </div>
-              <div className="space-y-0.5">
-                {APP_SUBMENUS[hoveredApp].items.map((sub, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSubAction(sub)}
-                    className="w-full text-left px-2.5 py-[5px] rounded hover:bg-[#F0F1F3] hover:text-[#0077C5] text-[11px] font-medium text-gray-800 cursor-pointer transition flex items-center justify-between group"
-                  >
-                    <span>{sub.label}</span>
-                    <ChevronRight size={10} className="text-transparent group-hover:text-gray-400 transition" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── Pinned Section with direct Hover Sub-Tabs ── */}
-        <div className="w-[50px] h-px bg-[#E3E5E8] my-1.5" role="presentation" />
-        <div className="w-full flex items-center justify-between px-2.5 mb-1">
-          <p className="text-[9px] font-semibold text-[#6B6C72] uppercase tracking-[0.08em]">Pinned</p>
-          <button
-            onClick={() => setCurrentView('bookmarks')}
-            title="Edit pinned shortcuts"
-            className="text-[9px] text-[#2CA01C] hover:underline font-semibold cursor-pointer"
-          >
-            Edit
-          </button>
-        </div>
-
-        {pins.map((pin) => (
-          <div
-            key={pin.id}
-            className="w-full flex justify-center"
-            onMouseEnter={(e) => handleRailItemMouseEnter(e, pin)}
-            onMouseLeave={handleRailItemMouseLeave}
-          >
-            <RailItem
-              label={pin.label}
-              onClick={() => {
-                const appKey = PIN_TO_APP[pin.id] || (pin.label ? PIN_TO_APP[pin.label.toLowerCase()] : null);
-                if (appKey && APP_SUBMENUS[appKey]) {
-                  // Toggle rail flyout or navigate
-                  if (railFlyoutApp === appKey) {
-                    setRailFlyoutApp(null);
-                  } else {
-                    setRailFlyoutApp(appKey);
-                  }
-                }
-                setCurrentView(pin.id);
-              }}
-              active={isActive(pin.id)}
-            >
-              <span
-                className="w-[20px] h-[20px] rounded-md flex items-center justify-center text-white shadow-xs"
-                style={{ backgroundColor: pin.color }}
-                aria-hidden="true"
-              >
-                {(PIN_ICONS[pin.iconKey] || PIN_ICONS.default)(11)}
-              </span>
-            </RailItem>
-          </div>
-        ))}
-
-        {/* ── Submenu flyout for rail pinned items on hover ── */}
-        {railFlyoutApp && APP_SUBMENUS[railFlyoutApp] && (
-          <div
-            className="fixed left-[84px] w-[210px] bg-white border border-gray-200 rounded-lg shadow-2xl py-2 px-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 before:content-[''] before:absolute before:-left-3 before:top-0 before:w-3 before:h-full"
-            style={{
-              top: railFlyoutTop,
-              fontFamily: FONT,
-            }}
-            onMouseEnter={() => {
-              if (railFlyoutTimer.current) clearTimeout(railFlyoutTimer.current);
-            }}
-            onMouseLeave={() => setRailFlyoutApp(null)}
-          >
-            <div className="px-2 py-1 mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-wider border-b border-gray-100 flex items-center justify-between">
-              <span>{APP_SUBMENUS[railFlyoutApp].title}</span>
-              <span className="text-[8px] px-1 py-0.5 bg-gray-100 text-gray-600 rounded">Sub-tabs</span>
-            </div>
-            <div className="space-y-0.5">
-              {APP_SUBMENUS[railFlyoutApp].items.map((sub, idx) => (
+              {PREMIUM_MODULES.map((pm) => (
                 <button
-                  key={idx}
-                  onClick={() => handleSubAction(sub)}
-                  className="w-full text-left px-2.5 py-[5px] rounded hover:bg-[#F0F1F3] hover:text-[#0077C5] text-[11px] font-medium text-gray-800 cursor-pointer transition flex items-center justify-between group"
+                  key={pm.key}
+                  type="button"
+                  onClick={() => setPremiumModalModule(pm)}
+                  className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-gray-700 hover:bg-[#F4F5F8] transition cursor-pointer text-left group"
                 >
-                  <span>{sub.label}</span>
-                  <ChevronRight size={10} className="text-transparent group-hover:text-gray-400 transition" />
+                  <div className="flex items-center space-x-2 truncate">
+                    <span className="w-[18px] h-[18px] rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0">
+                      <Lock size={10} />
+                    </span>
+                    <span className="text-[13px] font-medium text-gray-800 truncate">
+                      {pm.label}
+                    </span>
+                  </div>
+                  <Diamond size={13} className="text-amber-500 shrink-0" />
                 </button>
               ))}
             </div>
           </div>
-        )}
-      </div>
+        </aside>
+      )}
 
-      {/* Customize at bottom */}
-      <div className="w-full flex flex-col items-center mt-auto pt-2">
-        <button
-          type="button"
-          onClick={onToggleCustomize}
-          aria-pressed={isCustomizing}
-          title="Customize dashboard layout"
-          className={`flex flex-col items-center pt-2 pb-1 cursor-pointer group transition rounded-md focus-visible:outline-2 focus-visible:outline-[#2CA01C] focus-visible:outline-offset-2 ${
-            isCustomizing ? 'text-[#2CA01C]' : 'text-[#6B6C72] hover:text-[#393A3D]'
-          }`}
+      {/* ── 3. PREMIUM FEATURE UPGRADE MODAL ── */}
+      {premiumModalModule && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setPremiumModalModule(null)}
         >
-          <Sliders size={16} aria-hidden="true" className={isCustomizing ? 'text-[#2CA01C]' : 'text-[#6B6C72] group-hover:text-[#393A3D]'} />
-          <span className={`text-[9px] mt-0.5 ${isCustomizing ? 'font-semibold text-[#2CA01C]' : 'font-medium'}`}>
-            Customize
-          </span>
-        </button>
-      </div>
-    </aside>
+          <div 
+            className="w-full max-w-[460px] bg-white rounded-xl shadow-2xl border border-gray-200 p-6 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPremiumModalModule(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-4 shadow-xs">
+              <Diamond size={24} />
+            </div>
+
+            <h3 className="text-[18px] font-bold text-gray-900 mb-1">
+              MESSO {premiumModalModule.label} (Enterprise Edition)
+            </h3>
+            <p className="text-[14px] text-gray-600 mb-4 leading-relaxed">
+              {premiumModalModule.desc}
+            </p>
+
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 mb-6 text-xs text-gray-600 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-gray-800">
+                <span>Included in MESSO Plus & Advanced plans:</span>
+              </div>
+              <div>• Automated statutory tax withholding & filing</div>
+              <div>• Multi-user role approvals & audit logging</div>
+              <div>• Priority 24/7 dedicated charter support</div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setPremiumModalModule(null)}
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg transition"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setPremiumModalModule(null);
+                  setCurrentView('pricing');
+                }}
+                className="px-4 py-2 text-sm font-semibold text-white bg-[#008927] hover:bg-[#00701F] rounded-lg shadow-xs transition"
+              >
+                View Plans & Upgrade
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
+/* ── Internal Rail Item ── */
 function RailItem({ label, onClick, active = false, boxed = false, children }) {
   return (
     <button
@@ -562,20 +551,20 @@ function RailItem({ label, onClick, active = false, boxed = false, children }) {
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       title={label}
-      className={`group flex flex-col items-center mb-2 cursor-pointer transition rounded-md focus-visible:outline-2 focus-visible:outline-[#2CA01C] focus-visible:outline-offset-2 ${
+      className={`group flex flex-col items-center mb-3 cursor-pointer transition rounded-md focus-visible:outline-2 focus-visible:outline-[#2CA01C] focus-visible:outline-offset-2 ${
         boxed
-          ? `w-[52px] h-[40px] justify-center mb-2 ${
-              active ? 'bg-[#E3E5E8] text-[#393A3D]' : 'hover:bg-gray-100 text-[#6B6C72]'
+          ? `w-[54px] h-[44px] justify-center mb-3 ${
+              active ? 'bg-[#E3E5E8] text-[#172B4D]' : 'hover:bg-gray-100 text-[#5E6C84]'
             }`
-          : `p-1 ${active ? 'text-[#393A3D]' : 'text-[#6B6C72] group-hover:text-[#393A3D]'}`
+          : `p-1 ${active ? 'text-[#172B4D]' : 'text-[#5E6C84] group-hover:text-[#172B4D]'}`
       }`}
     >
-      <span className={active ? 'text-[#393A3D]' : 'text-[#6B6C72] group-hover:text-[#393A3D]'}>
+      <span className={active ? 'text-[#172B4D]' : 'text-[#5E6C84] group-hover:text-[#172B4D]'}>
         {children}
       </span>
       <span
         className={`text-[9px] mt-0.5 leading-none ${
-          active ? 'font-semibold text-[#393A3D]' : 'font-medium text-[#6B6C72] group-hover:text-[#393A3D]'
+          active ? 'font-semibold text-[#172B4D]' : 'font-medium text-[#5E6C84] group-hover:text-[#172B4D]'
         }`}
       >
         {label}

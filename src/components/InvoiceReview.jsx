@@ -357,8 +357,8 @@ export default function InvoiceReview({
                         <td className="font-medium">{r.value || r.name || 'Gardening'}</td>
                         <td className="text-[#6b6c72]">{r.desc || 'Weekly Gardening Service'}</td>
                         <td className="text-right">{r.qty || 1}</td>
-                        <td className="text-right">${typeof r.rate === 'number' ? r.rate.toFixed(2) : parseFloat(r.rate || 200).toFixed(2)}</td>
-                        <td className="text-right">${typeof r.amount === 'number' ? r.amount.toFixed(2) : (parseFloat(r.qty || 1) * parseFloat(r.rate || 200)).toFixed(2)}</td>
+                        <td className="text-right">₹{typeof r.rate === 'number' ? r.rate.toFixed(2) : parseFloat(r.rate || 200).toFixed(2)}</td>
+                        <td className="text-right">₹{typeof r.amount === 'number' ? r.amount.toFixed(2) : (parseFloat(r.qty || 1) * parseFloat(r.rate || 200)).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -378,19 +378,19 @@ export default function InvoiceReview({
                 <div className="w-[200px] text-[12px] space-y-1.5">
                   <div className="flex justify-between text-[#393a3d]">
                     <span>Subtotal</span>
-                    <span>${typeof subtotal === 'number' ? subtotal.toFixed(2) : parseFloat(subtotal || 200).toFixed(2)}</span>
+                    <span>₹{typeof subtotal === 'number' ? subtotal.toFixed(2) : parseFloat(subtotal || 200).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-[#393a3d]">
                     <span>Discount {discountPct}%</span>
-                    <span>-${typeof discountVal === 'number' ? discountVal.toFixed(2) : parseFloat(discountVal || 20).toFixed(2)}</span>
+                    <span>-₹{typeof discountVal === 'number' ? discountVal.toFixed(2) : parseFloat(discountVal || 20).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-[#393a3d]">
                     <span>Sales tax</span>
-                    <span>${typeof salesTax === 'number' ? salesTax.toFixed(2) : parseFloat(salesTax || 14.4).toFixed(2)}</span>
+                    <span>₹{typeof salesTax === 'number' ? salesTax.toFixed(2) : parseFloat(salesTax || 14.4).toFixed(2)}</span>
                   </div>
                   <div className="pt-2 border-t border-[#e3e5e8] flex justify-between items-baseline font-bold text-[#393a3d]">
                     <span className="text-[14px]">Total</span>
-                    <span className="text-[18px]">${typeof total === 'number' ? total.toFixed(2) : parseFloat(total || 194.40).toFixed(2)}</span>
+                    <span className="text-[18px]">₹{typeof total === 'number' ? total.toFixed(2) : parseFloat(total || 194.40).toFixed(2)}</span>
                   </div>
                 </div>
 

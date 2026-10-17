@@ -69,7 +69,7 @@ export default function SearchDropdown({
           <div className="mb-4 p-4 rounded-xl bg-gradient-to-r from-[#F0FDF4] to-[#F8FAFC] border border-[#BBF7D0] shadow-xs">
             <div className="flex items-center gap-2 text-[#166534] font-semibold text-[14px] mb-1.5">
               <Sparkles size={17} className="text-[#2CA01C]" />
-              <span>Meso Assist Financial Answer</span>
+              <span>MESSO Assist Financial Answer</span>
             </div>
             <p className="text-[15px] text-[#1E293B] font-medium leading-relaxed">
               {smartData.answer}
@@ -134,36 +134,64 @@ export default function SearchDropdown({
         {/* 3. Empty State: Recent Transactions */}
         {!isQueryActive && (
           <div>
-            <div className="text-[14px] font-semibold text-[#393A3D] mb-2 px-2">
-              Recent transactions
+            <div className="flex items-center justify-between mb-2 px-2">
+              <span className="text-[14px] font-semibold text-[#393A3D]">
+                Recent transactions
+              </span>
+              {recentList.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setRecentTxns([])}
+                  className="text-[12px] text-[#0077C5] hover:underline font-medium cursor-pointer"
+                >
+                  Clear all
+                </button>
+              )}
             </div>
 
-            <div className="space-y-0.5">
-              {recentList.map((t, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => onSelectResult && onSelectResult(t.name)}
-                  className="flex items-center space-x-4 h-[44px] px-2 rounded hover:bg-[#F6F7F8] cursor-pointer transition text-[14px] text-[#393A3D]"
-                >
-                  <History size={16} className="text-[#6B6C72] shrink-0" />
-                  <span className="font-medium text-[#393A3D] min-w-[130px] truncate">
-                    {t.name}
-                  </span>
-                  <span className="w-[1px] h-[16px] bg-[#D4D7DC]" />
-                  <span className="min-w-[150px] text-[#393A3D] truncate">
-                    {t.contact || "—"}
-                  </span>
-                  <span className="w-[1px] h-[16px] bg-[#D4D7DC]" />
-                  <span className="min-w-[90px] text-[#393A3D]">
-                    {t.date}
-                  </span>
-                  <span className="w-[1px] h-[16px] bg-[#D4D7DC]" />
-                  <span className="font-semibold text-[#2CA01C]">
-                    {t.amount}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {recentList.length === 0 ? (
+              <div className="text-xs text-gray-400 px-2 py-4 text-center">
+                No recent transactions
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {recentList.map((t, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => onSelectResult && onSelectResult(t.name)}
+                    className="group flex items-center space-x-4 h-[44px] px-2 rounded hover:bg-[#F6F7F8] cursor-pointer transition text-[14px] text-[#393A3D]"
+                  >
+                    <History size={16} className="text-[#6B6C72] shrink-0" />
+                    <span className="font-medium text-[#393A3D] min-w-[130px] truncate">
+                      {t.name}
+                    </span>
+                    <span className="w-[1px] h-[16px] bg-[#D4D7DC]" />
+                    <span className="min-w-[150px] text-[#393A3D] truncate">
+                      {t.contact || "—"}
+                    </span>
+                    <span className="w-[1px] h-[16px] bg-[#D4D7DC]" />
+                    <span className="min-w-[90px] text-[#393A3D]">
+                      {t.date}
+                    </span>
+                    <span className="w-[1px] h-[16px] bg-[#D4D7DC]" />
+                    <span className="font-semibold text-[#2CA01C]">
+                      {t.amount}
+                    </span>
+                    <button
+                      type="button"
+                      title="Remove from recent searches"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRecentTxns(prev => prev.filter((_, i) => i !== idx));
+                      }}
+                      className="ml-auto opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-full transition"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
