@@ -4,9 +4,9 @@
  * Connects every UI component directly to PostgreSQL on Disk D and Supabase.
  */
 
-const rawBase = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000';
+const rawBase = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '' : 'http://127.0.0.1:5000');
 const cleanBase = rawBase.replace(/\/$/, '');
-const API_BASE = cleanBase.endsWith('/api') ? cleanBase : `${cleanBase}/api`;
+const API_BASE = cleanBase ? (cleanBase.endsWith('/api') ? cleanBase : `${cleanBase}/api`) : '/api';
 
 export function notifyMutation(detail = {}) {
   if (typeof window !== 'undefined') {
