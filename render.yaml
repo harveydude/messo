@@ -3,7 +3,6 @@ services:
   - type: web
     name: quickbooks-india-ui
     runtime: static
-    plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     routes:
@@ -15,7 +14,7 @@ services:
         fromService:
           type: web
           name: quickbooks-india-api
-          property: url
+          property: host
 
   # 2. Backend Web Service (Express API + Continuous Accounting Engine on Render Free Tier)
   - type: web
@@ -35,4 +34,4 @@ services:
         fromService:
           type: web
           name: quickbooks-india-ui
-          property: url
+          property: host
