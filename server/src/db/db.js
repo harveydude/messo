@@ -19,8 +19,12 @@ export async function getDb() {
   if (databaseUrl && !databaseUrl.includes('placeholder')) {
     if (!pool) {
       console.log('Connecting to cloud PostgreSQL / Supabase...');
+      let secureUrl = databaseUrl;
+      if (!secureUrl.includes('sslmode=')) {
+        secureUrl += (secureUrl.includes('?') ? '&' : '?') + 'sslmode=require';
+      }
       pool = new Pool({
-        connectionString: databaseUrl,
+        connectionString: secureUrl,
         ssl: { rejectUnauthorized: false },
       });
     }
