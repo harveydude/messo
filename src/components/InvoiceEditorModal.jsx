@@ -55,8 +55,10 @@ const CATALOG = [
 
 const TAX_RATES = [
   { label: 'GST 18% (Standard)', pct: 18.00 },
-  { label: 'GST 12% (Services)', pct: 12.00 },
-  { label: 'GST 5% (Reduced)', pct: 5.00 },
+  { label: 'GST 5% (Essentials & Mass Consumption)', pct: 5.00 },
+  { label: 'GST 40% (Demerit & Luxury Goods)', pct: 40.00 },
+  { label: 'GST 3% (Gold & Precious Metals)', pct: 3.00 },
+  { label: 'GST 0.25% (Diamonds & Precious Stones)', pct: 0.25 },
   { label: 'Exempt / Nil (0%)', pct: 0.00 }
 ];
 

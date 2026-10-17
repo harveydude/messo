@@ -78,7 +78,7 @@ router.post('/help-chat', async (req, res) => {
     if (lower.includes('invoice') || lower.includes('bill')) {
       reply = "To create an invoice, click '+ Create' -> 'Invoice', or press 'Alt + I'. You can also import CSV/PDF statements directly into books.";
     } else if (lower.includes('gst') || lower.includes('tax')) {
-      reply = "Meso continuously computes CGST, SGST, and IGST at 18% (Standard) or 12%/5% on every invoice and expense line item.";
+      reply = "Meso continuously computes CGST, SGST, and IGST according to current GST acts (18% Standard, 5% Essentials, 40% Demerit/Luxury, 3% Precious Metals, 0.25% Diamonds) on every invoice and expense line item.";
     } else if (lower.includes('reconcile') || lower.includes('bank')) {
       reply = "To reconcile your bank account, go to Accounting -> Reconcile. We automatically match bank transactions within ₹0.00 difference.";
     }
