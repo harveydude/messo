@@ -196,11 +196,13 @@ export async function closeFiscalYear({
     totalExpensePaise,
     netIncomePaise,
     retainedEarningsEntryId: jeId,
+    closingJournalEntryId: jeId,
     booksLockedUntilDate: endDate
   };
 }
 
-export async function listFiscalYearCloses({ companyId = 'comp_1' }) {
+export async function listFiscalYearCloses(options = 'comp_1') {
+  const companyId = typeof options === 'string' ? options : (options?.companyId || 'comp_1');
   const db = await getDb();
   const res = await db.query(
     `SELECT * FROM fiscal_year_closes WHERE company_id = $1 ORDER BY end_date DESC`,

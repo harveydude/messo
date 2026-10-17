@@ -49,7 +49,7 @@ export function requirePermission(requiredAction) {
     }
 
     // 2. Specific action checks
-    if (requiredAction === 'MANAGE_POLICIES' || requiredAction === 'CLOSE_BOOKS') {
+    if (requiredAction === 'MANAGE_POLICIES' || requiredAction === 'CLOSE_BOOKS' || requiredAction === 'YEAR_END_CLOSE') {
       if (![ROLES.OWNER, ROLES.CHARTERED_ACCOUNTANT].includes(role)) {
         return res.status(403).json({
           success: false,

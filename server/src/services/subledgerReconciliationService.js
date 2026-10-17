@@ -6,7 +6,9 @@
 
 import { getDb } from '../db/db.js';
 
-export async function checkSubledgerReconciliation({ companyId = 'comp_1', recordReport = true }) {
+export async function checkSubledgerReconciliation(options = 'comp_1') {
+  const companyId = typeof options === 'string' ? options : (options?.companyId || 'comp_1');
+  const recordReport = typeof options === 'object' ? (options?.recordReport ?? true) : true;
   const db = await getDb();
 
   // 1. Fetch Accounts Receivable (AR) GL Balance (Account 1100)
@@ -67,7 +69,10 @@ export async function checkSubledgerReconciliation({ companyId = 'comp_1', recor
       isBalanced: apVariancePaise === 0
     },
     isBalanced,
-    status: isBalanced ? 'HEALTHY' : 'VARIANCE_DETECTED'
+    status: isBalanced ? 'HEALTHY' : 'VARIANCE_DETECTED',
+    customerSubledgerPaise: arSubledgerPaise,
+    accountsReceivableGlPaise: arGlPaise,
+    variancePaise: arVariancePaise
   };
 
   if (recordReport) {
@@ -101,7 +106,8 @@ export async function checkSubledgerReconciliation({ companyId = 'comp_1', recor
  * Diagnostic utility to synchronize Chart of Accounts control ledger balances
  * to the exact sub-ledger open balances when initial batches or adjustments are promoted.
  */
-export async function syncSubledgerToGl({ companyId = 'comp_1' }) {
+export async function syncSubledgerToGl(options = 'comp_1') {
+  const companyId = typeof options === 'string' ? options : (options?.companyId || 'comp_1');
   const db = await getDb();
 
   // Sum open invoices
@@ -155,5 +161,6 @@ export async function syncSubledgerToGl({ companyId = 'comp_1' }) {
     );
   }
 
-  return checkSubledgerReconciliation({ companyId, recordReport: true });
+  const recon = await checkSubledgerReconciliation({ companyId, recordReport: true });
+  return { success: true, ...recon };
 }

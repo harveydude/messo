@@ -21,33 +21,39 @@ export const TAX_SCHEMES = {
 /**
  * Determines Tax Scheme and Place of Supply rules based on Supplier & Recipient locations.
  */
-export function determineTaxScheme({
-  supplierStateCode = '27',
-  placeOfSupplyStateCode = '27',
-  isExport = false,
-  isSez = false,
-  lutArn = null,
-  isGiftCityIfsc = false
-}) {
+export function determineTaxScheme(options = {}) {
+  const {
+    supplierStateCode = '27',
+    placeOfSupplyStateCode,
+    recipientStateCode,
+    isExport = false,
+    isSez = false,
+    hasLut = false,
+    lutArn = null,
+    isGiftCityIfsc = false
+  } = options;
+
   const sCode = String(supplierStateCode).padStart(2, '0');
-  const posCode = String(placeOfSupplyStateCode).padStart(2, '0');
+  const posCode = String(placeOfSupplyStateCode || recipientStateCode || supplierStateCode).padStart(2, '0');
 
   // 1. GIFT City IFSC Exempt Supplies
   if (isGiftCityIfsc) {
     return {
       taxScheme: TAX_SCHEMES.IFSC_EXEMPT,
+      scheme: TAX_SCHEMES.IFSC_EXEMPT,
       isZeroRated: true,
       description: 'GIFT City IFSC Section 80LA Zero-Rated Exemption'
     };
   }
 
   // 2. Export / SEZ under Letter of Undertaking (LUT)
-  if ((isExport || isSez) && lutArn) {
+  if ((isExport || isSez) && (lutArn || hasLut)) {
     return {
       taxScheme: TAX_SCHEMES.ZERO_RATED_LUT,
+      scheme: TAX_SCHEMES.ZERO_RATED_LUT,
       isZeroRated: true,
-      lutArn,
-      description: `Zero-Rated Supply under LUT (ARN: ${lutArn})`
+      lutArn: lutArn || 'LUT-ARN-APPLIED',
+      description: `Zero-Rated Supply under LUT (ARN: ${lutArn || 'LUT-ARN-APPLIED'})`
     };
   }
 
@@ -55,6 +61,7 @@ export function determineTaxScheme({
   if (isExport || isSez) {
     return {
       taxScheme: TAX_SCHEMES.EXPORT_WITH_PAYMENT,
+      scheme: TAX_SCHEMES.EXPORT_WITH_PAYMENT,
       isZeroRated: false,
       description: 'Export with Payment of IGST (Refund route)'
     };
@@ -65,12 +72,14 @@ export function determineTaxScheme({
     if (UTGST_STATE_CODES.has(posCode)) {
       return {
         taxScheme: TAX_SCHEMES.UTGST,
+        scheme: TAX_SCHEMES.UTGST,
         isZeroRated: false,
         description: `Intra-UT Supply (${posCode}): CGST + UTGST`
       };
     }
     return {
       taxScheme: TAX_SCHEMES.INTRA_STATE,
+      scheme: TAX_SCHEMES.INTRA_STATE,
       isZeroRated: false,
       description: `Intra-State Supply (${posCode}): CGST + SGST`
     };
@@ -79,6 +88,7 @@ export function determineTaxScheme({
   // 5. Inter-State Supply (Supplier State != Place of Supply)
   return {
     taxScheme: TAX_SCHEMES.INTER_STATE,
+    scheme: TAX_SCHEMES.INTER_STATE,
     isZeroRated: false,
     description: `Inter-State Supply (${sCode} -> ${posCode}): IGST`
   };
@@ -87,24 +97,43 @@ export function determineTaxScheme({
 /**
  * Calculates exact tax splits in paise based on taxable value, rate in basis points, and tax scheme.
  */
-export function calculateGstSplits({
-  taxableAmountPaise,
-  rateBp = 1800, // 18% = 1800 bp
-  cessRateBp = 0,
-  taxScheme = TAX_SCHEMES.INTRA_STATE
-}) {
+export function calculateGstSplits(arg1, arg2, arg3, arg4) {
+  let taxableAmountPaise, rateBp = 1800, cessRateBp = 0, taxScheme = TAX_SCHEMES.INTRA_STATE;
+  const isInputBigInt = typeof arg1 === 'bigint';
+
+  if (typeof arg1 === 'object' && arg1 !== null && typeof arg1 !== 'bigint') {
+    taxableAmountPaise = arg1.taxableAmountPaise;
+    rateBp = arg1.rateBp ?? 1800;
+    cessRateBp = arg1.cessRateBp ?? 0;
+    taxScheme = arg1.taxScheme || arg1.scheme || TAX_SCHEMES.INTRA_STATE;
+  } else {
+    taxableAmountPaise = arg1;
+    if (arg2 !== undefined) rateBp = arg2;
+    if (typeof arg3 === 'string') {
+      taxScheme = arg3;
+    } else {
+      if (arg3 !== undefined) cessRateBp = arg3;
+      if (arg4 !== undefined) taxScheme = arg4;
+    }
+  }
+
   const taxable = Number(taxableAmountPaise);
+
+  function formatOutput(num) {
+    return isInputBigInt ? BigInt(num) : num;
+  }
 
   if (taxScheme === TAX_SCHEMES.ZERO_RATED_LUT || taxScheme === TAX_SCHEMES.IFSC_EXEMPT) {
     return {
-      taxableAmountPaise: taxable,
-      cgstPaise: 0,
-      sgstPaise: 0,
-      igstPaise: 0,
-      cessPaise: 0,
-      totalTaxPaise: 0,
-      totalAmountPaise: taxable,
-      taxScheme
+      taxableAmountPaise: formatOutput(taxable),
+      cgstPaise: formatOutput(0),
+      sgstPaise: formatOutput(0),
+      igstPaise: formatOutput(0),
+      cessPaise: formatOutput(0),
+      totalTaxPaise: formatOutput(0),
+      totalAmountPaise: formatOutput(taxable),
+      taxScheme,
+      scheme: taxScheme
     };
   }
 
@@ -114,14 +143,15 @@ export function calculateGstSplits({
     const igstPaise = Math.round((taxable * rateBp) / 10000);
     const totalTax = igstPaise + cessPaise;
     return {
-      taxableAmountPaise: taxable,
-      cgstPaise: 0,
-      sgstPaise: 0,
-      igstPaise,
-      cessPaise,
-      totalTaxPaise: totalTax,
-      totalAmountPaise: taxable + totalTax,
-      taxScheme
+      taxableAmountPaise: formatOutput(taxable),
+      cgstPaise: formatOutput(0),
+      sgstPaise: formatOutput(0),
+      igstPaise: formatOutput(igstPaise),
+      cessPaise: formatOutput(cessPaise),
+      totalTaxPaise: formatOutput(totalTax),
+      totalAmountPaise: formatOutput(taxable + totalTax),
+      taxScheme,
+      scheme: taxScheme
     };
   }
 
@@ -132,14 +162,15 @@ export function calculateGstSplits({
   const totalTax = cgstPaise + sgstPaise + cessPaise;
 
   return {
-    taxableAmountPaise: taxable,
-    cgstPaise,
-    sgstPaise,
-    igstPaise: 0,
-    cessPaise,
-    totalTaxPaise: totalTax,
-    totalAmountPaise: taxable + totalTax,
-    taxScheme
+    taxableAmountPaise: formatOutput(taxable),
+    cgstPaise: formatOutput(cgstPaise),
+    sgstPaise: formatOutput(sgstPaise),
+    igstPaise: formatOutput(0),
+    cessPaise: formatOutput(cessPaise),
+    totalTaxPaise: formatOutput(totalTax),
+    totalAmountPaise: formatOutput(taxable + totalTax),
+    taxScheme,
+    scheme: taxScheme
   };
 }
 
@@ -187,13 +218,23 @@ export async function registerGstRate({
   return res.rows[0];
 }
 
-export async function getGstRateForHsn({
-  companyId = 'comp_1',
-  hsnOrSacCode,
-  date = new Date().toISOString().split('T')[0]
-}) {
+export async function getGstRateForHsn(arg1, arg2, arg3) {
+  let companyId = 'comp_1';
+  let hsnOrSacCode;
+  let date = new Date().toISOString().split('T')[0];
+
+  if (typeof arg1 === 'object' && arg1 !== null) {
+    companyId = arg1.companyId || companyId;
+    hsnOrSacCode = arg1.hsnOrSacCode;
+    date = arg1.date || date;
+  } else {
+    hsnOrSacCode = arg1;
+    if (arg2) date = arg2;
+    if (arg3) companyId = arg3;
+  }
+
   const db = await getDb();
-  const code = String(hsnOrSacCode).trim().toUpperCase();
+  const code = String(hsnOrSacCode || '').trim().toUpperCase();
 
   const res = await db.query(
     `SELECT * FROM gst_rate_registry

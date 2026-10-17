@@ -155,7 +155,7 @@ export async function matchOrAutoCreateAccount({
     `INSERT INTO chart_of_accounts (
       id, company_id, code, name, account_type, statement_group, cached_balance_paise
     ) VALUES ($1, $2, $3, $4, $5, $6, 0)
-    RETURNING id, name`,
+    RETURNING id, name, statement_group, account_type`,
     [accountId, companyId, code, cleanName, typeNormalized, group]
   );
 

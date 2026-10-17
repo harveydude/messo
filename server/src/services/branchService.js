@@ -55,7 +55,8 @@ export async function createBranch({
   return res.rows[0];
 }
 
-export async function listBranches({ companyId = 'comp_1' }) {
+export async function listBranches(options = 'comp_1') {
+  const companyId = typeof options === 'string' ? options : (options?.companyId || 'comp_1');
   const db = await getDb();
   const res = await db.query(
     `SELECT * FROM company_branches WHERE company_id = $1 AND is_active = true ORDER BY is_head_office DESC, branch_code ASC`,
@@ -86,7 +87,8 @@ export async function createCostCenter({
   return res.rows[0];
 }
 
-export async function listCostCenters({ companyId = 'comp_1' }) {
+export async function listCostCenters(options = 'comp_1') {
+  const companyId = typeof options === 'string' ? options : (options?.companyId || 'comp_1');
   const db = await getDb();
   const res = await db.query(
     `SELECT * FROM cost_centers WHERE company_id = $1 AND is_active = true ORDER BY code ASC`,

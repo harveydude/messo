@@ -158,22 +158,26 @@ export async function rollbackImportBatch({ batchId, companyId = 'comp_1', user 
   }
 
   await db.query('BEGIN');
+  let invRes = { rowCount: 0 };
+  let billRes = { rowCount: 0 };
   try {
     await db.query("SET LOCAL app.allow_journal_mutation = 'on'");
 
     // 1. Soft-delete invoices from this batch
-    await db.query(
+    invRes = await db.query(
       `UPDATE invoices 
        SET is_deleted = true, status = 'VOIDED', deletion_reason = 'Rollback of Import Batch ' || $1
-       WHERE import_batch_id = $1 AND company_id = $2`,
+       WHERE import_batch_id = $1 AND company_id = $2
+       RETURNING id`,
       [batchId, companyId]
     );
 
     // 2. Soft-delete bills from this batch
-    await db.query(
+    billRes = await db.query(
       `UPDATE bills 
        SET is_deleted = true, status = 'VOIDED', deletion_reason = 'Rollback of Import Batch ' || $1
-       WHERE import_batch_id = $1 AND company_id = $2`,
+       WHERE import_batch_id = $1 AND company_id = $2
+       RETURNING id`,
       [batchId, companyId]
     );
 
@@ -204,6 +208,8 @@ export async function rollbackImportBatch({ batchId, companyId = 'comp_1', user 
   return {
     success: true,
     batchId,
-    status: 'ROLLED_BACK'
+    status: 'ROLLED_BACK',
+    rolledBackInvoices: invRes?.rowCount || 0,
+    rolledBackBills: billRes?.rowCount || 0
   };
 }

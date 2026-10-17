@@ -50,15 +50,31 @@ export async function setExchangeRate({
     afterJson: res.rows[0]
   });
 
-  return res.rows[0];
+  return { ...res.rows[0], rate: Number(res.rows[0].rate) };
 }
 
-export async function getExchangeRate({
-  companyId = 'comp_1',
-  fromCurrency,
-  toCurrency = 'INR',
-  date = new Date().toISOString().split('T')[0]
-}) {
+export async function getExchangeRate(arg1, arg2, arg3, arg4) {
+  let companyId = 'comp_1';
+  let fromCurrency;
+  let toCurrency = 'INR';
+  let date = new Date().toISOString().split('T')[0];
+
+  if (typeof arg1 === 'object' && arg1 !== null) {
+    companyId = arg1.companyId || companyId;
+    fromCurrency = arg1.fromCurrency;
+    toCurrency = arg1.toCurrency || toCurrency;
+    date = arg1.date || date;
+  } else {
+    fromCurrency = arg1;
+    if (arg2) toCurrency = arg2;
+    if (arg3) date = arg3;
+    if (arg4) companyId = arg4;
+  }
+
+  if (!fromCurrency) {
+    return 1.0;
+  }
+
   const from = fromCurrency.toUpperCase();
   const to = toCurrency.toUpperCase();
 
@@ -102,18 +118,29 @@ export async function getExchangeRate({
   return 1.0;
 }
 
-export async function convertCurrency({
-  amountMinor,
-  fromCurrency,
-  toCurrency = 'INR',
-  date,
-  companyId = 'comp_1'
-}) {
+export async function convertCurrency(arg1, arg2) {
+  if (typeof arg1 === 'number' && typeof arg2 === 'number') {
+    const convertedPaise = BigInt(Math.round(arg1 * arg2 * 100));
+    return {
+      convertedPaise,
+      convertedMinor: Number(convertedPaise),
+      rate: arg2
+    };
+  }
+  const {
+    amountMinor,
+    fromCurrency,
+    toCurrency = 'INR',
+    date,
+    companyId = 'comp_1'
+  } = arg1 || {};
   const rate = await getExchangeRate({ companyId, fromCurrency, toCurrency, date });
   const convertedMinor = Math.round(Number(amountMinor) * rate);
+  const convertedPaise = BigInt(convertedMinor);
   return {
     originalMinor: Number(amountMinor),
     convertedMinor,
+    convertedPaise,
     rate,
     fromCurrency,
     toCurrency
@@ -123,29 +150,32 @@ export async function convertCurrency({
 /**
  * Calculates and logs Realized Forex Gain or Loss upon payment / settlement.
  */
-export async function recordForexGainLoss({
-  companyId = 'comp_1',
-  entityType = 'INVOICE',
-  entityId,
-  foreignCurrency,
-  foreignAmount,
-  bookingRate,
-  settlementRate,
-  isRealized = true,
-  user = { id: 'usr_1', role: 'FINANCE_MANAGER' }
-}) {
+export async function recordForexGainLoss(options = {}) {
+  const {
+    companyId = 'comp_1',
+    entityType = 'INVOICE',
+    entityId = 'ent_fx_' + Date.now(),
+    foreignCurrency = 'USD',
+    foreignAmount = 0,
+    bookingRate,
+    originalRate,
+    settlementRate,
+    isRealized = true,
+    user = { id: 'usr_1', role: 'FINANCE_MANAGER' }
+  } = options;
+
   const db = await getDb();
-  const bRate = Number(bookingRate);
-  const sRate = Number(settlementRate);
+  const bRate = Number(bookingRate ?? originalRate ?? 1.0);
+  const sRate = Number(settlementRate ?? 1.0);
   const fAmt = Number(foreignAmount);
 
   // For Receivables (INVOICE): higher settlement rate = GAIN (positive)
   // For Payables (BILL): higher settlement rate = LOSS (negative)
   let gainLossPaise = 0;
   if (entityType.toUpperCase() === 'INVOICE') {
-    gainLossPaise = Math.round(fAmt * (sRate - bRate));
+    gainLossPaise = Math.round(fAmt * (sRate - bRate) * 100);
   } else {
-    gainLossPaise = Math.round(fAmt * (bRate - sRate));
+    gainLossPaise = Math.round(fAmt * (bRate - sRate) * 100);
   }
 
   let jeId = null;
@@ -238,5 +268,9 @@ export async function recordForexGainLoss({
     ]
   );
 
-  return logRes.rows[0];
+  return {
+    ...logRes.rows[0],
+    isGain: gainLossPaise > 0,
+    differencePaise: BigInt(Math.abs(gainLossPaise))
+  };
 }

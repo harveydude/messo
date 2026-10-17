@@ -175,6 +175,7 @@ export async function softDeleteTransaction({
     success: true,
     entityType,
     entityId,
+    status: updatedRecord?.status || 'VOIDED',
     is_deleted: true,
     reversingEntryId,
     deletionReason

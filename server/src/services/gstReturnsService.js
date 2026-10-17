@@ -85,7 +85,13 @@ export async function compileGstr1({ companyId = 'comp_1', period = '2026-04' })
       igstPaise: totalIgstPaise,
       totalTaxPaise: totalCgstPaise + totalSgstPaise + totalIgstPaise
     },
-    tables: { b2b, b2cl, b2cs, exp }
+    tables: { b2b, b2cl, b2cs, exp },
+    schedules: {
+      table4_b2b: b2b,
+      table5_b2cl: b2cl,
+      table7_b2cs: b2cs,
+      table6_exp: exp
+    }
   };
 
   // Upsert in filings table as DRAFT
@@ -152,6 +158,15 @@ export async function fileGstReturn({
   user = { id: 'usr_1', role: 'CHARTERED_ACCOUNTANT' }
 }) {
   const db = await getDb();
+
+  const existing = await db.query(
+    `SELECT status FROM gst_returns_filings WHERE company_id = $1 AND return_type = $2 AND return_period = $3`,
+    [companyId, returnType, period]
+  );
+  if (existing.rows.length > 0 && existing.rows[0].status === 'FILED') {
+    throw new Error(`Return ${returnType} for period ${period} has already been filed.`);
+  }
+
   const ackReference = `ARN-${returnType.replace('-', '')}-${period.replace('-', '')}-${Math.floor(100000 + Math.random() * 900000)}`;
 
   const res = await db.query(

@@ -24,13 +24,13 @@ export function isSection17_5Blocked(categoryOrReason = '') {
   const norm = String(categoryOrReason).toUpperCase().replace(/[\s-]/g, '_');
   for (const cat of SECTION_17_5_CATEGORIES) {
     if (norm.includes(cat) || cat.includes(norm)) {
-      return { blocked: true, reason: `Section 17(5) Ineligible Credit: ${cat}` };
+      return true;
     }
   }
   if (norm.includes('FOOD') || norm.includes('CAB') || norm.includes('CAR_RENTAL') || norm.includes('PERSONAL')) {
-    return { blocked: true, reason: 'Section 17(5) Ineligible: Food / Conveyance / Personal Expense' };
+    return true;
   }
-  return { blocked: false, reason: null };
+  return false;
 }
 
 /**
@@ -60,10 +60,10 @@ export async function recordItcEntry({
   let blocked = isBlocked;
   let finalReason = blockReason;
   if (!blocked && blockReason) {
-    const evalResult = isSection17_5Blocked(blockReason);
-    if (evalResult.blocked) {
+    const isBlk = isSection17_5Blocked(blockReason);
+    if (isBlk) {
       blocked = true;
-      finalReason = evalResult.reason;
+      finalReason = typeof isBlk === 'object' && isBlk.reason ? isBlk.reason : `Section 17(5) Ineligible Credit: ${blockReason}`;
     }
   }
 
@@ -99,7 +99,18 @@ export async function recordItcEntry({
 /**
  * Returns the Electronic Credit Ledger summary (Net Available ITC) for a return period.
  */
-export async function getElectronicCreditLedgerSummary({ companyId = 'comp_1', claimPeriod }) {
+export async function getElectronicCreditLedgerSummary(arg1, arg2) {
+  let companyId = 'comp_1';
+  let claimPeriod;
+
+  if (typeof arg1 === 'object' && arg1 !== null) {
+    companyId = arg1.companyId || companyId;
+    claimPeriod = arg1.claimPeriod;
+  } else {
+    companyId = arg1 || companyId;
+    if (arg2) claimPeriod = arg2;
+  }
+
   const db = await getDb();
 
   const periodClause = claimPeriod ? 'AND claim_period = $2' : '';
@@ -127,6 +138,8 @@ export async function getElectronicCreditLedgerSummary({ companyId = 'comp_1', c
     availableIgstPaise: Number(row.available_igst),
     availableCessPaise: Number(row.available_cess),
     totalAvailableItcPaise: Number(row.total_available_itc),
-    totalBlockedItcPaise: Number(row.total_blocked_itc)
+    totalBlockedItcPaise: Number(row.total_blocked_itc),
+    availableItcPaise: Number(row.total_available_itc),
+    blockedItcPaise: Number(row.total_blocked_itc)
   };
 }
