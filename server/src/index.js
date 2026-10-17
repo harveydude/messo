@@ -34,6 +34,7 @@ import governanceRouter from './routes/governance.js';
 import ingestionRouter from './routes/ingestion.js';
 import gstRouter from './routes/gst.js';
 import directTaxRouter from './routes/directTax.js';
+import orderToCashRouter from './routes/orderToCash.js';
 import { startRecurringRunner } from './jobs/recurringRunner.js';
 
 import { idempotency } from './middleware/integrity.js';
@@ -172,6 +173,8 @@ app.use('/api', governanceRouter);
 app.use('/api/import', ingestionRouter);
 app.use('/api/gst', gstRouter);
 app.use('/api/direct-tax', directTaxRouter);
+app.use('/api/order-to-cash', orderToCashRouter);
+app.use('/api', orderToCashRouter);
 
 // Serve Frontend Static Build if available (SPA Fallback)
 if (fs.existsSync(distPath)) {
