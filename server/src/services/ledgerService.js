@@ -1,5 +1,6 @@
 import { getDb } from '../db/db.js';
 import { randomUUID } from 'crypto';
+export { bumpVersion, updateVersioned, conflict } from './versioned.js';
 
 // Format helper
 export const toInr = (paise) => (Math.abs(Number(paise || 0)) / 100).toFixed(2);
@@ -71,49 +72,57 @@ export async function postJournalEntry({
   const num = entryNumber || `JE-${Date.now().toString().slice(-6)}`;
   const finalSourceType = docType ? docType.toUpperCase() : sourceType;
 
-  // 1. Insert Journal Entry Header
-  await db.query(
-    `INSERT INTO journal_entries (id, company_id, entry_number, entry_date, memo, source_type, doc_type, source_id, created_by, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'POSTED')`,
-    [entryId, companyId, num, entryDate, narration, finalSourceType, finalSourceType, sourceId, createdBy]
-  );
-
-  // 2. Insert Lines & Update Account Normal Balances (Rule 2)
-  for (const line of lines) {
-    const lineId = `jl_${randomUUID()}`;
-    const debit = BigInt(line.debitPaise || 0);
-    const credit = BigInt(line.creditPaise || 0);
-
+  await db.query('BEGIN');
+  try {
+    // 1. Insert Journal Entry Header
     await db.query(
-      `INSERT INTO journal_entry_lines (id, journal_entry_id, account_id, contact_id, project_id, description, debit_paise, credit_paise)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [lineId, entryId, line.accountId, line.contactId || null, line.projectId || null, line.description || '', debit.toString(), credit.toString()]
+      `INSERT INTO journal_entries (id, company_id, entry_number, entry_date, memo, source_type, doc_type, source_id, created_by, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'POSTED')`,
+      [entryId, companyId, num, entryDate, narration, finalSourceType, finalSourceType, sourceId, createdBy]
     );
 
-    // Update Chart of Accounts & Legacy Accounts Balance
-    const accRes = await db.query('SELECT account_type, cached_balance_paise FROM chart_of_accounts WHERE id = $1', [line.accountId]);
-    if (accRes.rows.length > 0) {
-      const type = accRes.rows[0].account_type;
-      const current = BigInt(accRes.rows[0].cached_balance_paise || 0);
-
-      // Normal Balances:
-      // ASSET, EXPENSE, BANK, COGS: Debit increases (+), Credit decreases (-)
-      // LIABILITY, EQUITY, INCOME, TAX_PAYABLE, AP, CREDIT_CARD: Credit increases (+), Debit decreases (-)
-      let isDebitNormal = ['ASSET', 'EXPENSE', 'BANK', 'COGS', 'ACCOUNTS_RECEIVABLE', 'INVENTORY', 'FIXED_ASSET'].includes(type);
-      let delta = isDebitNormal ? (debit - credit) : (credit - debit);
-      let updated = current + delta;
+    // 2. Insert Lines & Update Account Normal Balances (Rule 2)
+    for (const line of lines) {
+      const lineId = `jl_${randomUUID()}`;
+      const debit = BigInt(line.debitPaise || 0);
+      const credit = BigInt(line.creditPaise || 0);
 
       await db.query(
-        'UPDATE chart_of_accounts SET cached_balance_paise = $1 WHERE id = $2',
-        [updated.toString(), line.accountId]
+        `INSERT INTO journal_entry_lines (id, journal_entry_id, account_id, contact_id, project_id, description, debit_paise, credit_paise)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [lineId, entryId, line.accountId, line.contactId || null, line.projectId || null, line.description || '', debit.toString(), credit.toString()]
       );
 
-      // Also update legacy accounts table
-      await db.query(
-        'UPDATE accounts SET balance_paise = $1 WHERE id = $2',
-        [updated.toString(), line.accountId]
-      );
+      // Update Chart of Accounts & Legacy Accounts Balance
+      const accRes = await db.query('SELECT account_type, cached_balance_paise FROM chart_of_accounts WHERE id = $1', [line.accountId]);
+      if (accRes.rows.length > 0) {
+        const type = accRes.rows[0].account_type;
+        const current = BigInt(accRes.rows[0].cached_balance_paise || 0);
+
+        // Normal Balances:
+        // ASSET, EXPENSE, BANK, COGS: Debit increases (+), Credit decreases (-)
+        // LIABILITY, EQUITY, INCOME, TAX_PAYABLE, AP, CREDIT_CARD: Credit increases (+), Debit decreases (-)
+        let isDebitNormal = ['ASSET', 'EXPENSE', 'BANK', 'COGS', 'ACCOUNTS_RECEIVABLE', 'INVENTORY', 'FIXED_ASSET'].includes(type);
+        let delta = isDebitNormal ? (debit - credit) : (credit - debit);
+        let updated = current + delta;
+
+        await db.query(
+          'UPDATE chart_of_accounts SET cached_balance_paise = $1 WHERE id = $2',
+          [updated.toString(), line.accountId]
+        );
+
+        // Also update legacy accounts table
+        await db.query(
+          'UPDATE accounts SET balance_paise = $1 WHERE id = $2',
+          [updated.toString(), line.accountId]
+        );
+      }
     }
+
+    await db.query('COMMIT');
+  } catch (err) {
+    try { await db.query('ROLLBACK'); } catch {}
+    throw err;
   }
 
   // Audit Log Entry

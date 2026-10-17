@@ -2,6 +2,11 @@ import { getDb } from './db.js';
 
 export async function seedInitialData(force = false) {
   const db = await getDb();
+  try {
+    await db.query("set app.allow_journal_mutation = 'on'");
+  } catch (err) {
+    // ignore if session settings not supported
+  }
 
   // Check if companies exist
   try {
@@ -408,6 +413,10 @@ export async function seedInitialData(force = false) {
       ON CONFLICT (id) DO NOTHING
     `, [`bft_mc_${i}`, `Mastercard Purchase #${i}`, -(i * 65.50)]);
   }
+
+  try {
+    await db.query("set app.allow_journal_mutation = 'off'");
+  } catch (err) {}
 
   console.log('✓ Master QuickBooks Online 2026 Enterprise Seed Complete.');
 }

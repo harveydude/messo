@@ -123,5 +123,23 @@ export async function initDb() {
     }
   }
 
+  const migrationsDir = path.join(__dirname, 'migrations');
+  if (fs.existsSync(migrationsDir)) {
+    const files = fs.readdirSync(migrationsDir).filter(f => f.endsWith('.sql')).sort();
+    for (const f of files) {
+      console.log(`Applying migration ${f}...`);
+      const migrationSql = fs.readFileSync(path.join(migrationsDir, f), 'utf8');
+      try {
+        if (db.exec) {
+          await db.exec(migrationSql);
+        } else {
+          await db.query(migrationSql);
+        }
+      } catch (err) {
+        console.warn(`Migration ${f} notice/warning:`, err.message);
+      }
+    }
+  }
+
   console.log('Meso database schema ready.');
 }

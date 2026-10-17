@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Check, AlertCircle, ChevronDown, Plus, Trash2, HelpCircle } from 'lucide-react';
 import api from '../api/client';
 import { useStore } from '../store';
@@ -29,6 +29,7 @@ export default function UniversalCreateWorkflowModal({
   const { dispatch } = useStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const idemKeyRef = useRef(null);
 
   // Common Header State
   const [docNumber, setDocNumber] = useState('');
@@ -58,6 +59,10 @@ export default function UniversalCreateWorkflowModal({
       setErrorMsg(null);
       return;
     }
+
+    idemKeyRef.current = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `idem_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
 
     const defaultNum = `${(workflowType || 'TXN').slice(0, 3).toUpperCase()}-${Date.now().toString().slice(-4)}`;
     setDocNumber(defaultNum);

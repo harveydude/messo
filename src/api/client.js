@@ -109,22 +109,37 @@ function getMockFallback(endpoint, options = {}) {
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  // mutations: attach idempotency key (caller may pass opts.idemKey to reuse across retries)
+  if (method !== 'GET') {
+    const defaultKey = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `idem_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
+    headers['Idempotency-Key'] = options?.idemKey || headers['Idempotency-Key'] || defaultKey;
+  }
+
   try {
     const res = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
       ...options,
+      headers,
     });
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP error ${res.status}`);
+      if (res.status === 409 && errorData?.error?.code === 'CONFLICT_VERSION') {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('qbo:version-conflict', { detail: errorData.error }));
+        }
+      }
+      throw new Error(errorData.error?.message || errorData.error || `HTTP error ${res.status}`);
     }
 
     const data = await res.json();
-    const method = (options.method || 'GET').toUpperCase();
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
       notifyMutation({ endpoint, method });
     }
@@ -200,9 +215,10 @@ export const api = {
     body: JSON.stringify(data),
   }),
   getJournalEntries: () => request('/accounting/journal-entries'),
-  createJournalEntry: (data) => request('/accounting/journal-entries', {
+  createJournalEntry: (data, opts = {}) => request('/accounting/journal-entries', {
     method: 'POST',
     body: JSON.stringify(data),
+    ...opts,
   }),
   getRules: () => request('/accounting/rules-and-recurring'),
   getBudgets: () => request('/accounting/budgets'),
@@ -266,9 +282,10 @@ export const api = {
     body: JSON.stringify({ scheduledDate }),
   }),
   getExpenses: () => request('/expenses'),
-  createExpense: (data) => request('/expenses', {
+  createExpense: (data, opts = {}) => request('/expenses', {
     method: 'POST',
     body: JSON.stringify(data),
+    ...opts,
   }),
 
   // Banking & Bank Feeds
@@ -318,9 +335,10 @@ export const api = {
     body: JSON.stringify({ bookmarks }),
   }),
   // Unified Transactions (29 +Create Workflows)
-  createTransaction: (data) => request('/transactions', {
+  createTransaction: (data, opts = {}) => request('/transactions', {
     method: 'POST',
     body: JSON.stringify(data),
+    ...opts,
   }),
 
   // Section 3 Business At A Glance & Layout Feedback

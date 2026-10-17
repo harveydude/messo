@@ -119,7 +119,7 @@ router.post('/:id/send', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Invoice not found' });
     }
 
-    await db.query(`UPDATE invoices SET status = 'SENT', last_reminder_sent_at = CURRENT_TIMESTAMP WHERE id = $1`, [id]);
+    await db.query(`UPDATE invoices SET status = 'SENT', last_reminder_sent_at = CURRENT_TIMESTAMP, version = version + 1 WHERE id = $1`, [id]);
 
     await logAudit({
       action: 'UPDATE',
@@ -157,7 +157,7 @@ router.post('/:id/payment', async (req, res) => {
 
     // 1. Update Invoice balance & status
     await db.query(
-      `UPDATE invoices SET balance_due_paise = $1, amount_paid_paise = amount_paid_paise + $2, status = $3 WHERE id = $4`,
+      `UPDATE invoices SET balance_due_paise = $1, amount_paid_paise = amount_paid_paise + $2, status = $3, version = version + 1 WHERE id = $4`,
       [newBalance.toString(), paymentPaise.toString(), newStatus, id]
     );
 

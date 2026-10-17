@@ -266,6 +266,17 @@ export default function App() {
       : `${routeLabel} · Meso`;
   }, [routeLabel]);
 
+  // Optimistic locking conflict toast
+  const [conflictToast, setConflictToast] = useState(null);
+  useEffect(() => {
+    const handleConflict = (e) => {
+      setConflictToast(e.detail?.message || 'Changed by someone else — refreshing');
+      setTimeout(() => setConflictToast(null), 4000);
+    };
+    window.addEventListener('qbo:version-conflict', handleConflict);
+    return () => window.removeEventListener('qbo:version-conflict', handleConflict);
+  }, []);
+
   // Auto fullscreen on first load so users get the full view.
   useEffect(() => {
     const tryFullscreen = async () => {
@@ -805,6 +816,11 @@ export default function App() {
             onClose={() => setReconcileOpen(false)}
             onFinish={() => setReconcileOpen(false)}
           />
+        )}
+        {conflictToast && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#E35205] text-white px-4 py-2 rounded-md shadow-lg flex items-center gap-2 text-[13px] font-medium animate-fade-in pointer-events-none">
+            <span>⚠️ {conflictToast}</span>
+          </div>
         )}
       </div>
       </StoreProvider>

@@ -14,7 +14,7 @@ export async function processTransaction(payload, defaultType = null) {
   const txnType = (payload.txnType || defaultType || 'EXPENSE').toUpperCase();
   const txnId = `txn_${randomUUID()}`;
   const docNumber = payload.docNumber || payload.invoiceNumber || payload.billNumber || payload.refNo || `${txnType.slice(0, 3)}-${Date.now().toString().slice(-4)}`;
-  const txnDate = payload.txnDate || payload.date || payload.issueDate || payload.paymentDate || new Date().toISOString().split('T')[0];
+  const txnDate = payload.txnDate || payload.date || payload.issueDate || payload.paymentDate || payload.expense_date || new Date().toISOString().split('T')[0];
   const dueDate = payload.dueDate || (['INVOICE', 'BILL'].includes(txnType) ? new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] : null);
   const contactId = payload.contactId || payload.customerId || payload.vendorId || null;
   const memo = payload.memo || payload.notes || payload.description || '';
@@ -34,7 +34,12 @@ export async function processTransaction(payload, defaultType = null) {
     subtotalPaise += lineAmtPaise;
   }
 
-  if (payload.totalAmount || payload.amount || payload.total) {
+  if (payload.amount_minor != null) {
+    totalPaise = BigInt(Math.round(Number(payload.amount_minor)));
+    if (subtotalPaise === 0n) {
+      subtotalPaise = totalPaise;
+    }
+  } else if (payload.totalAmount || payload.amount || payload.total) {
     totalPaise = BigInt(Math.round(Number(payload.totalAmount || payload.amount || payload.total) * 100));
     if (subtotalPaise === 0n) {
       subtotalPaise = totalPaise;
@@ -111,7 +116,7 @@ export async function processTransaction(payload, defaultType = null) {
       if (payload.linkedTxnId || payload.invoiceId) {
         const invId = payload.linkedTxnId || payload.invoiceId;
         await db.query(
-          `UPDATE invoices SET amount_paid_paise = amount_paid_paise + $1, balance_due_paise = GREATEST(0, balance_due_paise - $1), status = CASE WHEN balance_due_paise <= $1 THEN 'PAID' ELSE 'PARTIALLY_PAID' END WHERE id = $2`,
+          `UPDATE invoices SET amount_paid_paise = amount_paid_paise + $1, balance_due_paise = GREATEST(0, balance_due_paise - $1), status = CASE WHEN balance_due_paise <= $1 THEN 'PAID' ELSE 'PARTIALLY_PAID' END, version = version + 1 WHERE id = $2`,
           [Number(totalPaise), invId]
         );
       }
@@ -184,8 +189,8 @@ export async function processTransaction(payload, defaultType = null) {
     // ------------------------------------------------------------------------
     case 'EXPENSE': {
       isPosting = true;
-      const paymentAcc = payload.paymentAccountId || 'acc_1010';
-      const expenseAcc = payload.expenseAccountId || payload.categoryAccountId || 'acc_6020';
+      const paymentAcc = payload.paymentAccountId || payload.payment_account_id || 'acc_1010';
+      const expenseAcc = payload.expenseAccountId || payload.expense_account_id || payload.categoryAccountId || 'acc_6020';
       glLines = [
         { accountId: expenseAcc, debitPaise: Number(totalPaise), creditPaise: 0, description: memo || `Operating Expense` },
         { accountId: paymentAcc, debitPaise: 0, creditPaise: Number(totalPaise), description: `Paid from Bank/Card` }
@@ -195,7 +200,7 @@ export async function processTransaction(payload, defaultType = null) {
         `INSERT INTO expenses (id, expense_number, payee_name, payment_account_id, payment_date, total_paise, category, memo)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (id) DO NOTHING`,
-        [txnId, docNumber, payload.payeeName || 'Vendor Payee', paymentAcc, txnDate, Number(totalPaise), payload.category || 'General', memo]
+        [txnId, docNumber, payload.payeeName || payload.payee || 'Vendor Payee', paymentAcc, txnDate, Number(totalPaise), payload.category || 'General', memo]
       );
       break;
     }
@@ -240,7 +245,7 @@ export async function processTransaction(payload, defaultType = null) {
       if (payload.billId || payload.linkedTxnId) {
         const bId = payload.billId || payload.linkedTxnId;
         await db.query(
-          `UPDATE bills SET open_balance_paise = GREATEST(0, open_balance_paise - $1), status = CASE WHEN open_balance_paise <= $1 THEN 'PAID' ELSE 'PARTIALLY_PAID' END WHERE id = $2`,
+          `UPDATE bills SET open_balance_paise = GREATEST(0, open_balance_paise - $1), status = CASE WHEN open_balance_paise <= $1 THEN 'PAID' ELSE 'PARTIALLY_PAID' END, version = version + 1 WHERE id = $2`,
           [Number(totalPaise), bId]
         );
       }

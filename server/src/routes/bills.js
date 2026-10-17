@@ -113,7 +113,7 @@ router.post('/:id/pay', async (req, res) => {
 
     // 1. Mark Bill as Paid
     await db.query(
-      `UPDATE bills SET status = 'PAID', open_balance_paise = 0 WHERE id = $1`,
+      `UPDATE bills SET status = 'PAID', open_balance_paise = 0, version = version + 1 WHERE id = $1`,
       [id]
     );
 

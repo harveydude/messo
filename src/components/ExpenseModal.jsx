@@ -43,6 +43,7 @@ import api from '../api/client';
 
 export default function ExpenseModal({ isOpen, onClose, onSaveSuccess }) {
   const { dispatch } = useStore();
+  const idemKey = useRef((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('idem_' + Math.random().toString(36).slice(2))).current;
 
   // State: whether AI autofill has been applied
   const [isAutofilled, setIsAutofilled] = useState(false);
@@ -240,7 +241,7 @@ export default function ExpenseModal({ isOpen, onClose, onSaveSuccess }) {
         memo: memo || 'Expense recorded from Meso ExpenseModal',
         lines: parsedLines.length > 0 ? parsedLines : [{ amount: totalVal, category: categorySelected || 'acc_6010', description: memo || 'Expense' }],
         totalInr: totalVal
-      });
+      }, { idemKey });
 
       if (!res || res.success === false) {
         throw new Error(res?.error || 'Failed to record expense in ledger');

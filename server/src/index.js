@@ -30,6 +30,8 @@ import catalogRouter from './routes/catalog.js';
 import operationsRouter from './routes/operations.js';
 import transactionsRouter from './routes/transactions.js';
 
+import { idempotency } from './middleware/integrity.js';
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -43,10 +45,18 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'idempotency-key', 'x-company-id'],
+  exposedHeaders: ['Idempotent-Replay', 'idempotent-replay']
 }));
 
 app.use(express.json());
+
+// Adaptive company scope & Idempotency guard (write-integrity trio)
+app.use((req, res, next) => {
+  req.companyId = req.companyId || req.header('x-company-id') || req.user?.company_id || 'comp_1';
+  next();
+});
+app.use(idempotency);
 
 // Health check endpoints
 app.get('/health', (req, res) => {
@@ -65,6 +75,42 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     currency: 'INR (₹)'
   });
+});
+
+// Test query bridge for testing against local embedded database
+app.post('/api/test/query', async (req, res) => {
+  try {
+    const { getDb } = await import('./db/db.js');
+    const db = await getDb();
+    const { text, params } = req.body;
+    const result = await db.query(text, params);
+    res.json({ success: true, rows: result.rows, rowCount: result.rowCount });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message, code: err.code });
+  }
+});
+
+app.post('/api/test/tx', async (req, res) => {
+  try {
+    const { getDb } = await import('./db/db.js');
+    const db = await getDb();
+    const { queries } = req.body;
+    await db.query('BEGIN');
+    const results = [];
+    try {
+      for (const q of queries) {
+        const r = await db.query(q.text, q.params);
+        results.push({ rows: r.rows, rowCount: r.rowCount });
+      }
+      await db.query('COMMIT');
+      res.json({ success: true, results });
+    } catch (err) {
+      try { await db.query('ROLLBACK'); } catch {}
+      res.status(400).json({ success: false, error: err.message, code: err.code });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Primary Accounting & Core Routes

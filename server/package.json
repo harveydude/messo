@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "node --watch src/index.js",
+    "test:integrity": "node tests/verify-integrity.js",
+    "test:ledger": "node verify-ledger.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.14",

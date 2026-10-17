@@ -92,6 +92,7 @@ function GripDots() {
 
 export default function JournalEntryModal({ isOpen, onClose }) {
   const { dispatch } = useStore();
+  const idemKey = useRef((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('idem_' + Math.random().toString(36).slice(2))).current;
 
   const [date, setDate] = useState('10/20/2025');
   const [journalNo, setJournalNo] = useState('1');
@@ -215,7 +216,7 @@ export default function JournalEntryModal({ isOpen, onClose }) {
         entryDate: date || new Date().toISOString().split('T')[0],
         memo: memo || 'Journal entry created from Meso UI',
         lines: mappedLines
-      });
+      }, { idemKey });
 
       // 2. Hydrate local store
       try {
