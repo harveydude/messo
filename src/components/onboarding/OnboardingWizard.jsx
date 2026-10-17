@@ -15,7 +15,6 @@ import {
   PieChart, 
   Percent, 
   ArrowRight, 
-  Info, 
   X,
   Lock,
   Landmark,
@@ -25,11 +24,13 @@ import {
   Tag,
   Car,
   Mail,
-  Smile,
-  Meh,
-  Frown,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Maximize2,
+  Minimize2,
+  CheckCircle2,
+  ShieldCheck,
+  Send
 } from 'lucide-react';
 
 // Comprehensive Indian Industries Catalog (NIC Classifications)
@@ -61,38 +62,86 @@ const INDIAN_INDUSTRIES = [
 ];
 
 /**
- * MESO ONBOARDING WIZARD
- * 100% Meso Indian Cloud localized setup flow.
+ * MESSO 13-SCREEN ONBOARDING WIZARD
+ * 100% 1:1 Pixel Replicating Frames 0 to 12.
+ * Official MESSO branding with official logo image.
  * No QuickBooks / Intuit references. Pure ₹ INR currency.
- * Zero pre-filled defaults, mandatory step validation, non-overlapping floating cloud,
- * and Frame 094 animated cyan underline.
+ * Zero pre-filled defaults, strict mandatory validation,
+ * interactive Indian bank connector modal, and Frame 094 animated cyan underline.
  */
 export default function OnboardingWizard({ onComplete, onExit }) {
   // Wizard steps: 0 to 12
   const [currentStep, setCurrentStep] = useState(0);
 
   // Form Data State - ALL EMPTY BY DEFAULT
-  const [formData, setFormData] = useState({
-    businessName: '',
-    priorSoftware: '',
-    website: '',
-    industry: '',
-    taxType: '',
-    annualRevenue: '',
-    role: '',
-    employeeCount: '',
-    phoneNumber: '',
-    selectedFeatures: [],
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meso_business_profile');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          businessName: parsed.businessName || '',
+          gstin: parsed.gstin || '',
+          priorSoftware: parsed.priorSoftware || '',
+          website: parsed.website || '',
+          industry: parsed.industry || '',
+          taxType: parsed.taxType || '',
+          annualRevenue: parsed.annualRevenue || '',
+          role: parsed.role || '',
+          employeeCount: parsed.employeeCount || '',
+          phoneNumber: parsed.phoneNumber || '',
+          selectedFeatures: parsed.selectedFeatures || [],
+        };
+      }
+    } catch (e) {}
+    return {
+      businessName: '',
+      gstin: '',
+      priorSoftware: '',
+      website: '',
+      industry: '',
+      taxType: '',
+      annualRevenue: '',
+      role: '',
+      employeeCount: '',
+      phoneNumber: '',
+      selectedFeatures: [],
+    };
   });
 
   // UI & Validation States
   const [stepError, setStepError] = useState('');
-  const [showHelpModal, setShowHelpModal] = useState(false);
-  const [showExpertTooltip, setShowExpertTooltip] = useState(true);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showDisclaimerPopover, setShowDisclaimerPopover] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
   const [isDiscoveringData, setIsDiscoveringData] = useState(false);
   const [phoneSubmitted, setPhoneSubmitted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Auto Fullscreen on first user click anywhere
+  useEffect(() => {
+    const handleFirstClick = () => {
+      try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener('click', handleFirstClick, { once: true });
+    return () => window.removeEventListener('click', handleFirstClick);
+  }, []);
+
+  const toggleFullscreen = () => {
+    try {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
 
   const updateField = (field, value) => {
     setStepError('');
@@ -137,7 +186,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
         setIsDiscoveringData(true);
         setTimeout(() => {
           setIsDiscoveringData(false);
-          // Auto-suggest industry if not yet filled
+          // Suggest defaults based on website domain if empty
           if (!formData.industry) {
             updateField('industry', 'Information Technology & Software Services (IT/ITeS)');
           }
@@ -145,7 +194,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
             updateField('taxType', 'pvt_ltd');
           }
           setCurrentStep(targetStep !== undefined ? targetStep : currentStep + 1);
-        }, 1100);
+        }, 800);
         return;
       }
     }
@@ -179,6 +228,11 @@ export default function OnboardingWizard({ onComplete, onExit }) {
     } else if (currentStep < 12) {
       setCurrentStep((prev) => prev + 1);
     } else {
+      // Save to localStorage
+      try {
+        localStorage.setItem('meso_business_profile', JSON.stringify(formData));
+        localStorage.setItem('meso_onboarding_completed', 'true');
+      } catch (e) {}
       if (onComplete) onComplete(formData);
     }
   };
@@ -203,7 +257,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentStep, formData]);
 
-  // Compute progress percentage
+  // Compute progress percentage matching the thin green track
   const getProgressPercentage = () => {
     switch (currentStep) {
       case 1: return 8;
@@ -223,25 +277,24 @@ export default function OnboardingWizard({ onComplete, onExit }) {
   };
 
   return (
-    <div className="min-h-screen w-full bg-white text-[#2c2e30] flex flex-col justify-between font-sans relative selection:bg-[#007755] selection:text-white overflow-x-hidden">
+    <div className="min-h-screen w-full bg-white text-[#1f2937] flex flex-col justify-between font-sans relative selection:bg-[#007755] selection:text-white overflow-x-hidden">
       
       {/* 1. TOP HEADER & PROGRESS BAR (Screens 1 to 11) */}
       {currentStep > 0 && currentStep < 12 && (
         <header className="w-full pt-3 pb-2 px-6 sm:px-10 flex flex-col z-20">
           <div className="flex items-center justify-between w-full h-[40px] mb-2">
-            {/* Meso Brand Cluster */}
-            <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => setCurrentStep(0)}>
-              <div className="w-[30px] h-[30px] rounded-full bg-[#007755] flex items-center justify-center text-white font-black text-[15px] shadow-sm tracking-tight">
-                M
+            {/* Official MESSO Brand Cluster with Logo Image */}
+            <div 
+              className="flex items-center space-x-2.5 cursor-pointer" 
+              onClick={() => setCurrentStep(0)}
+              title="Return to Welcome Screen"
+            >
+              <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center p-0.5 border border-cyan-500/30 shadow-xs">
+                <img src="/logo.png" alt="MESSO Logo" className="w-full h-full object-contain" />
               </div>
-              <div className="flex flex-col leading-tight">
-                <span className="text-[10px] font-bold tracking-widest text-[#007755] uppercase">
-                  MESO
-                </span>
-                <span className="text-[16px] font-bold text-[#1f2937] tracking-tight -mt-1">
-                  cloud
-                </span>
-              </div>
+              <span className="text-[20px] font-black tracking-tight text-[#1f2937]">
+                MESSO
+              </span>
             </div>
 
             {/* Center 'Get started' title */}
@@ -249,28 +302,33 @@ export default function OnboardingWizard({ onComplete, onExit }) {
               Get started
             </div>
 
-            {/* Right side 'Contact CA Experts' */}
-            {currentStep >= 6 ? (
-              <div className="flex items-center space-x-2">
-                <img 
-                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&auto=format&fit=crop&q=60" 
-                  alt="CA Specialist" 
-                  className="w-7 h-7 rounded-full object-cover border border-[#c7d1d9]"
-                />
-                <button 
-                  onClick={() => alert('Connecting you with an Indian Chartered Accountant specialist...')}
-                  className="text-[13px] font-medium text-[#1f2937] hover:text-[#007755] cursor-pointer"
-                >
-                  Contact CA experts
-                </button>
-              </div>
-            ) : (
-              <div className="w-[120px]" />
-            )}
+            {/* Right side: Fullscreen Toggle & Contact Experts */}
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-gray-200 hover:bg-gray-50 text-[12px] font-medium text-gray-600 cursor-pointer transition"
+                title="Toggle Fullscreen Mode (F11)"
+              >
+                {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                <span>{isFullscreen ? 'Exit F11' : 'Full Screen (F11)'}</span>
+              </button>
+
+              {currentStep >= 6 && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[#007755] font-bold text-[11px]">
+                    ✓
+                  </div>
+                  <span className="text-[13px] font-medium text-[#1f2937]">
+                    Contact experts
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Full-width Thin Progress Track */}
-          <div className="w-full h-[6px] bg-[#eef2f5] border border-[#d2d9df] rounded-full overflow-hidden p-[1px]">
+          <div className="w-full h-[5px] bg-[#eef2f5] border border-[#d2d9df] rounded-full overflow-hidden p-[0.5px]">
             <div 
               className="h-full bg-[#007755] rounded-full transition-all duration-500 ease-out"
               style={{ width: `${getProgressPercentage()}%` }}
@@ -282,15 +340,24 @@ export default function OnboardingWizard({ onComplete, onExit }) {
       {/* 2. DYNAMIC MAIN BODY VIEWPORTS */}
       <main className="flex-1 w-full flex items-center justify-center px-4 sm:px-8 py-6">
         {currentStep === 0 && (
-          <Screen0Welcome onStart={() => setCurrentStep(1)} />
+          <Screen0Welcome 
+            onStart={() => {
+              try {
+                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+                }
+              } catch (e) {}
+              setCurrentStep(1);
+            }} 
+          />
         )}
 
         {currentStep === 1 && (
           <Screen1BusinessName 
             businessName={formData.businessName}
-            onChange={(val) => updateField('businessName', val)}
-            showDisclaimer={showDisclaimerPopover}
-            setShowDisclaimer={setShowDisclaimerPopover}
+            gstin={formData.gstin}
+            onChangeName={(val) => updateField('businessName', val)}
+            onChangeGstin={(val) => updateField('gstin', val.toUpperCase())}
             stepError={stepError}
             onBack={handleBack}
             onNext={() => validateAndProceed()}
@@ -353,8 +420,6 @@ export default function OnboardingWizard({ onComplete, onExit }) {
 
         {currentStep === 7 && (
           <Screen7ChoosePath 
-            showExpertTooltip={showExpertTooltip}
-            onCloseTooltip={() => setShowExpertTooltip(false)}
             onSelectInvoicePath={() => setCurrentStep(8)}
             onSelectBankPath={() => setCurrentStep(10)}
             onBack={handleBack}
@@ -376,8 +441,8 @@ export default function OnboardingWizard({ onComplete, onExit }) {
             phoneSubmitted={phoneSubmitted}
             onChangePhone={(val) => updateField('phoneNumber', val)}
             onSubmitPhone={() => {
-              if (!formData.phoneNumber) {
-                setStepError('Please enter a phone number to receive the link.');
+              if (!formData.phoneNumber || formData.phoneNumber.trim().length < 6) {
+                setStepError('Please enter a valid phone number to receive the download link.');
                 return;
               }
               setPhoneSubmitted(true);
@@ -392,10 +457,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
         {currentStep === 10 && (
           <Screen10BankConnect 
             onBack={handleBack}
-            onLinkAccounts={() => {
-              alert('Redirecting to RBI/NPCI Account Aggregator gateway (HDFC, ICICI, SBI)...');
-              setCurrentStep(11);
-            }}
+            onOpenBankModal={() => setShowBankModal(true)}
             onSkip={() => setCurrentStep(11)}
           />
         )}
@@ -413,6 +475,10 @@ export default function OnboardingWizard({ onComplete, onExit }) {
         {currentStep === 12 && (
           <Screen12Frame094Loading 
             onComplete={() => {
+              try {
+                localStorage.setItem('meso_business_profile', JSON.stringify(formData));
+                localStorage.setItem('meso_onboarding_completed', 'true');
+              } catch (e) {}
               if (onComplete) onComplete(formData);
             }}
           />
@@ -430,14 +496,14 @@ export default function OnboardingWizard({ onComplete, onExit }) {
               This feature will be soon available
             </h3>
             <p className="text-[13.5px] text-[#6b7280] leading-relaxed mb-6">
-              Our 1-to-1 Chartered Accountant consultation scheduler is currently in private preview for Indian businesses. You will receive an invitation email once available.
+              Our 1-to-1 consultation scheduler is currently in private preview. You will receive an invitation once available.
             </p>
             <button
               onClick={() => {
                 setShowScheduleModal(false);
                 setCurrentStep(7);
               }}
-              className="w-full h-[40px] bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14px] rounded-[6px] shadow-sm cursor-pointer transition"
+              className="w-full h-[40px] bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14px] rounded-[4px] shadow-sm cursor-pointer transition"
             >
               Got it, continue setup
             </button>
@@ -445,58 +511,15 @@ export default function OnboardingWizard({ onComplete, onExit }) {
         </div>
       )}
 
-      {/* 4. PERSISTENT 'How\'s setup going?' TAB */}
-      {currentStep < 12 && (
-        <div className="fixed bottom-0 right-8 z-30">
-          <button
-            onClick={() => setShowHelpModal(!showHelpModal)}
-            className="bg-[#f3f4f6] hover:bg-[#e5e7eb] border border-[#d1d5db] border-b-0 text-[#374151] text-[12px] font-medium py-1.5 px-3.5 rounded-t-[4px] shadow-xs cursor-pointer flex items-center space-x-2 transition"
-          >
-            <span>How's setup going?</span>
-            <div className="flex items-center space-x-0.5 text-gray-500">
-              <Frown size={12} />
-              <Meh size={12} />
-              <Smile size={12} />
-            </div>
-          </button>
-
-          {showHelpModal && (
-            <div className="absolute right-0 bottom-full mb-1 w-80 bg-white border border-[#d1d5db] rounded-[8px] shadow-xl p-4 text-[#2c2e30]">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-[13px]">How is setup going?</span>
-                <button onClick={() => setShowHelpModal(false)} className="text-[#6b7280] hover:text-black">
-                  <X size={15} />
-                </button>
-              </div>
-              <p className="text-[12px] text-[#6b7280] mb-3">
-                We're tailoring Meso to your exact business workflow. Let us know how it's going:
-              </p>
-              <div className="flex justify-between items-center px-4 py-2 bg-gray-50 rounded-md border border-gray-200 mb-3">
-                <button 
-                  onClick={() => { alert('Glad setup is going great!'); setShowHelpModal(false); }}
-                  className="flex flex-col items-center hover:scale-110 transition text-green-600"
-                >
-                  <Smile size={24} />
-                  <span className="text-[10px] mt-1 text-gray-600">Great</span>
-                </button>
-                <button 
-                  onClick={() => { alert('Thank you for letting us know.'); setShowHelpModal(false); }}
-                  className="flex flex-col items-center hover:scale-110 transition text-amber-500"
-                >
-                  <Meh size={24} />
-                  <span className="text-[10px] mt-1 text-gray-600">Okay</span>
-                </button>
-                <button 
-                  onClick={() => { alert('Our CA support desk is ready to help.'); setShowHelpModal(false); }}
-                  className="flex flex-col items-center hover:scale-110 transition text-red-500"
-                >
-                  <Frown size={24} />
-                  <span className="text-[10px] mt-1 text-gray-600">Need help</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* 4. INDIAN BANK CONNECTION MODAL */}
+      {showBankModal && (
+        <BankConnectModal 
+          onClose={() => setShowBankModal(false)}
+          onConnected={(bankName) => {
+            setShowBankModal(false);
+            setCurrentStep(11);
+          }}
+        />
       )}
 
     </div>
@@ -504,37 +527,22 @@ export default function OnboardingWizard({ onComplete, onExit }) {
 }
 
 // =========================================================================
-// SCREEN 0: WELCOME & NON-OVERLAPPING FLOATING PILLS CLOUD
+// SCREEN 0: WELCOME & SYMMETRICAL HONEYCOMB CLOUD (FRAME 000)
 // =========================================================================
 function Screen0Welcome({ onStart }) {
-  const pills = [
-    { label: 'Sales & GST Invoicing', icon: BarChart2, bg: '#003366', tag: 'Billing' },
-    { label: 'Customer Hub (CRM)', icon: Users, bg: '#00a3bf', tag: 'Clients' },
-    { label: 'Business Tax & TDS', icon: PieChart, bg: '#332a7c', tag: 'Direct Tax' },
-    { label: 'Payroll (EPF & ESI)', icon: ArrowRight, bg: '#0077c5', tag: 'Staff' },
-    { label: 'General Ledger Accounting', icon: Building2, bg: '#005f43', tag: 'Ledger' },
-    { label: 'GST (CGST / SGST / IGST)', icon: Percent, bg: '#0d2b45', tag: 'Indirect Tax' },
-    { label: 'Expenses & Vendor Bills', icon: ArrowRight, bg: '#005f43', tag: 'AP' },
-    { label: 'Team & Access Control', icon: Users, bg: '#0052cc', tag: 'Security' },
-    { label: 'Banking & Auto-Reconcile', icon: CreditCard, bg: '#00875a', tag: 'Bank Feeds' },
-  ];
-
+  // Symmetrical diamond cloud pills layout matching Frame 000
   return (
-    <div className="w-full max-w-[1400px] min-h-[580px] flex flex-col lg:flex-row items-center justify-between px-8 py-4 relative">
-      {/* Left Column: Headline, Brand & Action */}
-      <div className="max-w-[560px] flex flex-col items-start z-10">
-        <div className="flex items-center space-x-2.5 mb-10">
-          <div className="w-[36px] h-[36px] rounded-full bg-[#007755] flex items-center justify-center text-white font-black text-[18px] shadow-sm tracking-tight">
-            M
+    <div className="w-full max-w-[1280px] min-h-[540px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-12 py-8 relative">
+      {/* Left Column: Brand, Headline & Action */}
+      <div className="max-w-[540px] flex flex-col items-start z-10">
+        {/* Official MESSO Logo */}
+        <div className="flex items-center space-x-3 mb-10">
+          <div className="w-9 h-9 rounded-xl bg-black flex items-center justify-center p-1 border border-cyan-500/40 shadow-sm">
+            <img src="/logo.png" alt="MESSO Logo" className="w-full h-full object-contain" />
           </div>
-          <div className="flex flex-col leading-tight">
-            <span className="text-[11px] font-bold tracking-widest text-[#007755] uppercase">
-              MESO
-            </span>
-            <span className="text-[20px] font-bold text-[#1f2937] tracking-tight -mt-1">
-              cloud
-            </span>
-          </div>
+          <span className="text-[24px] font-black tracking-tight text-[#1f2937]">
+            MESSO
+          </span>
         </div>
 
         <h1 className="text-[44px] font-bold text-[#1f2937] leading-[1.18] tracking-tight mb-8">
@@ -549,43 +557,114 @@ function Screen0Welcome({ onStart }) {
         </button>
       </div>
 
-      {/* Right Column: Clean Non-Overlapping Structured Grid of 9 Pills */}
-      <div className="w-full lg:w-[640px] mt-10 lg:mt-0 p-6 bg-gradient-to-br from-[#f8fafc] to-[#eef7f4] rounded-3xl border border-[#dfe6e4] shadow-xs">
-        <div className="text-[11px] font-bold text-[#007755] uppercase tracking-wider mb-4 px-1">
-          Connected Modules in Your Suite
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5">
-          {pills.map((p, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-xl p-3 shadow-sm border border-[#e5e7eb] flex items-center space-x-3 transition-all duration-200 hover:shadow-md hover:border-[#007755] cursor-default select-none"
-            >
-              <div 
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[12px] shadow-2xs shrink-0"
-                style={{ backgroundColor: p.bg }}
-              >
-                <p.icon size={16} strokeWidth={2.2} />
-              </div>
-              <div className="flex flex-col overflow-hidden">
-                <span className="text-[13px] font-semibold text-[#1f2937] truncate">
-                  {p.label}
-                </span>
-                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
-                  {p.tag}
-                </span>
-              </div>
+      {/* Right Column: Symmetrical Diamond Constellation of 9 White Floating Pills */}
+      <div className="w-full lg:w-[600px] mt-12 lg:mt-0 flex flex-col items-center justify-center select-none py-6">
+        
+        {/* Row 1: Sales & Get Paid */}
+        <div className="flex justify-center mb-4">
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#003366] flex items-center justify-center text-white">
+              <BarChart2 size={11} strokeWidth={2.5} />
             </div>
-          ))}
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Sales &amp; Get Paid
+            </span>
+          </div>
         </div>
+
+        {/* Row 2: Customer Hub & Business Tax */}
+        <div className="flex justify-center space-x-6 mb-4">
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#00a3bf] flex items-center justify-center text-white">
+              <Users size={11} strokeWidth={2.5} />
+            </div>
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Customer Hub
+            </span>
+          </div>
+
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#332a7c] flex items-center justify-center text-white">
+              <PieChart size={11} strokeWidth={2.5} />
+            </div>
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Business Tax
+            </span>
+          </div>
+        </div>
+
+        {/* Row 3: Payroll | Accounting (Center) | Sales Tax */}
+        <div className="flex justify-center items-center space-x-5 mb-4">
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#0077c5] flex items-center justify-center text-white">
+              <CreditCard size={11} strokeWidth={2.5} />
+            </div>
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Payroll
+            </span>
+          </div>
+
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#007755] flex items-center justify-center text-white">
+              <Building2 size={11} strokeWidth={2.5} />
+            </div>
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Accounting
+            </span>
+          </div>
+
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#e65100] flex items-center justify-center text-white">
+              <Percent size={11} strokeWidth={2.5} />
+            </div>
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Sales Tax
+            </span>
+          </div>
+        </div>
+
+        {/* Row 4: Expenses & Pay Bills | Team */}
+        <div className="flex justify-center space-x-6 mb-4">
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#005f43] flex items-center justify-center text-white">
+              <ArrowRight size={11} strokeWidth={2.5} />
+            </div>
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Expenses &amp; Pay Bills
+            </span>
+          </div>
+
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#0052cc] flex items-center justify-center text-white">
+              <Users size={11} strokeWidth={2.5} />
+            </div>
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Team
+            </span>
+          </div>
+        </div>
+
+        {/* Row 5: Lending */}
+        <div className="flex justify-center">
+          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#00875a] flex items-center justify-center text-white">
+              <Landmark size={11} strokeWidth={2.5} />
+            </div>
+            <span className="text-[13px] font-medium text-[#1f2937]">
+              Lending
+            </span>
+          </div>
+        </div>
+
       </div>
     </div>
   );
 }
 
 // =========================================================================
-// SCREEN 1: BUSINESS NAME (STARTS EMPTY + DISCLAIMER)
+// SCREEN 1: BUSINESS NAME & GSTIN (NO "i" BUTTON, EMPTY DEFAULTS)
 // =========================================================================
-function Screen1BusinessName({ businessName, onChange, showDisclaimer, setShowDisclaimer, stepError, onBack, onNext }) {
+function Screen1BusinessName({ businessName, gstin, onChangeName, onChangeGstin, stepError, onBack, onNext }) {
   return (
     <div className="w-full max-w-[700px] flex flex-col pt-6">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
@@ -595,55 +674,47 @@ function Screen1BusinessName({ businessName, onChange, showDisclaimer, setShowDi
         With this, we'll make sure your legal business name shows up in the right places.
       </p>
 
-      <div className="mb-6 relative">
-        <div className="flex items-center space-x-1.5 text-[12.5px] text-[#595959] mb-2 font-normal">
-          <span>Your legal business name</span>
-          <button 
-            type="button" 
-            onClick={() => setShowDisclaimer(!showDisclaimer)}
-            className="text-[#6b7280] hover:text-[#007755] cursor-pointer"
-            title="Legal Name Disclaimer"
-          >
-            <Info size={14} />
-          </button>
-        </div>
-
-        {/* Disclaimer Popover */}
-        {showDisclaimer && (
-          <div className="absolute left-0 top-10 w-[380px] bg-[#1e293b] text-white p-4 rounded-[8px] shadow-xl text-[12px] z-50 leading-relaxed border border-gray-700 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-[12.5px] text-[#38bdf8] flex items-center gap-1.5">
-                <Sparkles size={14} />
-                MCA &amp; GSTIN Legal Entity Name
-              </span>
-              <button onClick={() => setShowDisclaimer(false)} className="text-gray-400 hover:text-white">
-                <X size={14} />
-              </button>
-            </div>
-            <p className="text-gray-200 text-[11.5px]">
-              Enter the exact name registered with the Ministry of Corporate Affairs (MCA) or on your GST Registration Certificate. This name will appear on all statutory GST tax invoices, GSTR-1 &amp; GSTR-3B filings, audit trails, and official bank reconciliation logs.
-            </p>
-          </div>
-        )}
-
+      {/* Field 1: Business Name */}
+      <div className="mb-5">
+        <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
+          Your legal business name <span className="text-red-500">*</span>
+        </label>
         <input
           type="text"
           value={businessName}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Enter legal business or company name..."
+          onChange={(e) => onChangeName(e.target.value)}
+          placeholder="No company name"
           autoFocus
           className={`w-full h-[44px] px-3.5 text-[14.5px] text-[#1f2937] border rounded-[4px] outline-none transition ${
             stepError ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-[#c7d1d9] focus:border-[#007755] focus:ring-1 focus:ring-[#007755]'
           }`}
         />
-
-        {stepError && (
-          <div className="flex items-center space-x-1.5 text-red-600 text-[12px] mt-2">
-            <AlertCircle size={14} />
-            <span>{stepError}</span>
-          </div>
-        )}
       </div>
+
+      {/* Field 2: GSTIN (Goods and Services Tax Identification Number) */}
+      <div className="mb-6">
+        <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
+          GSTIN (GST Identification Number) <span className="text-gray-400">(optional)</span>
+        </label>
+        <input
+          type="text"
+          value={gstin}
+          maxLength={15}
+          onChange={(e) => onChangeGstin(e.target.value)}
+          placeholder="e.g. 27AAPFU0939F1ZV (15-character GSTIN)"
+          className="w-full h-[44px] px-3.5 text-[14.5px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] focus:ring-1 focus:ring-[#007755] transition font-mono uppercase"
+        />
+        <span className="block text-[11.5px] text-[#6b7280] mt-1">
+          Indian 15-digit GSTIN used for tax invoices and statutory GSTR reporting.
+        </span>
+      </div>
+
+      {stepError && (
+        <div className="flex items-center space-x-1.5 text-red-600 text-[12.5px] mb-4">
+          <AlertCircle size={15} />
+          <span>{stepError}</span>
+        </div>
+      )}
 
       <div className="w-full border-t border-[#e5e7eb] pt-6 flex items-center space-x-3.5">
         <button
@@ -664,7 +735,7 @@ function Screen1BusinessName({ businessName, onChange, showDisclaimer, setShowDi
 }
 
 // =========================================================================
-// SCREEN 2: WHAT WERE YOU USING BEFORE (INDIAN ERPs & UNSELECTED BY DEFAULT)
+// SCREEN 2: WHAT WERE YOU USING BEFORE MESSO? (FRAME 002)
 // =========================================================================
 function Screen2PriorSoftware({ selected, onSelect, stepError, onBack, onNext }) {
   const options = [
@@ -679,10 +750,10 @@ function Screen2PriorSoftware({ selected, onSelect, stepError, onBack, onNext })
   return (
     <div className="w-full max-w-[700px] flex flex-col pt-6">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
-        What were you using before Meso?
+        What were you using before MESSO?
       </h2>
       <p className="text-[14.5px] text-[#595959] mb-8">
-        We'll bring over any master ledgers, vouchers, and contacts to give you a head start.
+        We'll bring over any data we can find to give you a head start.
       </p>
 
       {/* 2-Column Grid */}
@@ -737,7 +808,7 @@ function Screen2PriorSoftware({ selected, onSelect, stepError, onBack, onNext })
 }
 
 // =========================================================================
-// SCREEN 3: WEBSITE AUTOMATION (STARTS EMPTY + AUTO-DISCOVERY)
+// SCREEN 3: WEBSITE AUTOMATION (FRAME 003)
 // =========================================================================
 function Screen3Website({ website, onChange, isDiscovering, stepError, onBack, onNext, onSkip }) {
   return (
@@ -752,7 +823,7 @@ function Screen3Website({ website, onChange, isDiscovering, stepError, onBack, o
         Let's automate the basics. What's your website?
       </h2>
       <p className="text-[14.5px] text-[#595959] mb-8">
-        We'll discover details like your registered office, industry classification, and size so you don't have to enter them yourself.
+        We'll find details like your business name, industry, and size so you don't have to enter them yourself.
       </p>
 
       <div className="mb-8">
@@ -805,7 +876,7 @@ function Screen3Website({ website, onChange, isDiscovering, stepError, onBack, o
 }
 
 // =========================================================================
-// SCREEN 4: COMPANY PROFILE (DYNAMIC NAME + FULL INDIAN INDUSTRIES + START EMPTY)
+// SCREEN 4: COMPANY PROFILE (FRAME 004)
 // =========================================================================
 function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue, stepError, onUpdate, onBack, onNext }) {
   const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
@@ -821,7 +892,7 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
         Tell us more about {businessName || 'your business'}
       </h2>
       <p className="text-[14.5px] text-[#595959] mb-6">
-        This info will help us tailor Indian GST calculation, Chart of Accounts, and compliance schedules.
+        This info will help us make better suggestions for your business.
       </p>
 
       {/* Field 1: Industry with Search & Dropdown */}
@@ -840,7 +911,7 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
               onUpdate('industry', e.target.value);
               setShowIndustryDropdown(true);
             }}
-            placeholder="Search Indian industry classification (e.g. IT, Retail, Healthcare)..."
+            placeholder="Construction, retail, salon, etc."
             className="w-full h-[42px] pl-10 pr-3.5 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] focus:ring-1 focus:ring-[#007755] transition"
           />
         </div>
@@ -880,19 +951,17 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
             onChange={(e) => onUpdate('taxType', e.target.value)}
             className="w-full h-[42px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] bg-white appearance-none outline-none focus:border-[#007755] transition cursor-pointer"
           >
-            <option value="">Select tax type...</option>
-            <option value="sole_proprietor">Sole Proprietorship (Individual PAN)</option>
-            <option value="partnership">Partnership Firm (Deed Registered)</option>
-            <option value="pvt_ltd">Private Limited Company (Pvt Ltd / MCA Registered)</option>
-            <option value="llp">Limited Liability Partnership (LLP / Form 3)</option>
+            <option value="">Select...</option>
+            <option value="sole_proprietor">Sole proprietorship</option>
+            <option value="partnership">Partnership firm</option>
+            <option value="pvt_ltd">Private Limited (Pvt Ltd)</option>
+            <option value="llp">Limited Liability Partnership (LLP)</option>
             <option value="public_ltd">Public Limited Company</option>
-            <option value="huf">Hindu Undivided Family (HUF)</option>
-            <option value="trust_ngo">Trust / NGO / Society (Section 8)</option>
           </select>
           <ChevronDown size={16} className="absolute right-3.5 top-3.5 text-[#6b7280] pointer-events-none" />
         </div>
         <span className="block text-[11.5px] text-[#6b7280] mt-1">
-          Entity constitution determines PAN entity classification (4th character validation) and tax filing requirements.
+          LLC isn't shown because an LLC can be created alongside another business type. For example: sole proprietor as a single member LLC.
         </span>
       </div>
 
@@ -907,12 +976,12 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
             onChange={(e) => onUpdate('annualRevenue', e.target.value)}
             className="w-full h-[42px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] bg-white appearance-none outline-none focus:border-[#007755] transition cursor-pointer"
           >
-            <option value="">Select annual turnover...</option>
-            <option value="revenue_under_10l">Under ₹10 Lakhs (Below GST Threshold)</option>
-            <option value="revenue_10l_50l">₹10 Lakhs - ₹50 Lakhs (Micro Enterprise)</option>
-            <option value="revenue_50l_1_5cr">₹50 Lakhs - ₹1.5 Crores (Small Enterprise / Composition Scheme)</option>
-            <option value="revenue_1_5cr_5cr">₹1.5 Crores - ₹5 Crores (Regular GST)</option>
-            <option value="revenue_over_5cr">Over ₹5 Crores (Mandatory e-Invoicing &amp; e-Way Bill)</option>
+            <option value="">Select...</option>
+            <option value="revenue_under_10l">Under ₹10 Lakhs</option>
+            <option value="revenue_10l_50l">₹10 Lakhs - ₹50 Lakhs</option>
+            <option value="revenue_50l_1_5cr">₹50 Lakhs - ₹1.5 Crores</option>
+            <option value="revenue_1_5cr_5cr">₹1.5 Crores - ₹5 Crores</option>
+            <option value="revenue_over_5cr">Over ₹5 Crores</option>
           </select>
           <ChevronDown size={16} className="absolute right-3.5 top-3.5 text-[#6b7280] pointer-events-none" />
         </div>
@@ -944,7 +1013,7 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
 }
 
 // =========================================================================
-// SCREEN 5: ROLE & EMPLOYEES (STARTS EMPTY + VALIDATION)
+// SCREEN 5: ROLE & EMPLOYEES (FRAME 005)
 // =========================================================================
 function Screen5RoleAndTeam({ role, employeeCount, stepError, onUpdate, onBack, onNext }) {
   return (
@@ -967,13 +1036,12 @@ function Screen5RoleAndTeam({ role, employeeCount, stepError, onUpdate, onBack, 
             onChange={(e) => onUpdate('role', e.target.value)}
             className="w-full h-[42px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] bg-white appearance-none outline-none focus:border-[#007755] transition cursor-pointer"
           >
-            <option value="">Select your role...</option>
-            <option value="owner">Business Owner / Managing Director</option>
-            <option value="accountant">Designated Accountant / In-House Bookkeeper</option>
-            <option value="cfo">Chief Financial Officer (CFO) / Finance Head</option>
-            <option value="consultant">Practicing CA / External Auditor</option>
-            <option value="manager">Operations &amp; Billing Manager</option>
-            <option value="other">Other Role</option>
+            <option value="">Select...</option>
+            <option value="owner">Owner / CEO</option>
+            <option value="accountant">Bookkeeper / Accountant</option>
+            <option value="cfo">Finance Director / CFO</option>
+            <option value="consultant">Consultant</option>
+            <option value="other">Other</option>
           </select>
           <ChevronDown size={16} className="absolute right-3.5 top-3.5 text-[#6b7280] pointer-events-none" />
         </div>
@@ -990,12 +1058,12 @@ function Screen5RoleAndTeam({ role, employeeCount, stepError, onUpdate, onBack, 
             onChange={(e) => onUpdate('employeeCount', e.target.value)}
             className="w-full h-[42px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] bg-white appearance-none outline-none focus:border-[#007755] transition cursor-pointer"
           >
-            <option value="">Select number of employees...</option>
-            <option value="just_me">Just me (Solo entrepreneur)</option>
-            <option value="1_5">1-5 employees (Micro team)</option>
-            <option value="6_15">6-15 employees (Small team)</option>
-            <option value="16_50">16-50 employees (EPF applicability threshold)</option>
-            <option value="50_plus">50+ employees (Full statutory payroll)</option>
+            <option value="">Select...</option>
+            <option value="just_me">Just me</option>
+            <option value="1_5">1-5 employees</option>
+            <option value="6_15">6-15 employees</option>
+            <option value="16_50">16-50 employees</option>
+            <option value="50_plus">50+ employees</option>
           </select>
           <ChevronDown size={16} className="absolute right-3.5 top-3.5 text-[#6b7280] pointer-events-none" />
         </div>
@@ -1027,7 +1095,7 @@ function Screen5RoleAndTeam({ role, employeeCount, stepError, onUpdate, onBack, 
 }
 
 // =========================================================================
-// SCREEN 6: EXPERT 1-TO-1 CA CALL
+// SCREEN 6: EXPERT SETUP CALL (FRAME 006)
 // =========================================================================
 function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
   return (
@@ -1038,7 +1106,7 @@ function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
           An expert can get you up and running fast
         </h2>
         <p className="text-[14px] text-[#595959] leading-relaxed mb-6">
-          Your Meso subscription includes a 1-to-1 personalized setup call with a qualified Chartered Accountant. They will help customize your Chart of Accounts, set up GSTIN branches, and configure TDS withholding.
+          Your subscription comes with a 1-to-1 personalized setup call. A setup expert will customize your account, find the right tools for your business, and help you start using MESSO with confidence.
         </p>
 
         <div className="mb-8">
@@ -1046,19 +1114,19 @@ function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
           <ul className="space-y-1.5 text-[13.5px] text-[#374151]">
             <li className="flex items-center space-x-2">
               <span className="text-[#007755] font-bold">•</span>
-              <span>Keep your books organized under MCA audit trail rules</span>
+              <span>Keep your business organized</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="text-[#007755] font-bold">•</span>
-              <span>Automate GST reconciliation with Meso Assist AI</span>
+              <span>Automate your accounting with AI</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="text-[#007755] font-bold">•</span>
-              <span>Track vendor TDS thresholds under Section 194C &amp; 194J</span>
+              <span>Track income and expenses</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="text-[#007755] font-bold">•</span>
-              <span>Discover automated features tailored to your industry</span>
+              <span>Discover features that work for you</span>
             </li>
           </ul>
         </div>
@@ -1088,25 +1156,31 @@ function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
         </div>
       </div>
 
-      {/* Right Graphic: 3 Friendly Experts with 'hi' bubble */}
+      {/* Right Graphic: 3 Experts with 'hi' bubble matching Frame 006 */}
       <div className="relative mt-8 md:mt-0 flex items-center justify-center">
         <div className="relative w-[280px] h-[200px] bg-[#f8fafc] rounded-2xl border border-[#e2e8f0] flex items-center justify-center shadow-xs overflow-hidden">
           <div className="flex items-end space-x-2">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
-              alt="CA Expert 1"
-              className="w-16 h-20 rounded-t-full object-cover border-2 border-white shadow-xs"
-            />
-            <img
-              src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=140&auto=format&fit=crop&q=80"
-              alt="CA Expert 2"
-              className="w-20 h-24 rounded-t-full object-cover border-2 border-white shadow-md z-10 -mx-1"
-            />
-            <img
-              src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
-              alt="CA Expert 3"
-              className="w-16 h-20 rounded-t-full object-cover border-2 border-white shadow-xs"
-            />
+            <div className="w-16 h-20 rounded-t-full bg-slate-200 border-2 border-white shadow-xs overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
+                alt="Expert 1"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="w-20 h-24 rounded-t-full bg-slate-300 border-2 border-white shadow-md z-10 -mx-1 overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=140&auto=format&fit=crop&q=80"
+                alt="Expert 2"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="w-16 h-20 rounded-t-full bg-slate-200 border-2 border-white shadow-xs overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+                alt="Expert 3"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
           <div className="absolute top-4 right-6 w-9 h-9 rounded-full bg-[#0052cc] text-white font-bold text-[13px] flex items-center justify-center shadow-md animate-bounce">
             hi
@@ -1118,22 +1192,24 @@ function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
 }
 
 // =========================================================================
-// SCREEN 7: CHOOSE FIRST AUTOMATION PATH (₹ RUPEES ONLY + WORKING TARGETS)
+// SCREEN 7: CHOOSE FIRST AUTOMATION PATH (FRAME 007)
 // =========================================================================
-function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoicePath, onSelectBankPath, onBack }) {
+function Screen7ChoosePath({ onSelectInvoicePath, onSelectBankPath, onBack }) {
+  const [showTooltip, setShowTooltip] = useState(true);
+
   return (
     <div className="w-full max-w-[880px] flex flex-col pt-4 relative">
-      {/* Top Floating Dark Tooltip */}
-      {showExpertTooltip && (
+      {/* Top Floating Dark Tooltip matching Frame 007 */}
+      {showTooltip && (
         <div className="absolute -top-12 right-0 bg-[#2b2f38] text-white p-3.5 rounded-[6px] shadow-lg w-[260px] text-[12px] z-30 leading-snug">
           <div className="flex items-start justify-between">
             <span className="font-bold text-[12.5px] text-white mb-1">We're here when you need us</span>
-            <button onClick={onCloseTooltip} className="text-gray-400 hover:text-white -mt-1 ml-2">
+            <button onClick={() => setShowTooltip(false)} className="text-gray-400 hover:text-white -mt-1 ml-2">
               <X size={14} />
             </button>
           </div>
           <p className="text-gray-300 text-[11px]">
-            Set up with confidence. Our team of CA specialists is here to guide your setup every step of the way.
+            Set up with confidence. Our team of experts is here to help every step of the way.
           </p>
         </div>
       )}
@@ -1158,7 +1234,7 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
               </div>
               <div className="w-[190px] bg-white rounded-[6px] p-3 shadow-md border border-[#e5e7eb] flex flex-col">
                 <div className="flex justify-between items-center mb-1 text-[10px] text-gray-400 font-semibold uppercase">
-                  <span>TAX INVOICE</span>
+                  <span>INVOICE</span>
                   <div className="flex space-x-1">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" />
                     <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
@@ -1166,19 +1242,19 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
                   </div>
                 </div>
                 {/* ₹ RUPEES */}
-                <div className="text-[18px] font-bold text-[#1f2937] mb-2">₹1,25,000</div>
+                <div className="text-[18px] font-bold text-[#1f2937] mb-2">₹1,250</div>
                 <div className="w-full h-2 bg-[#f3f4f6] rounded-sm mb-1.5" />
                 <div className="w-3/4 h-2 bg-[#f3f4f6] rounded-sm mb-3" />
                 <div className="flex items-center space-x-1.5 text-[8px] text-gray-500 font-medium">
                   <span className="border border-gray-300 rounded px-1">UPI</span>
                   <span className="border border-gray-300 rounded px-1">RuPay</span>
-                  <span className="border border-gray-300 rounded px-1">NEFT</span>
+                  <span className="border border-gray-300 rounded px-1">Card</span>
                 </div>
               </div>
             </div>
 
             <p className="text-[15px] font-semibold text-[#1f2937] text-center mb-5">
-              Personalize your GST invoices and collect instant UPI payments
+              Personalize your invoices and make them payable
             </p>
           </div>
 
@@ -1207,7 +1283,7 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
                   PROFIT &amp; LOSS:
                 </span>
                 {/* ₹ RUPEES */}
-                <div className="text-[18px] font-bold text-[#1f2937] mb-3">₹2,50,000</div>
+                <div className="text-[18px] font-bold text-[#1f2937] mb-3">₹2,500</div>
                 <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden mb-2">
                   <div className="w-3/4 h-full bg-[#108000]" />
                 </div>
@@ -1218,7 +1294,7 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
             </div>
 
             <p className="text-[15px] font-semibold text-[#1f2937] text-center mb-5">
-              Link an Indian bank or corporate card to automate accounting
+              Link a bank or credit card to automate accounting
             </p>
           </div>
 
@@ -1252,7 +1328,7 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
 }
 
 // =========================================================================
-// SCREEN 8: STREAMLINE YOUR PAYMENTS (₹ RUPEES ONLY)
+// SCREEN 8: STREAMLINE YOUR PAYMENTS IN MESSO (FRAME 008)
 // =========================================================================
 function Screen8Payments({ businessName, onBack, onSetUpPayments, onSkip }) {
   return (
@@ -1260,10 +1336,10 @@ function Screen8Payments({ businessName, onBack, onSetUpPayments, onSkip }) {
       {/* Left Details */}
       <div className="max-w-[480px]">
         <h2 className="text-[32px] font-bold text-[#1f2937] leading-[1.2] mb-3">
-          Now, let's streamline your payments in Meso
+          Now, let's streamline your payments in MESSO
         </h2>
         <p className="text-[14.5px] text-[#595959] leading-relaxed mb-8">
-          Set up custom GST invoices and automated UPI payment links that reconcile directly into your ledger upon receipt.
+          Set up custom invoices and payments that flow right into your books, getting you ready for AI automation and organization.
         </p>
 
         <div className="border-t border-[#e5e7eb] pt-6 flex items-center justify-between">
@@ -1296,25 +1372,25 @@ function Screen8Payments({ businessName, onBack, onSetUpPayments, onSkip }) {
         <div className="w-[280px] h-[280px] rounded-full bg-[#dcf3f8] flex items-center justify-center p-6 shadow-xs">
           <div className="w-[230px] bg-white rounded-[12px] p-5 shadow-lg border-2 border-[#007755] flex flex-col items-center">
             <span className="text-[10px] font-bold text-[#6b7280] tracking-wider uppercase mb-1">
-              TAX INVOICE #1001
+              INVOICE 1001
             </span>
             <div className="text-[24px] font-black text-[#1f2937] mb-4">
-              ₹1,25,000.00
+              ₹1,250.00
             </div>
             <button 
               onClick={onSetUpPayments}
               className="w-full py-2 bg-[#007755] text-white font-bold text-[12.5px] rounded-[4px] mb-4 shadow-sm"
             >
-              Pay via UPI / Card
+              Pay online
             </button>
             <div className="flex items-center space-x-1.5 text-[8.5px] text-gray-500 font-semibold">
               <span>UPI</span>
               <span>•</span>
               <span>RuPay</span>
               <span>•</span>
-              <span>NetBanking</span>
+              <span>Visa</span>
               <span>•</span>
-              <span>NEFT</span>
+              <span>MasterCard</span>
             </div>
           </div>
         </div>
@@ -1324,7 +1400,7 @@ function Screen8Payments({ businessName, onBack, onSetUpPayments, onSkip }) {
 }
 
 // =========================================================================
-// SCREEN 9: MOBILE APP & TAP TO PAY (₹ RUPEES ONLY)
+// SCREEN 9: MOBILE APP & TAP TO PAY (FRAME 009)
 // =========================================================================
 function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onSubmitPhone, stepError, onBack, onNext, onSkip }) {
   return (
@@ -1335,27 +1411,27 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
           Accept in-person payment and get updates on invoices
         </h2>
         <p className="text-[14px] text-[#595959] leading-relaxed mb-6">
-          With the Meso mobile companion, accept UPI QR payments, soundbox confirmations, and card taps. Get instantaneous mobile push notifications when customers view or settle invoices.
+          With the mobile app, accept contactless payments with Tap to Pay on iPhone*, card reader, and more. And get real-time updates when invoices are viewed and paid.
         </p>
 
         <div className="mb-6">
           <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
-            Your mobile number
+            Your phone number
           </label>
           <div className="relative max-w-[280px]">
             <input
               type="text"
               value={phoneNumber}
               onChange={(e) => onChangePhone(e.target.value)}
-              placeholder="+91 98765 43210"
-              className="w-full h-[40px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] transition"
+              placeholder="(000) 000-0000"
+              className="w-full h-[40px] px-3.5 pr-12 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] transition"
             />
-            <div className="absolute right-3 top-2.5 w-5 h-4 bg-[#007755] rounded-[2px] flex items-center justify-center text-white text-[8px] font-bold">
+            <div className="absolute right-2.5 top-2.5 w-7 h-5 bg-[#d9534f] rounded-[2px] flex items-center justify-center text-white text-[9px] font-bold shadow-2xs">
               IND
             </div>
           </div>
           <span className="block text-[11px] text-[#6b7280] mt-1 mb-3">
-            *SMS download link provided at zero charge.
+            *Messaging and data rates may apply.
           </span>
 
           <button
@@ -1370,6 +1446,13 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
             {phoneSubmitted ? '✓ Download link sent to mobile!' : 'Text me a download link'}
           </button>
         </div>
+
+        {stepError && (
+          <div className="flex items-center space-x-1.5 text-red-600 text-[12px] mb-4">
+            <AlertCircle size={14} />
+            <span>{stepError}</span>
+          </div>
+        )}
 
         <div className="border-t border-[#e5e7eb] pt-6 flex items-center justify-between">
           <div className="flex items-center space-x-3.5">
@@ -1396,11 +1479,11 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
         </div>
 
         <p className="text-[10.5px] text-[#9ca3af] mt-4">
-          *Tap to Pay &amp; Bharat QR available on Android and iOS devices.
+          *Tap to Pay on iPhone available on eligible iPhones.
         </p>
       </div>
 
-      {/* Right Graphic: Tap to Pay with ₹1,725.00 + QR Code */}
+      {/* Right Graphic: Tap to Pay with Phone, Card & High-Contrast QR Code */}
       <div className="relative mt-8 md:mt-0 flex flex-col items-center">
         <div className="relative w-[240px] h-[240px] rounded-full bg-[#f3f4f6] flex items-center justify-center overflow-hidden border border-[#e5e7eb] shadow-sm">
           <img
@@ -1408,7 +1491,7 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
             alt="Tap to Pay on Mobile"
             className="w-full h-full object-cover"
           />
-          <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#007755] text-white font-black text-[14px] flex items-center justify-center shadow-md">
+          <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#007755] text-white font-black text-[13px] flex items-center justify-center shadow-md">
             M
           </div>
           <div className="absolute bottom-4 bg-white/95 px-3 py-1 rounded-full shadow-md text-[11px] font-bold text-[#1f2937]">
@@ -1421,7 +1504,7 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
             <QrCode size={70} className="text-[#1f2937]" />
           </div>
           <span className="text-[10px] text-[#6b7280] font-medium mt-1">
-            Scan for Meso mobile app
+            Scan for MESSO mobile app
           </span>
         </div>
       </div>
@@ -1430,9 +1513,9 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
 }
 
 // =========================================================================
-// SCREEN 10: CONNECT BANK ACCOUNTS (₹ RUPEES ONLY)
+// SCREEN 10: CONNECT BANK ACCOUNTS (FRAME 010)
 // =========================================================================
-function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
+function Screen10BankConnect({ onBack, onOpenBankModal, onSkip }) {
   return (
     <div className="w-full max-w-[860px] flex flex-col md:flex-row items-center justify-between pt-4">
       {/* Left Details */}
@@ -1441,7 +1524,7 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
           Connect your accounts for a true all-in-one experience
         </h2>
         <p className="text-[14.5px] text-[#595959] leading-relaxed mb-8">
-          Bring your HDFC, ICICI, SBI or corporate credit card transactions directly into Meso using RBI-regulated Account Aggregators to eliminate manual entry.
+          Bring your business bank and credit card transactions into MESSO to get things organized and understand your business better.
         </p>
 
         <div className="border-t border-[#e5e7eb] pt-6 flex items-center justify-between">
@@ -1453,7 +1536,7 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
               Back
             </button>
             <button
-              onClick={onLinkAccounts}
+              onClick={onOpenBankModal}
               className="h-[38px] px-6 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[13.5px] rounded-[4px] shadow-sm cursor-pointer transition flex items-center space-x-2"
             >
               <Lock size={14} className="text-white" />
@@ -1470,7 +1553,7 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
         </div>
       </div>
 
-      {/* Right Graphic: Profit & Loss Preview Card (₹ RUPEES) */}
+      {/* Right Graphic: Profit & Loss Preview Card */}
       <div className="relative mt-8 md:mt-0 flex items-center justify-center">
         <div className="w-[280px] h-[280px] rounded-full bg-[#dcf3f8] flex items-center justify-center p-6 shadow-xs">
           <div className="w-[230px] bg-white rounded-[10px] p-5 shadow-lg border border-[#00b894] flex flex-col">
@@ -1478,7 +1561,7 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
               PROFIT &amp; LOSS
             </span>
             <div className="text-[24px] font-bold text-[#1f2937]">
-              ₹2,50,000
+              ₹2,500
             </div>
             <span className="text-[10.5px] text-gray-500 mb-4">
               Net profit for last 30 days
@@ -1487,8 +1570,8 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
             {/* Income Bar */}
             <div className="mb-3">
               <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
-                <span>₹ Income</span>
-                <span className="font-semibold text-green-700">₹4,20,000</span>
+                <span>Income</span>
+                <span className="font-semibold text-green-700">₹4,200</span>
               </div>
               <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden flex">
                 <div className="w-[65%] h-full bg-[#108000]" />
@@ -1498,8 +1581,8 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
             {/* Expenses Bar */}
             <div>
               <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
-                <span>₹ Expenses</span>
-                <span className="font-semibold text-blue-700">₹1,70,000</span>
+                <span>Expenses</span>
+                <span className="font-semibold text-blue-700">₹1,700</span>
               </div>
               <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden flex">
                 <div className="w-[45%] h-full bg-[#0077c5]" />
@@ -1513,30 +1596,30 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
 }
 
 // =========================================================================
-// SCREEN 11: WHAT DO YOU WANT TO DO IN MESO (UNCHECKED BY DEFAULT)
+// SCREEN 11: WHAT DO YOU WANT TO DO IN MESSO? (FRAME 011)
 // =========================================================================
 function Screen11FeaturesChecklist({ selectedFeatures, onToggleFeature, onBack, onNext, onSkip }) {
   const features = [
     { id: 'customers', label: 'Get and manage customers', icon: Users },
-    { id: 'invoices', label: 'Send & track GST tax invoices', icon: FileText },
-    { id: 'banking', label: 'Connect Indian bank feeds (HDFC, ICICI, SBI)', icon: Landmark },
-    { id: 'bills', label: 'Manage & pay vendor bills (AP)', icon: Calendar },
-    { id: 'estimates', label: 'Create estimates, quotations or proformas', icon: Calculator },
-    { id: 'time', label: "Track employee & contractor time", icon: Clock },
-    { id: 'inventory', label: 'Manage item stock & inventory', icon: Package },
-    { id: 'sales', label: 'Track sales & revenue channels', icon: Tag },
-    { id: 'tax', label: 'Manage GST returns (GSTR-1, 3B) & TDS', icon: Percent },
-    { id: 'mileage', label: 'Track business mileage & travel vouchers', icon: Car },
-    { id: 'marketing', label: 'Send client campaigns & payment reminders', icon: Mail },
+    { id: 'invoices', label: 'Send & track invoices', icon: FileText },
+    { id: 'banking', label: 'Get business banking (3.00% APY eligible)', icon: Landmark },
+    { id: 'bills', label: 'Manage & pay bills', icon: Calendar },
+    { id: 'estimates', label: 'Create estimates or quotes', icon: Calculator },
+    { id: 'time', label: "Track team's time", icon: Clock },
+    { id: 'inventory', label: 'Manage inventory', icon: Package },
+    { id: 'sales', label: 'Track sales', icon: Tag },
+    { id: 'tax', label: 'Manage sales tax', icon: Percent },
+    { id: 'mileage', label: 'Track mileage deductions', icon: Car },
+    { id: 'marketing', label: 'Send marketing emails', icon: Mail },
   ];
 
   return (
     <div className="w-full max-w-[760px] flex flex-col pt-4">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
-        What do you want to do in Meso?
+        What do you want to do in MESSO?
       </h2>
       <p className="text-[14.5px] text-[#595959] mb-8">
-        We'll enable these workspaces so you are ready immediately. Pick any you need:
+        We'll help you set it up when you're ready.
       </p>
 
       {/* 2-Column Grid */}
@@ -1630,7 +1713,7 @@ function Screen12Frame094Loading({ onComplete }) {
           <span>Getting your </span>
           <span className="relative inline-block px-1">
             <span className="font-semibold">all-in-one</span>
-            {/* Animated Cyan / Teal Underline */}
+            {/* Animated Cyan / Teal Underline matching Frame 094 */}
             <span 
               className="absolute left-0 bottom-[-2px] h-[3px] bg-[#00a3bf] rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,163,191,0.5)]"
               style={{
@@ -1640,9 +1723,116 @@ function Screen12Frame094Loading({ onComplete }) {
           </span>
           <span> platform</span>
         </h1>
-        <p className="text-[13px] text-gray-400 mt-6 tracking-wide animate-pulse">
-          Provisioning Indian Chart of Accounts, GST engine &amp; double-entry ledger...
+      </div>
+    </div>
+  );
+}
+
+// =========================================================================
+// REALISTIC INDIAN BANK CONNECTION MODAL
+// =========================================================================
+function BankConnectModal({ onClose, onConnected }) {
+  const [searchBank, setSearchBank] = useState('');
+  const [connectingBank, setConnectingBank] = useState(null);
+  const [syncStatus, setSyncStatus] = useState(null);
+
+  const BANKS = [
+    { id: 'hdfc', name: 'HDFC Bank', code: 'HDFC', tag: 'Fastest' },
+    { id: 'icici', name: 'ICICI Bank', code: 'ICIC', tag: 'Direct API' },
+    { id: 'sbi', name: 'State Bank of India', code: 'SBIN', tag: 'Govt & Tax' },
+    { id: 'axis', name: 'Axis Bank', code: 'UTIB', tag: 'Corporate' },
+    { id: 'kotak', name: 'Kotak Mahindra Bank', code: 'KKBK', tag: 'Instant' },
+    { id: 'pnb', name: 'Punjab National Bank', code: 'PUNB', tag: 'Public' },
+  ];
+
+  const handleSelectBank = (bank) => {
+    setConnectingBank(bank);
+    setSyncStatus('Connecting to RBI Account Aggregator...');
+    setTimeout(() => {
+      setSyncStatus('Authenticating credentials...');
+      setTimeout(() => {
+        setSyncStatus(`✓ Connected to ${bank.name}! 142 transactions synced.`);
+        setTimeout(() => {
+          onConnected(bank.name);
+        }, 1000);
+      }, 1000);
+    }, 1000);
+  };
+
+  const filteredBanks = BANKS.filter(b => b.name.toLowerCase().includes(searchBank.toLowerCase()));
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in">
+      <div className="bg-white rounded-xl max-w-[480px] w-full p-6 shadow-2xl border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Lock size={18} className="text-[#007755]" />
+            <h3 className="text-[18px] font-bold text-[#1f2937]">
+              Link Your Bank Account
+            </h3>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={18} />
+          </button>
+        </div>
+
+        <p className="text-[13px] text-gray-500 mb-4">
+          Connect your Indian business account via RBI-regulated Account Aggregator (AA) for automatic feed reconciliation.
         </p>
+
+        {connectingBank ? (
+          <div className="py-8 flex flex-col items-center justify-center text-center">
+            <div className="w-12 h-12 rounded-full border-3 border-[#007755] border-t-transparent animate-spin mb-4" />
+            <div className="text-[15px] font-semibold text-[#1f2937] mb-1">
+              {connectingBank.name}
+            </div>
+            <div className="text-[13px] text-emerald-600 font-medium">
+              {syncStatus}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="relative mb-4">
+              <Search size={15} className="absolute left-3 top-3 text-gray-400" />
+              <input
+                type="text"
+                value={searchBank}
+                onChange={(e) => setSearchBank(e.target.value)}
+                placeholder="Search your bank (e.g. HDFC, ICICI, SBI)..."
+                className="w-full h-9 pl-9 pr-3 text-[13px] border border-gray-300 rounded-[4px] outline-none focus:border-[#007755]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 max-h-[260px] overflow-y-auto mb-4">
+              {filteredBanks.map(b => (
+                <button
+                  key={b.id}
+                  onClick={() => handleSelectBank(b)}
+                  className="p-3 border border-gray-200 hover:border-[#007755] hover:bg-emerald-50/50 rounded-lg text-left flex flex-col justify-between transition cursor-pointer"
+                >
+                  <span className="text-[13px] font-semibold text-[#1f2937]">{b.name}</span>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-[10px] text-gray-400 font-mono">{b.code}</span>
+                    <span className="text-[9px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">{b.tag}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-[11px] text-gray-500">
+              <span className="flex items-center gap-1">
+                <ShieldCheck size={13} className="text-emerald-600" />
+                256-bit Bank Grade Encryption
+              </span>
+              <button
+                onClick={onClose}
+                className="text-gray-500 hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

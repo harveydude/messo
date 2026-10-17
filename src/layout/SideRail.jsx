@@ -52,7 +52,7 @@ const APP_SUBMENUS = {
       { label: 'Recurring payments', view: 'recurring_transactions' },
       { label: 'Sales Order', view: 'orders' },
       { label: 'Sales Channels & Apps', view: 'apps' },
-      { label: 'Meso Payouts', view: 'bank_transactions' },
+      { label: 'MESSO Payouts', view: 'bank_transactions' },
       { label: 'Product and Services', view: 'products_services' },
     ],
   },
@@ -336,7 +336,7 @@ export default function SideRail({
               {/* Header with Title and Search */}
               <div className="px-2 pb-1.5 text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
                 <span>MY APPS</span>
-                <span className="text-[9px] text-gray-400 font-normal">Meso Hub</span>
+                <span className="text-[9px] text-gray-400 font-normal">MESSO Hub</span>
               </div>
 
               {/* Search input in My Apps */}

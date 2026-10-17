@@ -236,7 +236,32 @@ const CREATE_ACTION_TARGETS = {
 export default function App() {
   const { viewId, query, navigate, routeLabel } = useRoute();
 
-  const [companyName, setCompanyName] = useState("Karan's Landscaping Services");
+  const [businessProfile, setBusinessProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meso_business_profile');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      businessName: "MESSO Technologies",
+      gstin: "27AAPFU0939F1ZV",
+      industry: "Information Technology & Software Services (IT/ITeS)",
+      taxType: "pvt_ltd",
+      annualRevenue: "revenue_1_5cr_5cr",
+      role: "owner",
+      employeeCount: "6_15"
+    };
+  });
+
+  const [companyName, setCompanyName] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meso_business_profile');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.businessName) return parsed.businessName;
+      }
+    } catch (e) {}
+    return "MESSO Technologies";
+  });
   const [searchQuery, setSearchQuery] = useState(query.q || '');
 
   // Modals & drawers
@@ -270,8 +295,8 @@ export default function App() {
   // The tab title follows the screen.
   useEffect(() => {
     document.title = routeLabel === 'Dashboard'
-      ? 'Meso'
-      : `${routeLabel} · Meso`;
+      ? 'MESSO'
+      : `${routeLabel} · MESSO`;
   }, [routeLabel]);
 
   // Optimistic locking conflict toast
@@ -736,7 +761,11 @@ export default function App() {
         <StoreProvider>
           <OnboardingWizard
             onComplete={(data) => {
-              if (data?.businessName) setCompanyName(data.businessName);
+              if (data) {
+                setBusinessProfile(data);
+                if (data.businessName) setCompanyName(data.businessName);
+                localStorage.setItem('meso_business_profile', JSON.stringify(data));
+              }
               localStorage.setItem('meso_onboarding_completed', 'true');
               navigate('dashboard');
             }}
@@ -755,6 +784,7 @@ export default function App() {
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#F6F7F8] antialiased">
         <TopBar
           companyName={companyName}
+          businessProfile={businessProfile}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onSearch={handleSearch}

@@ -4,20 +4,27 @@ import {
   HelpCircle, 
   Settings, 
   Bell, 
-  Users, 
   X,
-  Sparkles,
-  CheckSquare,
-  Grid,
-  UserCheck,
-  ChevronDown
+  CheckSquare, 
+  Grid, 
+  ChevronDown,
+  Maximize2,
+  Minimize2,
+  Building2,
+  FileText,
+  Briefcase,
+  Users,
+  ShieldCheck,
+  TrendingUp,
+  RotateCcw
 } from 'lucide-react';
 import SearchDropdown from '../components/SearchDropdown';
 import MyIntegrationsPopover from '../components/MyIntegrationsPopover';
 import NotificationsPanel from '../components/NotificationsPanel';
 
 export default function TopBar({ 
-  companyName = "MESO Creative Labs Pvt Ltd", 
+  companyName = "MESSO Technologies", 
+  businessProfile = null,
   searchQuery = "", 
   setSearchQuery, 
   onSearch, 
@@ -30,6 +37,8 @@ export default function TopBar({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [myIntegrationsOpen, setMyIntegrationsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
   const searchContainerRef = useRef(null);
   const appsMenuRef = useRef(null);
@@ -52,6 +61,18 @@ export default function TopBar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const toggleFullscreen = () => {
+    try {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+        }
+      }
+    } catch (e) {}
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       setIsSearchFocused(false);
@@ -72,60 +93,67 @@ export default function TopBar({
     onSearch(searchQuery || "Show me open invoices for the last 30 days");
   };
 
+  // Derive business information
+  const activeBusinessName = businessProfile?.businessName || companyName || "MESSO Technologies";
+  const activeGstin = businessProfile?.gstin || "27AAPFU0939F1ZV";
+  const initialLetter = activeBusinessName ? activeBusinessName.charAt(0).toUpperCase() : 'M';
+
   return (
     <header className="w-full bg-white relative z-30 shrink-0 select-none">
       {/* Promo banner */}
-      <div className="h-[34px] w-full bg-gradient-to-r from-[#2CA01C] via-[#0AA574] to-[#0077C5] flex items-center justify-center gap-3 text-[13px] text-white">
-        <span className="font-medium">Buy now and save 90% for 3 months</span>
-        <span className="w-px h-[14px] bg-white/40" aria-hidden="true" />
-        <a href="#subscribe" className="font-semibold underline hover:no-underline">
+      <div className="h-[32px] w-full bg-gradient-to-r from-[#007755] via-[#0AA574] to-[#0077C5] flex items-center justify-center gap-3 text-[12px] text-white">
+        <span className="font-medium">Special Launch: Get 90% discount on MESSO Cloud for 3 months</span>
+        <span className="w-px h-[12px] bg-white/40" aria-hidden="true" />
+        <a href="#pricing" className="font-semibold underline hover:no-underline">
           Subscribe now
         </a>
       </div>
 
-      {/* Main TopBar Container (Coordinate: H:56px, Border: #dfe1e6) */}
+      {/* Main TopBar Container */}
       <div className="h-[56px] w-full bg-white border-b border-[#dfe1e6] flex items-center justify-between px-4 relative shadow-[0_1px_2px_rgba(9,30,66,0.04)]">
-        {/* Left cluster: Brand Logo (x:16, y:10), Company Name & GSTIN Badge */}
-        <div className="flex items-center space-x-3 min-w-[280px]">
+        {/* Left cluster: Official MESSO Logo, Company Name & GSTIN Badge */}
+        <div className="flex items-center space-x-3 min-w-[260px]">
           <div 
-            className="flex items-center space-x-2 cursor-pointer shrink-0 group" 
+            className="flex items-center space-x-2.5 cursor-pointer shrink-0 group" 
             onClick={() => onSearch('')}
-            title="Meso Financial Cloud"
+            title="MESSO Home"
           >
-            <div className="w-8 h-8 rounded-lg overflow-hidden bg-black flex items-center justify-center shadow-xs border border-emerald-500/30 group-hover:border-emerald-400 transition">
-              <img src="/logo.png" alt="Meso Logo" className="w-full h-full object-cover" />
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-black flex items-center justify-center shadow-xs border border-cyan-500/30 group-hover:border-cyan-400 transition">
+              <img src="/logo.png" alt="MESSO Logo" className="w-full h-full object-contain" />
             </div>
-            <div className="text-[17px] font-bold text-[#172b4d] tracking-tight leading-none">
-              meso
+            <div className="text-[19px] font-black text-[#172b4d] tracking-tight leading-none uppercase">
+              MESSO
             </div>
           </div>
 
-          <div className="border-l border-gray-200 pl-3">
-            <div className="flex items-center gap-1 cursor-pointer hover:text-black">
-              <span className="text-[13.5px] font-semibold text-[#172b4d] truncate max-w-[150px]">
-                {isSearchFocused ? "MESO Labs..." : (companyName || "MESO Creative Labs")}
+          {/* Company Name & GSTIN Dropdown trigger */}
+          <div 
+            className="border-l border-gray-200 pl-3 cursor-pointer hover:bg-gray-50 rounded p-1 transition"
+            onClick={() => setProfileModalOpen(true)}
+            title="Click to view full Business Profile"
+          >
+            <div className="flex items-center gap-1">
+              <span className="text-[13.5px] font-semibold text-[#172b4d] truncate max-w-[170px]">
+                {activeBusinessName}
               </span>
               <ChevronDown size={13} className="text-[#5e6c84] shrink-0" />
             </div>
             <div className="flex items-center gap-1 mt-0.5">
               <span className="text-[9.5px] font-semibold px-1.5 py-0.2 rounded bg-[#e6f4ea] text-[#005f43] tracking-wider font-mono">
-                GSTIN: 27AABCP1234A1Z5
+                GSTIN: {activeGstin}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Center Smart Search Bar & NLP Prompt (Coordinate: X:480, W:640, H:38) */}
+        {/* Center Smart Search Bar (Carefully bounded, NEVER extends behind sidebar) */}
         <div 
           ref={searchContainerRef}
-          className={isSearchFocused 
-            ? "absolute left-1/2 -translate-x-1/2 top-[6px] z-[60] w-[1310px]" 
-            : "flex-1 max-w-[640px] mx-auto px-4"
-          }
+          className="flex-1 max-w-[500px] mx-4 relative"
         >
           <div className="relative flex items-center w-full">
             <Search 
-              size={17} 
+              size={16} 
               className={`absolute left-3.5 text-[#5e6c84] pointer-events-none transition-colors ${
                 isSearchFocused ? 'text-[#007755]' : ''
               }`} 
@@ -137,11 +165,11 @@ export default function TopBar({
               onFocus={() => setIsSearchFocused(true)}
               onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Search transactions, customers, reports or ask 'Why did my expenses go up?'"
-              className={`w-full text-[13px] text-[#172b4d] placeholder-[#5e6c84] bg-[#f4f5f8] rounded-full transition-all pl-[38px] pr-[96px] focus:outline-none focus:bg-white ${
+              placeholder="Search invoices, customers, vouchers, ledger accounts..."
+              className={`w-full text-[13px] text-[#172b4d] placeholder-[#5e6c84] bg-[#f4f5f8] rounded-full transition-all pl-[38px] pr-[36px] focus:outline-none focus:bg-white ${
                 isSearchFocused
-                  ? 'h-[42px] border-2 border-[#007755] shadow-lg'
-                  : 'h-[38px] border border-transparent hover:border-[#dfe1e6]'
+                  ? 'h-[40px] border-2 border-[#007755] shadow-md'
+                  : 'h-[36px] border border-transparent hover:border-[#dfe1e6]'
               }`}
             />
 
@@ -149,66 +177,58 @@ export default function TopBar({
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery && setSearchQuery('')}
-                className="absolute right-22 text-[#5e6c84] hover:text-[#172b4d] p-1 cursor-pointer transition"
+                className="absolute right-3 text-[#5e6c84] hover:text-[#172b4d] p-1 cursor-pointer transition"
                 title="Clear search"
               >
-                <X size={15} />
+                <X size={14} />
               </button>
             )}
-
-            {/* Ask AI Pill inside Search Bar */}
-            <div
-              onClick={onOpenAssistant}
-              className="absolute right-2 flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-[11px] font-semibold cursor-pointer shadow-xs select-none hover:opacity-95 transition"
-              style={{ background: 'var(--ai-gradient)' }}
-              title="Ask MESO Assist AI"
-            >
-              <Sparkles size={11} />
-              <span>Ask AI</span>
-            </div>
           </div>
 
-          {/* Search Dropdown attached directly below */}
+          {/* Search Dropdown attached directly below input */}
           {isSearchFocused && (
-            <SearchDropdown
-              query={searchQuery}
-              onSelectResult={handleSelectResult}
-              onAdvancedSearch={handleAdvancedSearch}
-            />
+            <div className="absolute left-0 top-full mt-1.5 w-full z-50">
+              <SearchDropdown
+                query={searchQuery}
+                onSelectResult={handleSelectResult}
+                onAdvancedSearch={handleAdvancedSearch}
+              />
+            </div>
           )}
         </div>
 
-        {/* Right Action Rail (Coordinate: X:1320, W:584, H:36) */}
-        <div className="flex items-center space-x-2.5 pr-1 text-[#5e6c84]">
+        {/* Right Action Rail */}
+        <div className="flex items-center space-x-2 text-[#5e6c84]">
+          {/* Full Screen Mode Toggle Button (F11) */}
+          <button 
+            type="button"
+            onClick={toggleFullscreen}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-full bg-gray-50 border border-gray-200 hover:bg-gray-100 text-[11.5px] font-medium text-gray-700 cursor-pointer transition shadow-2xs"
+            title="Toggle Fullscreen Mode (F11)"
+          >
+            {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+            <span className="hidden sm:inline">{isFullscreen ? 'Exit F11' : 'Full Screen (F11)'}</span>
+          </button>
+
           {/* Setup Wizard Button */}
           <button 
             onClick={onOpenOnboarding}
-            className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#e6f4ea] border border-[#007755] hover:bg-[#d2edd8] text-[12px] font-semibold text-[#007755] cursor-pointer transition shadow-2xs"
+            className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#e6f4ea] border border-[#007755] hover:bg-[#d2edd8] text-[12px] font-semibold text-[#007755] cursor-pointer transition shadow-2xs"
             title="Open 13-Screen Setup Wizard"
           >
-            <Sparkles size={13} className="text-[#007755]" />
+            <RotateCcw size={13} className="text-[#007755]" />
             <span>Setup Wizard</span>
           </button>
 
-          {/* Contact Chartered Accountant */}
-          <button 
-            onClick={() => alert("Connecting with your designated Chartered Accountant (CA Anand Varma, FCA)...")}
-            className="hidden xl:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#f8f9fa] border border-[#dfe1e6] hover:bg-gray-100 text-[12px] font-medium text-[#172b4d] cursor-pointer transition shadow-2xs"
-            title="Contact Chartered Accountant"
-          >
-            <UserCheck size={14} className="text-[#007755]" />
-            <span>Contact CA</span>
-          </button>
-
           {/* Action icon group */}
-          <div className="flex items-center space-x-1.5 text-[#5e6c84]">
-            {/* Tasks */}
+          <div className="flex items-center space-x-1 text-[#5e6c84]">
+            {/* Tasks & Checklists */}
             <button 
-              onClick={() => alert("Tasks & Bookkeeping Checklist")}
+              onClick={() => alert("Bookkeeping Tasks & Audit Trail Checklist")}
               className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-[#5e6c84] hover:text-[#172b4d]" 
               title="Tasks & Checklists"
             >
-              <CheckSquare size={18} />
+              <CheckSquare size={17} />
             </button>
 
             {/* Apps & Integrations */}
@@ -223,7 +243,7 @@ export default function TopBar({
                 }`}
                 title="Apps & Integrations"
               >
-                <Grid size={18} />
+                <Grid size={17} />
               </button>
 
               {myIntegrationsOpen && (
@@ -249,7 +269,7 @@ export default function TopBar({
                 }`}
                 title="Notifications"
               >
-                <Bell size={18} />
+                <Bell size={17} />
                 <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#de350b]" />
               </button>
 
@@ -260,7 +280,7 @@ export default function TopBar({
               )}
             </div>
 
-            {/* Help / Documentation */}
+            {/* Help & Documentation (Opens Help Assistant) */}
             <button 
               onClick={() => {
                 setMyIntegrationsOpen(false);
@@ -268,9 +288,9 @@ export default function TopBar({
                 if (onOpenAssistant) onOpenAssistant();
               }}
               className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-[#5e6c84] hover:text-[#172b4d]"
-              title="Help & Documentation"
+              title="Help, AI Assistant & Documentation"
             >
-              <HelpCircle size={18} />
+              <HelpCircle size={17} />
             </button>
 
             {/* Settings Gear */}
@@ -283,30 +303,137 @@ export default function TopBar({
               className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-[#5e6c84] hover:text-[#172b4d]"
               title="Account & Settings"
             >
-              <Settings size={18} />
+              <Settings size={17} />
             </button>
           </div>
 
-          {/* User Avatar */}
+          {/* User & Company Profile Avatar Button */}
           <button 
-            onClick={onOpenShortcuts}
-            className="w-[32px] h-[32px] rounded-full bg-[#0052cc] hover:bg-[#0047b3] text-white flex items-center justify-center font-bold text-xs shadow-xs ml-1 cursor-pointer transition"
-            title="Accountant view & Keyboard Shortcuts"
+            onClick={() => setProfileModalOpen(true)}
+            className="w-[32px] h-[32px] rounded-full bg-[#007755] hover:bg-[#005f43] text-white flex items-center justify-center font-bold text-xs shadow-xs ml-1 cursor-pointer transition border border-emerald-400"
+            title="View Business Profile & Company Details"
           >
-            J
-          </button>
-
-          {/* Dedicated MESO Assist AI Trigger Button */}
-          <button 
-            onClick={onOpenAssistant}
-            title="MESO Assist AI Intelligence"
-            className="w-[34px] h-[34px] rounded-lg border border-[#7c3aed] flex items-center justify-center text-white shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer ml-1"
-            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #00b894 100%)' }}
-          >
-            <Sparkles size={16} />
+            {initialLetter}
           </button>
         </div>
       </div>
+
+      {/* BUSINESS PROFILE MODAL (Displays exact onboarding info) */}
+      {profileModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-xl max-w-[520px] w-full p-6 shadow-2xl border border-gray-200">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-[#007755] text-white flex items-center justify-center font-black text-sm">
+                  {initialLetter}
+                </div>
+                <div>
+                  <h3 className="text-[17px] font-bold text-[#1f2937]">
+                    {activeBusinessName}
+                  </h3>
+                  <span className="text-[11.5px] text-gray-500 font-mono">
+                    GSTIN: {activeGstin}
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setProfileModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Business Attributes Grid */}
+            <div className="space-y-3.5 mb-6 text-[13px]">
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                <span className="text-gray-500 flex items-center gap-2">
+                  <Building2 size={15} className="text-[#007755]" />
+                  Legal Entity Type
+                </span>
+                <span className="font-semibold text-gray-800 capitalize">
+                  {businessProfile?.taxType 
+                    ? businessProfile.taxType.replace('_', ' ') 
+                    : 'Private Limited (Pvt Ltd)'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                <span className="text-gray-500 flex items-center gap-2">
+                  <Briefcase size={15} className="text-[#007755]" />
+                  Industry Sector
+                </span>
+                <span className="font-semibold text-gray-800 text-right truncate max-w-[260px]">
+                  {businessProfile?.industry || 'Information Technology & Software (IT/ITeS)'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                <span className="text-gray-500 flex items-center gap-2">
+                  <TrendingUp size={15} className="text-[#007755]" />
+                  Annual Turnover
+                </span>
+                <span className="font-semibold text-gray-800">
+                  {businessProfile?.annualRevenue 
+                    ? businessProfile.annualRevenue.replace('revenue_', '').replace('_', ' to ') 
+                    : '₹1.5 Crores - ₹5 Crores'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                <span className="text-gray-500 flex items-center gap-2">
+                  <Users size={15} className="text-[#007755]" />
+                  Your Role &amp; Team Size
+                </span>
+                <span className="font-semibold text-gray-800 capitalize">
+                  {businessProfile?.role ? businessProfile.role : 'Managing Director'} · {businessProfile?.employeeCount ? businessProfile.employeeCount.replace('_', '-') : '1-5'} employees
+                </span>
+              </div>
+
+              {businessProfile?.website && (
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 border border-gray-100">
+                  <span className="text-gray-500 flex items-center gap-2">
+                    <FileText size={15} className="text-[#007755]" />
+                    Company Website
+                  </span>
+                  <a 
+                    href={businessProfile.website.startsWith('http') ? businessProfile.website : `https://${businessProfile.website}`}
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="font-medium text-[#007755] hover:underline"
+                  >
+                    {businessProfile.website}
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileModalOpen(false);
+                  if (onOpenOnboarding) onOpenOnboarding();
+                }}
+                className="flex items-center space-x-1.5 px-4 py-2 bg-[#007755] hover:bg-[#005f43] text-white rounded-[6px] font-semibold text-[13px] shadow-sm cursor-pointer transition"
+              >
+                <RotateCcw size={14} />
+                <span>Rerun Setup Wizard</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setProfileModalOpen(false)}
+                className="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-[6px] font-medium text-[13px] cursor-pointer transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </header>
   );
 }
