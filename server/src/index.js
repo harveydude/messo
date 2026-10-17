@@ -32,6 +32,7 @@ import transactionsRouter from './routes/transactions.js';
 import taxonomyRouter from './routes/taxonomy.js';
 import governanceRouter from './routes/governance.js';
 import ingestionRouter from './routes/ingestion.js';
+import gstRouter from './routes/gst.js';
 import { startRecurringRunner } from './jobs/recurringRunner.js';
 
 import { idempotency } from './middleware/integrity.js';
@@ -168,6 +169,7 @@ app.use('/api', taxonomyRouter);
 app.use('/api/governance', governanceRouter);
 app.use('/api', governanceRouter);
 app.use('/api/import', ingestionRouter);
+app.use('/api/gst', gstRouter);
 
 // Serve Frontend Static Build if available (SPA Fallback)
 if (fs.existsSync(distPath)) {

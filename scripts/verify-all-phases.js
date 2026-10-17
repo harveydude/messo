@@ -17,6 +17,10 @@ import { setExchangeRate, getExchangeRate, convertCurrency, recordForexGainLoss 
 import { checkSubledgerReconciliation, syncSubledgerToGl } from '../server/src/services/subledgerReconciliationService.js';
 import { createBranch, listBranches, createCostCenter, listCostCenters } from '../server/src/services/branchService.js';
 import { closeFiscalYear, listFiscalYearCloses } from '../server/src/services/yearEndService.js';
+import { determineTaxScheme, calculateGstSplits, registerGstRate, getGstRateForHsn } from '../server/src/services/gstTaxEngine.js';
+import { recordItcEntry, getElectronicCreditLedgerSummary, isSection17_5Blocked } from '../server/src/services/itcService.js';
+import { generateIrnHash, generateEInvoice, cancelEInvoice, generateEwayBill } from '../server/src/services/eInvoiceService.js';
+import { compileGstr1, compileGstr3b, fileGstReturn } from '../server/src/services/gstReturnsService.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -774,9 +778,224 @@ async function runPhase15() {
     'Phase 15.4: System strictly blocked attempting duplicate close on already locked fiscal year');
 }
 
+async function runPhase16() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 16: Place of Supply & Tax Determination ---');
+  console.log('======================================================');
+
+  // Test 16.1: Intra-state supply (MH 27 to MH 27) -> CGST 9% + SGST 9%
+  const intra = determineTaxScheme({ supplierStateCode: '27', placeOfSupplyStateCode: '27' });
+  const intraSplits = calculateGstSplits({ taxableAmountPaise: 1000000, rateBp: 1800, taxScheme: intra.taxScheme });
+  assert(intra.taxScheme === 'INTRA_STATE' && intraSplits.cgstPaise === 90000 && intraSplits.sgstPaise === 90000 && intraSplits.igstPaise === 0,
+    'Phase 16.1: Intra-state supply accurately splits into equal CGST (9%) and SGST (9%)');
+
+  // Test 16.2: Inter-state supply (MH 27 to KA 29) -> IGST 18%
+  const inter = determineTaxScheme({ supplierStateCode: '27', placeOfSupplyStateCode: '29' });
+  const interSplits = calculateGstSplits({ taxableAmountPaise: 1000000, rateBp: 1800, taxScheme: inter.taxScheme });
+  assert(inter.taxScheme === 'INTER_STATE' && interSplits.igstPaise === 180000 && interSplits.cgstPaise === 0,
+    'Phase 16.2: Inter-state supply routes 100% to Integrated GST (IGST 18%)');
+
+  // Test 16.3: Intra-UT supply (Lakshadweep 31 to 31) -> UTGST
+  const ut = determineTaxScheme({ supplierStateCode: '31', placeOfSupplyStateCode: '31' });
+  assert(ut.taxScheme === 'UTGST',
+    'Phase 16.3: Union Territory without legislature accurately identified for UTGST');
+
+  // Test 16.4: Zero-Rated Export under LUT
+  const lut = determineTaxScheme({ isExport: true, lutArn: 'AD270326000001Z' });
+  const lutSplits = calculateGstSplits({ taxableAmountPaise: 1000000, rateBp: 1800, taxScheme: lut.taxScheme });
+  assert(lut.taxScheme === 'ZERO_RATED_LUT' && lutSplits.totalTaxPaise === 0,
+    'Phase 16.4: Zero-Rated export under Letter of Undertaking (LUT) yields 0% tax liability');
+}
+
+async function runPhase17() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 17: Effective-Dated HSN/SAC Rate Registry -');
+  console.log('======================================================');
+
+  const testCompId = 'comp_hsn_' + Date.now();
+
+  // Test 17.1: Register current HSN rate
+  const rate1 = await registerGstRate({
+    companyId: testCompId,
+    hsnOrSacCode: '998314',
+    description: 'IT Consulting & Cloud Software Services',
+    slabRateBp: 1800,
+    effectiveFrom: '2023-01-01',
+    category: 'SERVICES'
+  });
+  assert(rate1.slab_rate_bp === 1800 && rate1.category === 'SERVICES',
+    'Phase 17.1: Standard 18% HSN rate registered with category classification');
+
+  // Test 17.2: Register historical lower slab rate (e.g. 12% before 2023)
+  await registerGstRate({
+    companyId: testCompId,
+    hsnOrSacCode: '998314',
+    description: 'Historical Software Services Rate',
+    slabRateBp: 1200,
+    effectiveFrom: '2017-07-01',
+    effectiveTo: '2022-12-31',
+    category: 'SERVICES'
+  });
+
+  // Test 17.3: Query historical vs current rates
+  const hist = await getGstRateForHsn({ companyId: testCompId, hsnOrSacCode: '998314', date: '2020-05-15' });
+  const curr = await getGstRateForHsn({ companyId: testCompId, hsnOrSacCode: '998314', date: '2026-04-15' });
+  assert(hist.slab_rate_bp === 1200 && curr.slab_rate_bp === 1800,
+    'Phase 17.3: Effective-dated query returns historical 12% for 2020 and active 18% for 2026');
+
+  // Test 17.4: Default fallback for unlisted codes
+  const unlisted = await getGstRateForHsn({ companyId: testCompId, hsnOrSacCode: '000000', date: '2026-04-15' });
+  assert(unlisted.slab_rate_bp === 1800,
+    'Phase 17.4: Standard Indian statutory fallback rate (18%) safely resolved for unlisted codes');
+}
+
+async function runPhase18() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 18: Electronic Credit Ledger (ITC) & RCM ---');
+  console.log('======================================================');
+
+  const testCompId = 'comp_itc_' + Date.now();
+
+  // Test 18.1: Eligible business expense claim
+  const itc1 = await recordItcEntry({
+    companyId: testCompId,
+    docType: 'BILL',
+    docId: 'bill_office_rent',
+    itcType: 'ELIGIBLE_INPUT_SERVICES',
+    cgstPaise: 18000,
+    sgstPaise: 18000,
+    claimPeriod: '2026-04'
+  });
+  assert(itc1.is_claimed === true && itc1.is_blocked === false,
+    'Phase 18.1: Eligible Input Tax Credit recorded into Electronic Credit Ledger');
+
+  // Test 18.2: Ineligible Section 17(5) blocked credit (e.g. food/caterer)
+  const itc2 = await recordItcEntry({
+    companyId: testCompId,
+    docType: 'BILL',
+    docId: 'bill_team_lunch',
+    itcType: 'ELIGIBLE_INPUTS',
+    cgstPaise: 9000,
+    sgstPaise: 9000,
+    blockReason: 'FOOD_AND_BEVERAGES',
+    claimPeriod: '2026-04'
+  });
+  assert(itc2.is_blocked === true && itc2.is_claimed === false,
+    'Phase 18.2: Section 17(5) blocked credit (Food & Beverages) automatically flagged and quarantined');
+
+  // Test 18.3: Ledger summary calculations
+  const summary = await getElectronicCreditLedgerSummary({ companyId: testCompId, claimPeriod: '2026-04' });
+  assert(summary.availableCgstPaise === 18000 && summary.totalBlockedItcPaise === 18000,
+    'Phase 18.3: Electronic Credit Ledger summary accurately calculated Available vs Blocked ITC');
+}
+
+async function runPhase19() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 19: E-Invoicing (IRN/QR) & E-Way Bill Engine');
+  console.log('======================================================');
+
+  const testCompId = 'comp_einv_' + Date.now();
+  const db = await getDb();
+
+  // Create an invoice
+  const invId = 'inv_e_' + Date.now();
+  const invNum = 'INV-E-' + Date.now();
+  await db.query(
+    `INSERT INTO invoices (
+      id, company_id, invoice_number, customer_id, issue_date, due_date,
+      subtotal_paise, total_paise, balance_due_paise, status
+    ) VALUES ($1, $2, $3, 'cust_1', CURRENT_DATE, CURRENT_DATE, 50000000, 50000000, 50000000, 'OPEN')`,
+    [invId, testCompId, invNum]
+  );
+
+  // Test 19.1: Generate IRN hash
+  const irn = generateIrnHash({ supplierGstin: '27AAACB2222B1Z3', docNumber: invNum });
+  assert(typeof irn === 'string' && irn.length === 64,
+    'Phase 19.1: Deterministic 64-character SHA-256 IRN hash generated per NIC specification');
+
+  // Test 19.2: Generate E-Invoice with signed QR
+  const eInv = await generateEInvoice({
+    companyId: testCompId,
+    invoiceId: invId,
+    supplierGstin: '27AAACB2222B1Z3'
+  });
+  assert(eInv.irn_hash === irn && eInv.signed_qr_code.startsWith('JWT_NIC_SIGNED'),
+    'Phase 19.2: Signed QR code generated with digital cryptographic token');
+
+  // Test 19.3: 24-Hour Cancellation Rule
+  const cancelled = await cancelEInvoice({
+    companyId: testCompId,
+    irnHash: eInv.irn_hash,
+    cancellationReason: 'Duplicate entry correction'
+  });
+  assert(cancelled.status === 'CANCELLED',
+    'Phase 19.3: Authorized cancellation within 24-hour statutory window accepted');
+
+  // Test 19.4: E-Way Bill Generation
+  const eway = await generateEwayBill({
+    companyId: testCompId,
+    invoiceId: invId,
+    distanceKm: 250
+  });
+  assert(eway.success === true && eway.ewayBillNo.startsWith('27'),
+    'Phase 19.4: Part-A E-Way Bill generated with distance-based validity');
+}
+
+async function runPhase20() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 20: GSTR-1, GSTR-2B & GSTR-3B Tax Filing ---');
+  console.log('======================================================');
+
+  const testCompId = 'comp_gst_filing_' + Date.now();
+  const db = await getDb();
+
+  // Create a contact with GSTIN
+  const custId = 'cont_gstr_' + Date.now();
+  await db.query(
+    `INSERT INTO contacts (id, company_id, display_name, gstin, type, opening_balance_paise)
+     VALUES ($1, $2, 'Reliance Industries Ltd', '27AABCR1234F1Z1', 'CUSTOMER', 0)`,
+    [custId, testCompId]
+  );
+
+  // Create B2B invoice
+  const invId = 'inv_gstr1_' + Date.now();
+  await db.query(
+    `INSERT INTO invoices (
+      id, company_id, invoice_number, customer_id, issue_date, due_date,
+      subtotal_paise, total_paise, balance_due_paise, status, tax_scheme, cgst_paise, sgst_paise
+    ) VALUES ($1, $2, $3, $4, '2026-04-10', '2026-04-10', 2000000, 2360000, 2360000, 'OPEN', 'INTRA_STATE', 180000, 180000)`,
+    [invId, testCompId, 'INV-B2B-' + Date.now(), custId]
+  );
+
+  // Test 20.1: Compile GSTR-1
+  const gstr1 = await compileGstr1({ companyId: testCompId, period: '2026-04' });
+  assert(gstr1.b2bCount >= 1 && gstr1.totals.totalTaxPaise === 360000,
+    'Phase 20.1: GSTR-1 compiled with automated B2B schedule segregation and tax totals');
+
+  // Test 20.2: Compile GSTR-3B with ITC Offset
+  await recordItcEntry({
+    companyId: testCompId,
+    docType: 'BILL',
+    docId: 'bill_itc_offset',
+    cgstPaise: 80000,
+    sgstPaise: 80000,
+    claimPeriod: '2026-04'
+  });
+
+  const gstr3b = await compileGstr3b({ companyId: testCompId, period: '2026-04' });
+  const netPayable = gstr3b.table6_1_paymentOfTax.totalNetCashPayablePaise;
+  assert(netPayable === 200000,
+    'Phase 20.2: GSTR-3B tax offset computed accurately (360k Outward - 160k ITC = 200k Net Cash Payable)');
+
+  // Test 20.3: File GSTR-3B return
+  const filing = await fileGstReturn({ companyId: testCompId, returnType: 'GSTR-3B', period: '2026-04' });
+  assert(filing.success === true && filing.status === 'FILED' && filing.ackReference.startsWith('ARN-GSTR3B'),
+    'Phase 20.3: GSTR-3B return submitted with ARN acknowledgment reference');
+}
+
 async function main() {
   console.log('======================================================================');
-  console.log('🚀 MESO AUTONOMOUS CUMULATIVE VERIFICATION GATE: PHASES 1 TO 15');
+  console.log('🚀 MESO AUTONOMOUS CUMULATIVE VERIFICATION GATE: PHASES 1 TO 20');
   console.log('======================================================================');
 
   try {
@@ -803,6 +1022,13 @@ async function main() {
     await runPhase14();
     await runPhase15();
 
+    // Domain 4: Indian GST Compliance Engine (Phases 16-20)
+    await runPhase16();
+    await runPhase17();
+    await runPhase18();
+    await runPhase19();
+    await runPhase20();
+
     console.log('\n======================================================================');
     console.log(`VERIFICATION SUMMARY: ${testsPassed} PASSED, ${testsFailed} FAILED`);
     console.log('======================================================================');
@@ -812,21 +1038,21 @@ async function main() {
       process.exit(1);
     }
 
-    // Update architecture-state.json to mark Phases 1-15 as PASSED
+    // Update architecture-state.json to mark Phases 1-20 as PASSED
     const statePath = path.resolve(__dirname, '../architecture-state.json');
     if (fs.existsSync(statePath)) {
       const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-      for (let i = 0; i < 15; i++) {
+      for (let i = 0; i < 20; i++) {
         state.phases[i].status = 'PASSED';
         state.phases[i].lastVerifiedAt = new Date().toISOString();
       }
-      state.currentPhase = 16;
+      state.currentPhase = 21;
       state.lastUpdated = new Date().toISOString();
       fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
-      console.log('✓ Successfully updated architecture-state.json: Phases 1 to 15 marked PASSED.');
+      console.log('✓ Successfully updated architecture-state.json: Phases 1 to 20 marked PASSED.');
     }
 
-    console.log('🎯 ALL DOMAIN 1, 2 & 3 GATES CLEARED (100% PASS). Ready for Domain 4 (Phases 16-20).\n');
+    console.log('🎯 ALL DOMAIN 1, 2, 3 & 4 GATES CLEARED (100% PASS). Ready for Domain 5 (Phases 21-25).\n');
     process.exit(0);
   } catch (err) {
     console.error('\n❌ Unhandled exception during verification runner:', err);

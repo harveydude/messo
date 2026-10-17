@@ -420,6 +420,40 @@ export const api = {
     body: JSON.stringify(data),
   }),
   getFiscalYearCloses: () => request('/ledger/fiscal-years'),
+
+  // Domain 4: Indian GST Compliance Engine (Phases 16-20)
+  determineGstTax: (data) => request('/gst/determine-tax', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getGstRates: (hsn, date) => request(`/gst/rates?hsn=${encodeURIComponent(hsn || '')}${date ? `&date=${encodeURIComponent(date)}` : ''}`),
+  registerGstRate: (data) => request('/gst/rates', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  claimItc: (data) => request('/gst/itc/claim', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getItcSummary: (period) => request(`/gst/itc/summary${period ? `?period=${encodeURIComponent(period)}` : ''}`),
+  generateEInvoice: (data) => request('/gst/einvoice/generate', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  cancelEInvoice: (data) => request('/gst/einvoice/cancel', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  generateEwayBill: (data) => request('/gst/ewaybill/generate', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getGstr1: (period) => request(`/gst/returns/gstr-1${period ? `?period=${encodeURIComponent(period)}` : ''}`),
+  getGstr3b: (period) => request(`/gst/returns/gstr-3b${period ? `?period=${encodeURIComponent(period)}` : ''}`),
+  fileGstReturn: (data) => request('/gst/returns/file', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
 };
 
 export default api;
