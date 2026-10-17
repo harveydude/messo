@@ -420,3 +420,16 @@ export async function seedInitialData(force = false) {
 
   console.log('✓ Master QuickBooks Online 2026 Enterprise Seed Complete.');
 }
+
+if (process.argv[1] && process.argv[1].includes('seed.js')) {
+  (async () => {
+    const { initDb } = await import('./db.js');
+    await initDb();
+    await seedInitialData(true);
+    process.exit(0);
+  })().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
