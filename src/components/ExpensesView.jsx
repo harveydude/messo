@@ -36,6 +36,7 @@ const CATEGORY_OPTIONS = [
 ];
 
 const DEFAULT_BILL_ROWS = [
+  { id: 0, vendor: 'Brock Stone (Video Specialist)', due: '07/30/2026', amount: 120000.00, open: 120000.00, status: 'Due in 30 days', ago: '' },
   { id: 1, vendor: 'PG&E', due: '09/14/2025', amount: 7217.74, open: 7217.74, status: 'Overdue', ago: '43 days ago' },
   { id: 2, vendor: 'Norton Lumber and Building Mat...', due: '09/29/2025', amount: 17117.50, open: 17117.50, status: 'Overdue', ago: '28 days ago' },
   { id: 3, vendor: 'Robertson & Associates', due: '09/29/2025', amount: 26302.50, open: 26302.50, status: 'Overdue', ago: '28 days ago' },
@@ -44,6 +45,7 @@ const DEFAULT_BILL_ROWS = [
 ];
 
 const DEFAULT_VENDOR_ROWS = [
+  { id: 0, vendor: 'Brock Stone', company: 'Brock Stone Creative', phone: '+91 98200 12345', email: 'brock@stone.in', mail: true, t1099: true, bal: 120000.00, act: 'Pay balance' },
   { id: 1, vendor: "Bob's Burger Joint", company: '', phone: '', email: '', mail: false, t1099: false, bal: 0.00, act: 'Create Expense' },
   { id: 2, vendor: 'Books by Bessie', company: 'Books by Bessie', phone: '(650) 555-7745', email: 'Books@meso.in', mail: true, t1099: false, bal: 0.00, act: 'Create Expense' },
   { id: 3, vendor: 'Brosnahan Insurance Agency', company: 'Brosnahan Insurance Agency', phone: '(650) 555-9912', email: '', mail: false, t1099: true, bal: 20142.71, act: 'Pay balance' },

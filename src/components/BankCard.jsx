@@ -111,7 +111,9 @@ export default function BankCard({
                       onClick={onOpenRegisters}
                       className="text-[14px] text-[#0077C5] hover:underline font-medium cursor-pointer"
                     >
-                      {acct.reviewList
+                      {acct.reviewLink
+                        ? acct.reviewLink
+                        : acct.reviewList
                         ? `${acct.reviewList} to review`
                         : 'All caught up'}
                     </button>

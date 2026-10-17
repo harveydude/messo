@@ -32,6 +32,10 @@
   ],
   "funnel": {
     "period": "Last 30 days",
+    "outstanding": "₹5,28,200.00",
+    "outstandingCount": 3,
+    "paid": "₹3,53,900.00",
+    "paidCount": 6,
     "steps": [
       {
         "cta": true,
@@ -40,61 +44,61 @@
         "button": "Request payment"
       },
       {
-        "label": "Not Paid",
-        "amount": "₹1,861.55"
+        "label": "Unpaid Total",
+        "amount": "₹5,28,200.00"
       },
       {
         "label": "Paid",
-        "amount": "₹2,363.52",
-        "badge": "4 paid"
+        "amount": "₹3,53,900.00",
+        "badge": "6 paid"
       },
       {
         "label": "Deposited",
-        "amount": "₹1,276.15",
-        "badge": "2 deposited"
+        "amount": "₹1,47,600.00",
+        "badge": "3 deposited"
       }
     ]
   },
   "bank": {
     "asOf": "As of today",
-    "todaysBalance": "₹1,043.28",
+    "todaysBalance": "₹1,04,328.00",
     "accounts": [
       {
-        "name": "Checking",
-        "bankBalance": "₹3,621.93",
-        "inBooks": "₹1,201.00",
-        "updated": "Updated moments ago",
-        "reviewLink": "25 to review"
+        "name": "HDFC Current Account (A/c 50200012345678)",
+        "bankBalance": "-₹3,62,193.00",
+        "inBooks": "₹1,20,100.00",
+        "updated": "23 minutes ago",
+        "reviewLink": "15 to review"
       },
       {
-        "name": "Mastercard",
-        "bankBalance": "₹304.96",
-        "inBooks": "₹157.72",
-        "updated": "Updated moments ago",
-        "reviewLink": "7 to review"
+        "name": "ICICI Corporate RuPay Card",
+        "bankBalance": "₹30,496.00",
+        "inBooks": "₹15,772.00",
+        "updated": "moments ago",
+        "reviewLink": "5 to review"
       }
     ]
   },
   "pnl": {
-    "period": "Last month",
+    "period": "Last month (June 2026)",
     "title": "PROFIT & LOSS",
-    "subtitle": "Net profit for September",
-    "amount": "₹1,393",
-    "marginBadge": "78%",
-    "trendText": "Up 673% from prior month",
-    "trendDirection": "up",
+    "subtitle": "Net profit for June 2026",
+    "amount": "-₹41,200.00",
+    "marginBadge": "-9.5%",
+    "trendText": "Down from prior month",
+    "trendDirection": "down",
     "income": {
-      "amount": "₹8,347",
+      "amount": "₹4,29,700.00",
       "label": "Income",
-      "bookedPercent": 73,
-      "unreviewedPercent": 27,
+      "bookedPercent": 65,
+      "unreviewedPercent": 35,
       "reviewText": "8 to review"
     },
     "expenses": {
-      "amount": "₹6,953",
+      "amount": "₹4,70,900.00",
       "label": "Expenses",
-      "bookedPercent": 63,
-      "unreviewedPercent": 37,
+      "bookedPercent": 75,
+      "unreviewedPercent": 25,
       "reviewText": "15 to review"
     },
     "footerLink": "Categorize 23 transactions"

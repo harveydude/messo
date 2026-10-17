@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Search, Send, Sparkles } from 'lucide-react';
 import dashboardData from '../data/dashboard.json';
 
-export default function AssistantDrawer({ isOpen, onClose }) {
+export default function AssistantDrawer({ isOpen, onClose, onLaunchRecode }) {
   const [activeTab, setActiveTab] = useState('assistant');
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -150,13 +150,28 @@ export default function AssistantDrawer({ isOpen, onClose }) {
                   className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div 
-                    className={`max-w-[85%] rounded-[10px] p-4 text-[15px] leading-relaxed ${
+                    className={`max-w-[85%] rounded-[10px] p-4 text-[13.5px] leading-relaxed whitespace-pre-line ${
                       m.role === 'user' 
                         ? 'bg-[#DFF3F8] text-[#393A3D]' 
                         : 'bg-[#F4F5F7] text-[#393A3D] border border-[#E3E5E8]'
                     }`}
                   >
-                    {m.text}
+                    <div>{m.text}</div>
+                    {m.isAnomaly && onLaunchRecode && (
+                      <div className="mt-3 pt-2.5 border-t border-purple-200">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            onLaunchRecode();
+                          }}
+                          className="px-3.5 py-1.5 rounded-md bg-[#6c5ce7] hover:bg-[#5b4bc4] text-white text-[12px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                        >
+                          <Sparkles size={13} />
+                          <span>Resolve Anomaly &amp; Reclassify (Module 29)</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

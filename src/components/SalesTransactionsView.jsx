@@ -15,6 +15,20 @@ import ReviewInvoiceReminderModal from './ReviewInvoiceReminderModal';
  */
 const DEFAULT_SALES_INVOICES = [
   {
+    id: 'inv-1001',
+    date: '30/06/2026',
+    type: 'Invoice',
+    no: '1001',
+    customer: 'Vermilion Bike Store Pvt Ltd',
+    memo: 'Brand Strategy Package (SAC 998311)',
+    amount: 240000.00,
+    status: 'Current (Not Due)',
+    statusTone: 'paid',
+    daysOverdue: 0,
+    partiallyPaid: null,
+    dueDate: '30/07/2026'
+  },
+  {
     id: 'inv-1018',
     date: '9/20/25',
     type: 'Invoice',

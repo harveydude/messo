@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, HelpCircle, Check, Copy, GripVertical, Pin, Trash2, ExternalLink, History, Settings as SettingsIcon, Calendar, Paperclip, CheckCircle2, ChevronDown, ChevronRight, PlayCircle, Store, Pencil } from 'lucide-react';
+import { 
+  X, HelpCircle, Check, Copy, GripVertical, Pin, Trash2, ExternalLink, History, 
+  Settings as SettingsIcon, Calendar, Paperclip, CheckCircle2, ChevronDown, ChevronRight, 
+  PlayCircle, Store, Pencil, FileText, CreditCard, Receipt, DollarSign, Truck, 
+  UserCheck, UploadCloud, ArrowLeftRight, BookOpen 
+} from 'lucide-react';
 import UsageMeter from './UsageMeter';
 import dashboardData from '../data/dashboard.json';
 import api from '../api/client';
@@ -11,104 +16,100 @@ import api from '../api/client';
 export function QuickCreateMenu({ isOpen, onClose, onActionSelect }) {
   if (!isOpen) return null;
 
-  const columns = [
+  const categories = [
     {
       title: 'Customers',
-      width: 177,
       items: [
-        'Invoice', 'Receive payment', 'Statement', 'Estimate',
-        'Sales order', 'Credit memo', 'Sales receipt',
-        'Refund receipt', 'Delayed credit', 'Delayed charge',
-        'Add customer',
-      ],
+        { key: 'Invoice', label: 'GST Tax Invoice', icon: FileText, desc: 'Bill client with GST auto-computation' },
+        { key: 'Receive payment', label: 'Receive Payment', icon: CreditCard, desc: 'Record incoming UPI, NEFT or cheque' },
+        { key: 'Estimate', label: 'Quotation / Estimate', icon: FileText, desc: 'Send project estimate' },
+        { key: 'Sales receipt', label: 'Cash Sales Receipt', icon: Receipt, desc: 'Direct sale with instantaneous payment' },
+        { key: 'Credit memo', label: 'Credit Note / Memo', icon: Truck, desc: 'Return adjustment' },
+        { key: 'Add customer', label: 'Add New Customer', icon: UserCheck, desc: 'Create client profile' },
+      ]
     },
     {
-      title: 'Vendors',
-      width: 177,
+      title: 'Vendors / Suppliers',
       items: [
-        'Expense', 'Check', 'Bill', 'Pay bills',
-        'Purchase order', 'Vendor credit', 'Credit card credit',
-        'Print checks', 'Add vendor',
-      ],
+        { key: 'Expense', label: 'Direct Expense', icon: DollarSign, desc: 'Already paid debit / UPI transaction' },
+        { key: 'Bill', label: 'Vendor Bill (AP)', icon: Receipt, desc: 'Supplier tax invoice with TDS withholding' },
+        { key: 'Pay bills', label: 'Pay Vendor Bills', icon: CreditCard, desc: 'Batch settlement of accounts payable' },
+        { key: 'Vendor credit', label: 'Debit Note / Credit', icon: Truck, desc: 'Supplier adjustment note' },
+        { key: 'Add vendor', label: 'Add New Vendor', icon: UserCheck, desc: 'Add supplier with PAN/GSTIN' },
+      ]
     },
     {
-      title: 'Team',
-      width: 161,
+      title: 'Employees & Payroll',
       items: [
-        'Single time activity',
-        'Weekly timesheet',
-        'Add employee',
-        'Add contractor',
-        { label: 'Payroll', external: true },
-      ],
+        { key: 'Payroll', label: 'Monthly Payroll Run', icon: UserCheck, desc: 'Execute salary with EPF, ESI & PT' },
+        { key: 'Single time activity', label: 'Salary Voucher', icon: DollarSign, desc: 'Individual employee voucher' },
+        { key: 'Weekly timesheet', label: 'Weekly Timesheet', icon: Calendar, desc: 'Attendance & billable hours' },
+        { key: 'Add employee', label: 'Add Employee', icon: UserCheck, desc: 'Enroll staff for payroll' },
+      ]
     },
     {
-      title: 'Other',
-      width: 179,
+      title: 'Other / Ledger',
       items: [
-        'Task', 'Bank deposit', 'Transfer', 'Journal entry',
-        'Inventory qty adjustment', 'Pay down credit card',
-        'Add product/service',
-      ],
-    },
+        { key: 'Bank deposit', label: 'Bank Deposit', icon: UploadCloud, desc: 'Group cash / cheques into bank' },
+        { key: 'Transfer', label: 'Contra Fund Transfer', icon: ArrowLeftRight, desc: 'Transfer between HDFC and ICICI' },
+        { key: 'Journal entry', label: 'General Journal Entry', icon: BookOpen, desc: 'Manual adjusting debit/credit voucher' },
+        { key: 'Inventory qty adjustment', label: 'Inventory Adjustment', icon: Store, desc: 'Stock count write-off' },
+      ]
+    }
   ];
 
-  const [hoveredItem, setHoveredItem] = useState(null);
-
   return (
-    /* Scrim – click to close */
-    <div className="fixed inset-0 z-50" onClick={onClose}>
-      {/* Panel: anchored at left:78 top:60, w=754, white, rounded-[6px] */}
+    <div className="fixed inset-0 z-50 bg-black/20" onClick={onClose}>
       <div
-        className="absolute bg-white rounded-[6px] py-6 px-[30px] select-none"
+        className="absolute bg-white rounded-lg select-none"
         style={{
-          left: 78,
-          top: 60,
-          width: 754,
-          boxShadow: '0 10px 36px rgba(0,0,0,0.22)',
+          left: 88,
+          top: 68,
+          width: 780,
+          boxShadow: '0 16px 48px rgba(9, 30, 66, 0.25)',
+          border: '1px solid #dfe1e6',
+          padding: '20px 24px',
+          zIndex: 1100,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '20px'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex">
-          {columns.map((col, ci) => (
-            <div key={ci} style={{ width: col.width }} className="pr-4">
-              {/* Column header – 17px bold */}
-              <h4 className="text-[17px] font-bold text-[#393A3D] mb-3 leading-tight">{col.title}</h4>
-
-              {/* Items – 40px pitch */}
-              <ul className="space-y-0">
-                {col.items.map((raw, ii) => {
-                  const isObj = typeof raw === 'object';
-                  const label = isObj ? raw.label : raw;
-                  const isExternal = isObj && raw.external;
-                  const itemKey = `${ci}-${ii}`;
-                  const isHovered = hoveredItem === itemKey;
-
-                  return (
-                    <li key={ii}>
-                      <button
-                        onMouseEnter={() => setHoveredItem(itemKey)}
-                        onMouseLeave={() => setHoveredItem(null)}
-                        onClick={() => {
-                          onActionSelect(label);
-                          onClose();
-                        }}
-                        className={`w-full text-left h-[36px] px-3 rounded-[6px] text-[15px] text-[#393A3D] flex items-center transition-colors ${
-                          isHovered ? 'bg-[#F4F5F8]' : ''
-                        }`}
-                      >
-                        <span>{label}</span>
-                        {isExternal && (
-                          <ExternalLink size={13} className="ml-1.5 text-[#6B6C72] shrink-0" />
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+        {categories.map((col, idx) => (
+          <div key={idx} className="flex flex-col">
+            <h4 className="text-[12px] uppercase tracking-[0.6px] text-[#5e6c84] font-bold mb-3 pb-1.5 border-b border-[#ebecf0]">
+              {col.title}
+            </h4>
+            <div className="flex flex-col gap-1">
+              {col.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => {
+                      onActionSelect(item.key);
+                      onClose();
+                    }}
+                    className="flex flex-col p-2 rounded-md text-left transition hover:bg-[#f4f5f8] group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon size={14} className="text-[#007755] shrink-0 group-hover:scale-110 transition" />
+                      <span className="text-[13px] text-[#172b4d] font-medium leading-tight">
+                        {item.label}
+                      </span>
+                    </div>
+                    {item.desc && (
+                      <span className="text-[10.5px] text-[#5e6c84] mt-0.5 pl-5.5 leading-snug line-clamp-1">
+                        {item.desc}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );

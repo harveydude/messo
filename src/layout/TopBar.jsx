@@ -5,14 +5,19 @@ import {
   Settings, 
   Bell, 
   Users, 
-  X 
+  X,
+  Sparkles,
+  CheckSquare,
+  Grid,
+  UserCheck,
+  ChevronDown
 } from 'lucide-react';
 import SearchDropdown from '../components/SearchDropdown';
 import MyIntegrationsPopover from '../components/MyIntegrationsPopover';
 import NotificationsPanel from '../components/NotificationsPanel';
 
 export default function TopBar({ 
-  companyName = "Karan's Landscaping Services", 
+  companyName = "MESO Creative Labs Pvt Ltd", 
   searchQuery = "", 
   setSearchQuery, 
   onSearch, 
@@ -46,7 +51,6 @@ export default function TopBar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       setIsSearchFocused(false);
@@ -68,12 +72,8 @@ export default function TopBar({
   };
 
   return (
-    <header className="w-full bg-white relative z-30 shrink-0">
-      {/*
-        The promo banner sits above the toolbar, spanning the full width, and is
-        part of the chrome in the reference. It was absent entirely -- which is
-        the sort of thing that makes a reproduction "close" without being right.
-      */}
+    <header className="w-full bg-white relative z-30 shrink-0 select-none">
+      {/* Promo banner */}
       <div className="h-[34px] w-full bg-gradient-to-r from-[#2CA01C] via-[#0AA574] to-[#0077C5] flex items-center justify-center gap-3 text-[13px] text-white">
         <span className="font-medium">Buy now and save 90% for 3 months</span>
         <span className="w-px h-[14px] bg-white/40" aria-hidden="true" />
@@ -82,175 +82,219 @@ export default function TopBar({
         </a>
       </div>
 
-      <div className="h-[56px] w-full bg-white border-b border-[#E3E5E8] flex items-center justify-between px-4 select-none relative shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
-      {/* Left cluster: Logo (x:16, y:12) and Company Name */}
-      <div className="flex items-center space-x-6 min-w-[260px] pl-0">
-        <div className="flex items-center space-x-2 cursor-pointer shrink-0 group" onClick={() => onSearch('')}>
-          <div className="w-8 h-8 rounded-lg overflow-hidden bg-black flex items-center justify-center shadow-xs border border-cyan-500/30 group-hover:border-cyan-400 transition">
-            <img src="/logo.png" alt="Meso Logo" className="w-full h-full object-cover" />
+      {/* Main TopBar Container (Coordinate: H:56px, Border: #dfe1e6) */}
+      <div className="h-[56px] w-full bg-white border-b border-[#dfe1e6] flex items-center justify-between px-4 relative shadow-[0_1px_2px_rgba(9,30,66,0.04)]">
+        {/* Left cluster: Brand Logo (x:16, y:10), Company Name & GSTIN Badge */}
+        <div className="flex items-center space-x-3 min-w-[280px]">
+          <div 
+            className="flex items-center space-x-2 cursor-pointer shrink-0 group" 
+            onClick={() => onSearch('')}
+            title="Meso Financial Cloud"
+          >
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-black flex items-center justify-center shadow-xs border border-emerald-500/30 group-hover:border-emerald-400 transition">
+              <img src="/logo.png" alt="Meso Logo" className="w-full h-full object-cover" />
+            </div>
+            <div className="text-[17px] font-bold text-[#172b4d] tracking-tight leading-none">
+              meso
+            </div>
           </div>
-          <div className="leading-tight">
-            <div className="text-[16px] font-bold text-[#1f2937] leading-none tracking-tight">meso</div>
+
+          <div className="border-l border-gray-200 pl-3">
+            <div className="flex items-center gap-1 cursor-pointer hover:text-black">
+              <span className="text-[13.5px] font-semibold text-[#172b4d] truncate max-w-[150px]">
+                {isSearchFocused ? "MESO Labs..." : (companyName || "MESO Creative Labs")}
+              </span>
+              <ChevronDown size={13} className="text-[#5e6c84] shrink-0" />
+            </div>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="text-[9.5px] font-semibold px-1.5 py-0.2 rounded bg-[#e6f4ea] text-[#005f43] tracking-wider font-mono">
+                GSTIN: 27AABCP1234A1Z5
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Company Name (Truncated behind expanded search when focused) */}
-        <div className="text-[16px] font-semibold text-[#393A3D] cursor-pointer hover:text-black truncate max-w-[140px]">
-          <span>{isSearchFocused ? "Sample Comp..." : companyName}</span>
-        </div>
-      </div>
+        {/* Center Smart Search Bar & NLP Prompt (Coordinate: X:480, W:640, H:38) */}
+        <div 
+          ref={searchContainerRef}
+          className={isSearchFocused 
+            ? "absolute left-1/2 -translate-x-1/2 top-[6px] z-[60] w-[1310px]" 
+            : "flex-1 max-w-[640px] mx-auto px-4"
+          }
+        >
+          <div className="relative flex items-center w-full">
+            <Search 
+              size={17} 
+              className={`absolute left-3.5 text-[#5e6c84] pointer-events-none transition-colors ${
+                isSearchFocused ? 'text-[#007755]' : ''
+              }`} 
+            />
+            <input
+              type="text"
+              data-search-input
+              value={searchQuery}
+              onFocus={() => setIsSearchFocused(true)}
+              onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search transactions, customers, reports or ask 'Why did my expenses go up?'"
+              className={`w-full text-[13px] text-[#172b4d] placeholder-[#5e6c84] bg-[#f4f5f8] rounded-full transition-all pl-[38px] pr-[96px] focus:outline-none focus:bg-white ${
+                isSearchFocused
+                  ? 'h-[42px] border-2 border-[#007755] shadow-lg'
+                  : 'h-[38px] border border-transparent hover:border-[#dfe1e6]'
+              }`}
+            />
 
-      {/* Center Search Bar & Dropdown Container */}
-      <div 
-        ref={searchContainerRef}
-        className={isSearchFocused 
-          ? "absolute left-1/2 -translate-x-1/2 top-[6px] z-[60] w-[1310px]" 
-          : "flex-1 max-w-[640px] mx-auto px-4"
-        }
-      >
-        <div className="relative flex items-center w-full">
-          <Search 
-            size={18} 
-            className={`absolute left-3.5 text-[#6B6C72] pointer-events-none transition-colors ${
-              isSearchFocused ? 'text-[#2CA01C]' : ''
-            }`} 
-          />
-          <input
-            type="text"
-            data-search-input
-            value={searchQuery}
-            onFocus={() => setIsSearchFocused(true)}
-            onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Search for transactions, contacts, reports, help and more"
-            className={`w-full text-[15px] text-[#393A3D] placeholder-[#6B6C72] bg-white rounded-full transition-all pl-[42px] pr-10 focus:outline-none ${
-              isSearchFocused
-                ? 'h-[44px] border-2 border-[#2CA01C] shadow-lg'
-                : 'h-[36px] border border-[#9DA2A8] hover:border-[#6B6C72]'
-            }`}
-          />
-          {searchQuery && (
-            <button 
-              onClick={() => {
-                if (setSearchQuery) setSearchQuery('');
-              }}
-              className="absolute right-3.5 text-[#6B6C72] hover:text-[#393A3D] p-1 cursor-pointer transition"
-              title="Clear search"
+            {/* Clear Button */}
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery && setSearchQuery('')}
+                className="absolute right-22 text-[#5e6c84] hover:text-[#172b4d] p-1 cursor-pointer transition"
+                title="Clear search"
+              >
+                <X size={15} />
+              </button>
+            )}
+
+            {/* Ask AI Pill inside Search Bar */}
+            <div
+              onClick={onOpenAssistant}
+              className="absolute right-2 flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-[11px] font-semibold cursor-pointer shadow-xs select-none hover:opacity-95 transition"
+              style={{ background: 'var(--ai-gradient)' }}
+              title="Ask MESO Assist AI"
             >
-              <X size={16} />
-            </button>
+              <Sparkles size={11} />
+              <span>Ask AI</span>
+            </div>
+          </div>
+
+          {/* Search Dropdown attached directly below */}
+          {isSearchFocused && (
+            <SearchDropdown
+              query={searchQuery}
+              onSelectResult={handleSelectResult}
+              onAdvancedSearch={handleAdvancedSearch}
+            />
           )}
         </div>
 
-        {/* Search Dropdown attached directly below */}
-        {isSearchFocused && (
-          <SearchDropdown
-            query={searchQuery}
-            onSelectResult={handleSelectResult}
-            onAdvancedSearch={handleAdvancedSearch}
-          />
-        )}
-      </div>
-
-      {/* Right cluster: "Contact experts" + 20px icon buttons + 32px avatar */}
-      <div className="flex items-center space-x-4 pr-1 text-[#393A3D]">
-        {/* Contact experts + avatar */}
-        <button className="hidden xl:flex items-center space-x-2 px-2 py-1 rounded hover:bg-gray-100 text-[15px] font-medium text-[#393A3D] cursor-pointer">
-          <img 
-            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=64&h=64&q=80" 
-            alt="Expert" 
-            className="w-[28px] h-[28px] rounded-full object-cover" 
-          />
-          <span>Contact experts</span>
-        </button>
-
-        {/* Action icons (~44px apart, 20px icons) */}
-        <div className="flex items-center space-x-3 text-[#393A3D]">
-          {/* Apps / My Integrations icon with pink notification dot */}
-          <div ref={appsMenuRef} className="relative">
-            <button 
-              onClick={() => {
-                setMyIntegrationsOpen(prev => !prev);
-                setNotificationsOpen(false);
-              }}
-              className={`p-1.5 hover:bg-gray-100 rounded-full transition relative cursor-pointer ${
-                myIntegrationsOpen ? 'bg-gray-100' : ''
-              }`}
-              title="My integrations"
-            >
-              <Users size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#E31C5F]" />
-            </button>
-
-            {myIntegrationsOpen && (
-              <MyIntegrationsPopover 
-                onClose={() => setMyIntegrationsOpen(false)}
-                onNavigateFind={() => {
-                  setMyIntegrationsOpen(false);
-                  if (onNavigateApps) onNavigateApps();
-                }}
-              />
-            )}
-          </div>
-
-          {/* Bell icon */}
-          <div ref={bellMenuRef} className="relative">
-            <button 
-              onClick={() => {
-                setNotificationsOpen(prev => !prev);
-                setMyIntegrationsOpen(false);
-              }}
-              className={`p-1.5 hover:bg-gray-100 rounded-full transition relative cursor-pointer ${
-                notificationsOpen ? 'bg-gray-100' : ''
-              }`}
-              title="Notifications"
-            >
-              <Bell size={20} />
-            </button>
-
-            {notificationsOpen && (
-              <NotificationsPanel 
-                onClose={() => setNotificationsOpen(false)}
-              />
-            )}
-          </div>
-
-          {/* Settings / Gear icon */}
+        {/* Right Action Rail (Coordinate: X:1320, W:584, H:36) */}
+        <div className="flex items-center space-x-2.5 pr-1 text-[#5e6c84]">
+          {/* Contact Chartered Accountant */}
           <button 
-            onClick={() => {
-              setMyIntegrationsOpen(false);
-              setNotificationsOpen(false);
-              onOpenSettings();
-            }}
-            className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer"
-            title="Settings"
+            onClick={() => alert("Connecting with your designated Chartered Accountant (CA Anand Varma, FCA)...")}
+            className="hidden xl:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#f8f9fa] border border-[#dfe1e6] hover:bg-gray-100 text-[12px] font-medium text-[#172b4d] cursor-pointer transition shadow-2xs"
+            title="Contact Chartered Accountant"
           >
-            <Settings size={20} />
+            <UserCheck size={14} className="text-[#007755]" />
+            <span>Contact CA</span>
           </button>
 
-          {/* Help icon */}
+          {/* Action icon group */}
+          <div className="flex items-center space-x-1.5 text-[#5e6c84]">
+            {/* Tasks */}
+            <button 
+              onClick={() => alert("Tasks & Bookkeeping Checklist")}
+              className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-[#5e6c84] hover:text-[#172b4d]" 
+              title="Tasks & Checklists"
+            >
+              <CheckSquare size={18} />
+            </button>
+
+            {/* Apps & Integrations */}
+            <div ref={appsMenuRef} className="relative">
+              <button 
+                onClick={() => {
+                  setMyIntegrationsOpen(prev => !prev);
+                  setNotificationsOpen(false);
+                }}
+                className={`p-1.5 hover:bg-gray-100 rounded-full transition relative cursor-pointer text-[#5e6c84] hover:text-[#172b4d] ${
+                  myIntegrationsOpen ? 'bg-gray-100 text-[#172b4d]' : ''
+                }`}
+                title="Apps & Integrations"
+              >
+                <Grid size={18} />
+              </button>
+
+              {myIntegrationsOpen && (
+                <MyIntegrationsPopover 
+                  onClose={() => setMyIntegrationsOpen(false)}
+                  onNavigateFind={() => {
+                    setMyIntegrationsOpen(false);
+                    if (onNavigateApps) onNavigateApps();
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Notifications Bell */}
+            <div ref={bellMenuRef} className="relative">
+              <button 
+                onClick={() => {
+                  setNotificationsOpen(prev => !prev);
+                  setMyIntegrationsOpen(false);
+                }}
+                className={`p-1.5 hover:bg-gray-100 rounded-full transition relative cursor-pointer text-[#5e6c84] hover:text-[#172b4d] ${
+                  notificationsOpen ? 'bg-gray-100 text-[#172b4d]' : ''
+                }`}
+                title="Notifications"
+              >
+                <Bell size={18} />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#de350b]" />
+              </button>
+
+              {notificationsOpen && (
+                <NotificationsPanel 
+                  onClose={() => setNotificationsOpen(false)}
+                />
+              )}
+            </div>
+
+            {/* Help / Documentation */}
+            <button 
+              onClick={() => {
+                setMyIntegrationsOpen(false);
+                setNotificationsOpen(false);
+                if (onOpenAssistant) onOpenAssistant();
+              }}
+              className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-[#5e6c84] hover:text-[#172b4d]"
+              title="Help & Documentation"
+            >
+              <HelpCircle size={18} />
+            </button>
+
+            {/* Settings Gear */}
+            <button 
+              onClick={() => {
+                setMyIntegrationsOpen(false);
+                setNotificationsOpen(false);
+                onOpenSettings();
+              }}
+              className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer text-[#5e6c84] hover:text-[#172b4d]"
+              title="Account & Settings"
+            >
+              <Settings size={18} />
+            </button>
+          </div>
+
+          {/* User Avatar */}
           <button 
-            onClick={() => {
-              setMyIntegrationsOpen(false);
-              setNotificationsOpen(false);
-              if (onOpenAssistant) onOpenAssistant();
-            }}
-            className="p-1.5 hover:bg-gray-100 rounded-full transition cursor-pointer"
-            title="Help / Meso Assistant"
+            onClick={onOpenShortcuts}
+            className="w-[32px] h-[32px] rounded-full bg-[#0052cc] hover:bg-[#0047b3] text-white flex items-center justify-center font-bold text-xs shadow-xs ml-1 cursor-pointer transition"
+            title="Accountant view & Keyboard Shortcuts"
           >
-            <HelpCircle size={20} />
+            J
+          </button>
+
+          {/* Dedicated MESO Assist AI Trigger Button */}
+          <button 
+            onClick={onOpenAssistant}
+            title="MESO Assist AI Intelligence"
+            className="w-[34px] h-[34px] rounded-lg border border-[#7c3aed] flex items-center justify-center text-white shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer ml-1"
+            style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #00b894 100%)' }}
+          >
+            <Sparkles size={16} />
           </button>
         </div>
-
-        {/* 32px blue circle avatar flush right */}
-        <button 
-          onClick={onOpenShortcuts}
-          className="w-[32px] h-[32px] rounded-full bg-[#0077C5] hover:bg-[#005e9e] text-white flex items-center justify-center font-bold text-sm shadow-xs ml-2 cursor-pointer transition"
-          title="Accountant view & Shortcuts"
-        >
-          T
-        </button>
-      </div>
       </div>
     </header>
   );

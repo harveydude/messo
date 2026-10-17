@@ -20,6 +20,7 @@ import InvoiceReview from './components/InvoiceReview';
 import InvoiceEditorModal from './components/InvoiceEditorModal';
 import ExpenseModal from './components/ExpenseModal';
 import VendorBillScannerModal from './components/VendorBillScannerModal';
+import TransactionRecodeModal from './components/TransactionRecodeModal';
 import BankCategorize from './components/BankCategorize';
 import Reconcile from './components/Reconcile';
 import ReportsMath from './components/ReportsMath';
@@ -250,6 +251,7 @@ export default function App() {
   const [invoiceEditorOpen, setInvoiceEditorOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [billModalOpen, setBillModalOpen] = useState(false);
+  const [recodeModalOpen, setRecodeModalOpen] = useState(false);
   const [universalWorkflow, setUniversalWorkflow] = useState(null);
   const [pinnedItems, setPinnedItems] = useState(() => {
     try {
@@ -430,13 +432,14 @@ export default function App() {
     if (except !== 'invoiceEditor') setInvoiceEditorOpen(false);
     if (except !== 'expenseModal') setExpenseModalOpen(false);
     if (except !== 'billModal') setBillModalOpen(false);
+    if (except !== 'recodeModal') setRecodeModalOpen(false);
     if (except !== 'setup') setSetupDrawerOpen(false);
     if (except !== 'assistant') setAssistantOpen(false);
   }, []);
 
   useEscape(() => closeAllOverlays(), Object.values({
     createMenuOpen, settingsMenuOpen, accountSettingsOpen, additionalInfoOpen,
-    customizeMenusOpen, journalModalOpen, setupDrawerOpen, assistantOpen, invoiceEditorOpen, expenseModalOpen, billModalOpen,
+    customizeMenusOpen, journalModalOpen, setupDrawerOpen, assistantOpen, invoiceEditorOpen, expenseModalOpen, billModalOpen, recodeModalOpen,
   }).some(Boolean));
 
   const renderScreen = () => {
@@ -761,6 +764,7 @@ export default function App() {
           <AssistantDrawer
             isOpen={assistantOpen}
             onClose={() => setAssistantOpen(false)}
+            onLaunchRecode={() => setRecodeModalOpen(true)}
           />
         </div>
 
@@ -808,6 +812,11 @@ export default function App() {
         <VendorBillScannerModal
           isOpen={billModalOpen}
           onClose={() => setBillModalOpen(false)}
+        />
+        <TransactionRecodeModal
+          isOpen={recodeModalOpen}
+          onClose={() => setRecodeModalOpen(false)}
+          onSaved={() => setRecodeModalOpen(false)}
         />
         <UniversalCreateWorkflowModal
           isOpen={!!universalWorkflow}

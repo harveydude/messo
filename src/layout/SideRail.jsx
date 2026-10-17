@@ -265,15 +265,16 @@ export default function SideRail({
       style={{ fontFamily: FONT }}
     >
       <div className="w-full flex flex-col items-center">
-        {/* Create */}
-        <RailItem label="Create" onClick={onOpenCreate}>
-          <span
-            className="w-[26px] h-[26px] rounded-full border-2 border-[#393A3D] group-hover:border-[#2CA01C] group-focus-visible:border-[#2CA01C] flex items-center justify-center text-[#2CA01C] transition"
-            aria-hidden="true"
-          >
-            <Plus size={15} strokeWidth={2.5} />
-          </span>
-        </RailItem>
+        {/* Create Transaction Trigger Button (Section B Spec: 60x46, #007755) */}
+        <button
+          type="button"
+          onClick={onOpenCreate}
+          className="w-[60px] h-[46px] rounded-[23px] bg-[#007755] hover:bg-[#005f43] border border-white/20 flex flex-col items-center justify-center text-white mb-3 shadow-[0_2px_8px_rgba(0,119,85,0.35)] transition cursor-pointer select-none"
+          title="Create transaction"
+        >
+          <Plus size={18} strokeWidth={2.6} />
+          <span className="text-[9.5px] font-bold mt-0.5 leading-none">Create</span>
+        </button>
 
         {/* Bookmarks */}
         <RailItem label="Bookmarks" onClick={() => setCurrentView('bookmarks')} active={isActive('bookmarks')}>

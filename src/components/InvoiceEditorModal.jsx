@@ -18,6 +18,7 @@ import api from '../api/client';
 
 /* ─── Customer seed data ─── */
 const CUSTOMERS = [
+  "Vermilion Bike Store Pvt Ltd",
   "Amy's Bird Sanctuary",
   "Bill's Windsurf Shop",
   "Cool Cars",
@@ -32,6 +33,11 @@ const CUSTOMERS = [
 ];
 
 const CUSTOMER_DETAILS = {
+  'Vermilion Bike Store Pvt Ltd': {
+    email: 'bikestore@vermilion.in',
+    gstin: '27AABCU9603R1ZM',
+    billTo: 'Vermilion Bike Store Pvt Ltd\n214 Harborfront Avenue\nBandra West, Mumbai, MH 400050'
+  },
   'Cool Cars': {
     email: 'Cool_Cars@meso.in',
     billTo: 'Gaurav Parikh\nCool Cars\n65 Marine Drive\nNariman Point, Mumbai, MH 400021'
@@ -42,12 +48,13 @@ const TERMS_OPTIONS = ['Net 15', 'Net 30', 'Net 60', 'Due on receipt'];
 
 /* ─── Product catalog seed data ─── */
 const CATALOG = [
-  { name: 'Design', desc: 'Custom Design', cat: 'Design', sku: '', rate: 75.00 },
-  { name: 'Concrete', desc: 'Concrete for fountain installation', cat: 'Design > Fountains', sku: '', rate: 0.00 },
-  { name: 'Pump', desc: 'Fountain Pump', cat: 'Design > Fountains', sku: 'P461-17', rate: 15.00 },
-  { name: 'Rock Fountain', desc: 'Rock Fountain', cat: 'Design > Fountains', sku: 'R154-88', rate: 275.00 },
-  { name: 'Rocks', desc: 'Garden Rocks', cat: 'Design', sku: '', rate: 0.00 },
-  { name: 'Services', desc: '', cat: 'Design', sku: '', rate: 0.00 },
+  { name: 'Brand Strategy Package', desc: 'June Campaign: Brand positioning, creative direction & digital collateral (SAC 998311)', cat: 'Professional Services', sku: 'SAC-998311', rate: 240000.00 },
+  { name: 'Design', desc: 'Custom Design', cat: 'Design', sku: '', rate: 7500.00 },
+  { name: 'Concrete', desc: 'Concrete for fountain installation', cat: 'Design > Fountains', sku: '', rate: 1200.00 },
+  { name: 'Pump', desc: 'Fountain Pump', cat: 'Design > Fountains', sku: 'P461-17', rate: 4500.00 },
+  { name: 'Rock Fountain', desc: 'Rock Fountain', cat: 'Design > Fountains', sku: 'R154-88', rate: 25000.00 },
+  { name: 'Rocks', desc: 'Garden Rocks', cat: 'Design', sku: '', rate: 800.00 },
+  { name: 'Services', desc: '', cat: 'Design', sku: '', rate: 5000.00 },
   { name: 'Gardening', desc: 'Weekly Gardening Service', cat: 'Landscaping', sku: '', rate: 0.00 },
   { name: 'Hours', desc: '', cat: 'Landscaping', sku: '', rate: 0.00 },
   { name: 'Installation', desc: 'Installation of landscape design', cat: 'Landscaping', sku: '', rate: 0.00 }
