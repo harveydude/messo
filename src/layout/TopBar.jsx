@@ -24,7 +24,8 @@ export default function TopBar({
   onOpenSettings,
   onOpenShortcuts,
   onOpenAssistant,
-  onNavigateApps
+  onNavigateApps,
+  onOpenOnboarding
 }) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [myIntegrationsOpen, setMyIntegrationsOpen] = useState(false);
@@ -179,6 +180,16 @@ export default function TopBar({
 
         {/* Right Action Rail (Coordinate: X:1320, W:584, H:36) */}
         <div className="flex items-center space-x-2.5 pr-1 text-[#5e6c84]">
+          {/* Setup Wizard Button */}
+          <button 
+            onClick={onOpenOnboarding}
+            className="hidden lg:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#e6f4ea] border border-[#007755] hover:bg-[#d2edd8] text-[12px] font-semibold text-[#007755] cursor-pointer transition shadow-2xs"
+            title="Open 13-Screen Setup Wizard"
+          >
+            <Sparkles size={13} className="text-[#007755]" />
+            <span>Setup Wizard</span>
+          </button>
+
           {/* Contact Chartered Accountant */}
           <button 
             onClick={() => alert("Connecting with your designated Chartered Accountant (CA Anand Varma, FCA)...")}

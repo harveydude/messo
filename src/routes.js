@@ -18,6 +18,7 @@
  */
 export const ROUTES = [
   { id: 'dashboard', slug: '/', label: 'Dashboard' },
+  { id: 'onboarding', slug: '/onboarding', label: 'Setup wizard', aliases: ['/setup', '/wizard'] },
   { id: 'bookmarks', slug: '/bookmarks', label: 'Bookmarks' },
 
   { id: 'bank_transactions', slug: '/banking', label: 'Bank transactions' },

@@ -26,6 +26,7 @@ import Reconcile from './components/Reconcile';
 import ReportsMath from './components/ReportsMath';
 import CustomizeBookmarksModal from './components/CustomizeBookmarksModal';
 import UniversalCreateWorkflowModal from './components/UniversalCreateWorkflowModal';
+import OnboardingWizard from './components/onboarding/OnboardingWizard';
 import { StoreProvider } from './store';
 
 /*
@@ -454,6 +455,18 @@ export default function App() {
           />
         );
 
+      case 'onboarding':
+        return (
+          <OnboardingWizard
+            onComplete={(data) => {
+              if (data?.businessName) setCompanyName(data.businessName);
+              localStorage.setItem('meso_onboarding_completed', 'true');
+              navigate('dashboard');
+            }}
+            onExit={() => navigate('dashboard')}
+          />
+        );
+
       /**
        * The gear menu's utility screens, and the generic pages behind several
        * Create-menu items.
@@ -717,6 +730,23 @@ export default function App() {
   const [bankCategorizeTxn, setBankCategorizeTxn] = useState(null);
   const [reconcileOpen, setReconcileOpen] = useState(false);
 
+  if (viewId === 'onboarding') {
+    return (
+      <ErrorBoundary title="Setup Wizard">
+        <StoreProvider>
+          <OnboardingWizard
+            onComplete={(data) => {
+              if (data?.businessName) setCompanyName(data.businessName);
+              localStorage.setItem('meso_onboarding_completed', 'true');
+              navigate('dashboard');
+            }}
+            onExit={() => navigate('dashboard')}
+          />
+        </StoreProvider>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     /* The outer boundary covers the chrome. It used to sit around <main> only,
        so a throw in the top bar, sidebar or a popup blanked the entire app. */
@@ -732,6 +762,7 @@ export default function App() {
           onOpenShortcuts={() => { closeAllOverlays('additionalInfo'); setAdditionalInfoOpen(true); }}
           onOpenAssistant={() => { closeAllOverlays('assistant'); setAssistantOpen(true); }}
           onNavigateApps={() => navigate('apps')}
+          onOpenOnboarding={() => navigate('onboarding')}
         />
 
         <div className="flex flex-1 overflow-hidden relative">
