@@ -282,17 +282,17 @@ export default function OnboardingWizard({ onComplete, onExit }) {
       {/* 1. TOP HEADER & PROGRESS BAR (Screens 1 to 11) */}
       {currentStep > 0 && currentStep < 12 && (
         <header className="w-full pt-3 pb-2 px-6 sm:px-10 flex flex-col z-20">
-          <div className="flex items-center justify-between w-full h-[40px] mb-2">
+          <div className="flex items-center justify-between w-full h-[36px] mb-2">
             {/* Official MESSO Brand Cluster with Logo Image */}
             <div 
-              className="flex items-center space-x-2.5 cursor-pointer" 
+              className="flex items-center space-x-2 cursor-pointer" 
               onClick={() => setCurrentStep(0)}
               title="Return to Welcome Screen"
             >
-              <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center p-0.5 border border-cyan-500/30 shadow-xs">
+              <div className="w-[24px] h-[24px] rounded bg-black flex items-center justify-center p-0.5 border border-cyan-500/30 shadow-xs">
                 <img src="/logo.png" alt="MESSO Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="text-[20px] font-black tracking-tight text-[#1f2937]">
+              <span className="text-[16px] font-bold tracking-tight text-[#1f2937]">
                 MESSO
               </span>
             </div>
@@ -302,29 +302,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
               Get started
             </div>
 
-            {/* Right side: Fullscreen Toggle & Contact Experts */}
-            <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                onClick={toggleFullscreen}
-                className="flex items-center space-x-1.5 px-2.5 py-1 rounded border border-gray-200 hover:bg-gray-50 text-[12px] font-medium text-gray-600 cursor-pointer transition"
-                title="Toggle Fullscreen Mode (F11)"
-              >
-                {isFullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-                <span>{isFullscreen ? 'Exit F11' : 'Full Screen (F11)'}</span>
-              </button>
-
-              {currentStep >= 6 && (
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[#007755] font-bold text-[11px]">
-                    ✓
-                  </div>
-                  <span className="text-[13px] font-medium text-[#1f2937]">
-                    Contact experts
-                  </span>
-                </div>
-              )}
-            </div>
+            <div className="w-[60px]" />
           </div>
 
           {/* Full-width Thin Progress Track */}
@@ -530,132 +508,153 @@ export default function OnboardingWizard({ onComplete, onExit }) {
 // SCREEN 0: WELCOME & SYMMETRICAL HONEYCOMB CLOUD (FRAME 000)
 // =========================================================================
 function Screen0Welcome({ onStart }) {
-  // Symmetrical diamond cloud pills layout matching Frame 000
+  const pills = [
+    {
+      label: 'Sales & Get Paid',
+      bg: '#002147',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <rect x="1.5" y="6.5" width="2" height="4" rx="0.5" fill="#00A3BF" />
+          <rect x="5" y="4" width="2" height="6.5" rx="0.5" fill="#00A3BF" />
+          <rect x="8.5" y="1.5" width="2" height="9" rx="0.5" fill="#00A3BF" />
+        </svg>
+      ),
+      style: { left: '175px', top: '5px' }
+    },
+    {
+      label: 'Customer Hub',
+      bg: '#00828A',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="3" r="1.5" fill="white" />
+          <circle cx="6" cy="9" r="1.5" fill="white" />
+          <circle cx="3" cy="6" r="1.5" fill="white" />
+          <circle cx="9" cy="6" r="1.5" fill="white" />
+        </svg>
+      ),
+      style: { left: '70px', top: '60px' }
+    },
+    {
+      label: 'Business Tax',
+      bg: '#1D2B53',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="6" r="4.5" stroke="white" strokeWidth="1.2" />
+          <path d="M6 6 L6 1.5 A4.5 4.5 0 0 1 10.5 6 Z" fill="#FF5252" />
+        </svg>
+      ),
+      style: { left: '275px', top: '60px' }
+    },
+    {
+      label: 'Payroll',
+      bg: '#0057B8',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M3.5 2.5 L7.5 6 L3.5 9.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+      style: { left: '5px', top: '115px' }
+    },
+    {
+      label: 'Accounting',
+      bg: '#007755',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2.5 3.5 L9.5 8.5 M2.5 8.5 L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      ),
+      style: { left: '165px', top: '115px' }
+    },
+    {
+      label: 'Sales Tax',
+      bg: '#172B4D',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M6 2 C4 4.5 3 6.5 3 8 A3 3 0 0 0 9 8 C9 6.5 8 4.5 6 2 Z" fill="#FF5252" />
+        </svg>
+      ),
+      style: { left: '325px', top: '115px' }
+    },
+    {
+      label: 'Expenses & Pay Bills',
+      bg: '#005F43',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M4 3 L8 6 L4 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+      style: { left: '65px', top: '170px' }
+    },
+    {
+      label: 'Team',
+      bg: '#0052CC',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <circle cx="6" cy="4" r="1.5" fill="white" />
+          <circle cx="3.5" cy="8" r="1.5" fill="white" />
+          <circle cx="8.5" cy="8" r="1.5" fill="white" />
+        </svg>
+      ),
+      style: { left: '280px', top: '170px' }
+    },
+    {
+      label: 'Lending',
+      bg: '#00875A',
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <rect x="3" y="3" width="6" height="2.5" rx="1.25" fill="white" />
+          <rect x="3" y="6.5" width="6" height="2.5" rx="1.25" fill="white" />
+        </svg>
+      ),
+      style: { left: '185px', top: '225px' }
+    },
+  ];
+
   return (
-    <div className="w-full max-w-[1280px] min-h-[540px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-12 py-8 relative">
+    <div className="w-full max-w-[1240px] min-h-[500px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-12 py-6 relative">
       {/* Left Column: Brand, Headline & Action */}
-      <div className="max-w-[540px] flex flex-col items-start z-10">
+      <div className="max-w-[500px] flex flex-col items-start z-10">
         {/* Official MESSO Logo */}
-        <div className="flex items-center space-x-3 mb-10">
-          <div className="w-9 h-9 rounded-xl bg-black flex items-center justify-center p-1 border border-cyan-500/40 shadow-sm">
+        <div className="flex items-center space-x-2.5 mb-8">
+          <div className="w-[26px] h-[26px] rounded bg-black flex items-center justify-center p-0.5 border border-cyan-500/30 shadow-xs">
             <img src="/logo.png" alt="MESSO Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="text-[24px] font-black tracking-tight text-[#1f2937]">
+          <span className="text-[18px] font-bold tracking-tight text-[#1f2937]">
             MESSO
           </span>
         </div>
 
-        <h1 className="text-[44px] font-bold text-[#1f2937] leading-[1.18] tracking-tight mb-8">
+        <h1 className="text-[40px] font-bold text-[#1f2937] leading-[1.18] tracking-tight mb-8">
           Get set up fast with AI and expert guidance
         </h1>
 
         <button
           onClick={onStart}
-          className="h-[46px] px-8 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[15px] rounded-[4px] shadow-sm cursor-pointer transition transform active:scale-[0.98]"
+          className="h-[42px] px-7 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14px] rounded-[4px] shadow-sm cursor-pointer transition transform active:scale-[0.98]"
         >
           Let's get started
         </button>
       </div>
 
-      {/* Right Column: Symmetrical Diamond Constellation of 9 White Floating Pills */}
-      <div className="w-full lg:w-[600px] mt-12 lg:mt-0 flex flex-col items-center justify-center select-none py-6">
-        
-        {/* Row 1: Sales & Get Paid */}
-        <div className="flex justify-center mb-4">
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#003366] flex items-center justify-center text-white">
-              <BarChart2 size={11} strokeWidth={2.5} />
+      {/* Right Column: Exact Diamond Constellation of 9 Floating Pills matching Frame 000 */}
+      <div className="w-full lg:w-[500px] h-[280px] mt-10 lg:mt-0 relative select-none">
+        {pills.map((pill, idx) => (
+          <div 
+            key={idx}
+            className="absolute bg-white rounded-full px-3.5 py-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.07)] border border-[#e5e7eb] flex items-center space-x-2 transition-transform duration-200 hover:scale-105 hover:shadow-md cursor-default select-none"
+            style={pill.style}
+          >
+            <div 
+              className="w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0 shadow-2xs"
+              style={{ backgroundColor: pill.bg }}
+            >
+              {pill.icon}
             </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Sales &amp; Get Paid
+            <span className="text-[12px] font-medium text-[#1f2937] whitespace-nowrap">
+              {pill.label}
             </span>
           </div>
-        </div>
-
-        {/* Row 2: Customer Hub & Business Tax */}
-        <div className="flex justify-center space-x-6 mb-4">
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#00a3bf] flex items-center justify-center text-white">
-              <Users size={11} strokeWidth={2.5} />
-            </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Customer Hub
-            </span>
-          </div>
-
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#332a7c] flex items-center justify-center text-white">
-              <PieChart size={11} strokeWidth={2.5} />
-            </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Business Tax
-            </span>
-          </div>
-        </div>
-
-        {/* Row 3: Payroll | Accounting (Center) | Sales Tax */}
-        <div className="flex justify-center items-center space-x-5 mb-4">
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#0077c5] flex items-center justify-center text-white">
-              <CreditCard size={11} strokeWidth={2.5} />
-            </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Payroll
-            </span>
-          </div>
-
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#007755] flex items-center justify-center text-white">
-              <Building2 size={11} strokeWidth={2.5} />
-            </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Accounting
-            </span>
-          </div>
-
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#e65100] flex items-center justify-center text-white">
-              <Percent size={11} strokeWidth={2.5} />
-            </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Sales Tax
-            </span>
-          </div>
-        </div>
-
-        {/* Row 4: Expenses & Pay Bills | Team */}
-        <div className="flex justify-center space-x-6 mb-4">
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#005f43] flex items-center justify-center text-white">
-              <ArrowRight size={11} strokeWidth={2.5} />
-            </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Expenses &amp; Pay Bills
-            </span>
-          </div>
-
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#0052cc] flex items-center justify-center text-white">
-              <Users size={11} strokeWidth={2.5} />
-            </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Team
-            </span>
-          </div>
-        </div>
-
-        {/* Row 5: Lending */}
-        <div className="flex justify-center">
-          <div className="bg-white rounded-full px-4 py-2 shadow-md border border-gray-100 flex items-center space-x-2.5 transition-transform hover:-translate-y-0.5">
-            <div className="w-5 h-5 rounded-full bg-[#00875a] flex items-center justify-center text-white">
-              <Landmark size={11} strokeWidth={2.5} />
-            </div>
-            <span className="text-[13px] font-medium text-[#1f2937]">
-              Lending
-            </span>
-          </div>
-        </div>
-
+        ))}
       </div>
     </div>
   );
@@ -1709,20 +1708,18 @@ function Screen12Frame094Loading({ onComplete }) {
       className="fixed inset-0 bg-white z-50 flex items-center justify-center cursor-pointer select-none"
     >
       <div className="text-center">
-        <h1 className="text-[34px] sm:text-[38px] font-medium text-[#1f2937] tracking-normal">
-          <span>Getting your </span>
-          <span className="relative inline-block px-1">
-            <span className="font-semibold">all-in-one</span>
-            {/* Animated Cyan / Teal Underline matching Frame 094 */}
-            <span 
-              className="absolute left-0 bottom-[-2px] h-[3px] bg-[#00a3bf] rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,163,191,0.5)]"
-              style={{
-                width: `${lineWidth}%`,
-              }}
-            />
-          </span>
-          <span> platform</span>
-        </h1>
+        <div className="relative inline-block pb-2">
+          <h1 className="text-[34px] sm:text-[38px] font-medium text-[#1f2937] tracking-normal">
+            Getting your all-in-one platform
+          </h1>
+          {/* Animated Cyan / Teal Underline spanning across ALL text */}
+          <div 
+            className="absolute left-0 bottom-0 h-[3px] bg-[#00a3bf] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,163,191,0.6)]"
+            style={{
+              width: `${lineWidth}%`,
+            }}
+          />
+        </div>
       </div>
     </div>
   );

@@ -32,28 +32,24 @@ const APP_SUBMENUS = {
     ],
   },
   expenses: {
-    title: 'Expenses & Bills',
+    title: 'Expenses',
     items: [
-      { label: 'Expense Transaction', view: 'expense_transactions' },
+      { label: 'Expenses', view: 'expense_transactions' },
       { label: 'Vendors', view: 'vendors' },
       { label: 'Bills', view: 'bills' },
-      { label: 'Bill Payments & MSME', view: 'bills' },
       { label: 'Mileage', view: 'mileage' },
       { label: 'Contractors', view: 'team' },
-      { label: 'TDS & Withholding', view: 'business_tax' },
     ],
   },
   sales: {
-    title: 'Sales & Get Paid',
+    title: 'Sales',
     items: [
       { label: 'Overview', view: 'sales_transactions' },
-      { label: 'Sales Transaction', view: 'sales_transactions' },
+      { label: 'All sales', view: 'sales_transactions' },
       { label: 'Invoices', view: 'invoices' },
-      { label: 'Recurring payments', view: 'recurring_transactions' },
-      { label: 'Sales Order', view: 'orders' },
-      { label: 'Sales Channels & Apps', view: 'apps' },
-      { label: 'MESSO Payouts', view: 'bank_transactions' },
-      { label: 'Product and Services', view: 'products_services' },
+      { label: 'Customers', view: 'customers_list' },
+      { label: 'Estimates', view: 'estimates' },
+      { label: 'Products & services', view: 'products_services' },
     ],
   },
   customer_hub: {
@@ -65,39 +61,35 @@ const APP_SUBMENUS = {
     ],
   },
   team: {
-    title: 'Teams',
+    title: 'Team',
     items: [
       { label: 'Employees', view: 'team' },
       { label: 'Contractors', view: 'team' },
-      { label: "Workers' Compensation", view: 'workers_comp' },
+      { label: "Workers' comp", view: 'workers_comp' },
     ],
   },
   time: {
     title: 'Time',
     items: [
-      { label: 'Time Entries', view: 'time_entries' },
-      { label: 'Schedule', view: 'time_entries' },
+      { label: 'Time entries', view: 'time_entries' },
     ],
   },
   sales_tax: {
-    title: 'GST Compliance',
+    title: 'Sales Tax (GST)',
     items: [
-      { label: 'GSTR-1 & GSTR-3B Overview', view: 'sales_tax' },
+      { label: 'GST overview', view: 'sales_tax' },
     ],
   },
   business_tax: {
-    title: 'Business & Direct Tax',
+    title: 'Business Tax',
     items: [
-      { label: 'TDS Overview & Register', view: 'business_tax' },
-      { label: 'Section 194C / 194J', view: 'business_tax' },
-      { label: 'Presumptive Tax (44AD)', view: 'business_tax' },
+      { label: 'TDS & Direct Tax', view: 'business_tax' },
     ],
   },
   lending: {
     title: 'Lending',
     items: [
       { label: 'Overview', view: 'lending' },
-      { label: 'Term Loan Center', view: 'lending' },
     ],
   },
 };
