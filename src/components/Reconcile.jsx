@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Check, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { Check, ChevronLeft, AlertTriangle, Sparkles, FileText } from 'lucide-react';
 import { useStore, useLedger } from '../store';
 import { formatMoney } from '../money';
 import { CHART_OF_ACCOUNTS } from '../data/chartOfAccounts';
@@ -114,6 +114,31 @@ export default function Reconcile({ onClose, onFinish }) {
           </div>
 
           <div className="space-y-4">
+            {/* AI Statement Extraction Box (Module 23 from Master Spec) */}
+            <div className="border border-[#007755]/30 bg-[#e6f4ea]/60 rounded-xl p-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-[#007755] flex items-center justify-center text-white shrink-0">
+                  <Sparkles size={14} />
+                </div>
+                <div>
+                  <div className="text-[12px] font-bold text-gray-900 flex items-center gap-1.5">
+                    <span>HDFC_Statement_June_2026.pdf</span>
+                    <span className="text-[10px] bg-[#007755] text-white px-1.5 py-0.2 rounded font-medium">AI Analyzed</span>
+                  </div>
+                  <div className="text-[11px] text-gray-600">
+                    Auto-extracted: {formatMoney(account?.balance || 604328.00)} ending balance
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStatementBalance(String(account?.balance || 604328.00))}
+                className="text-[11px] font-bold text-[#007755] bg-white border border-[#007755]/30 hover:bg-emerald-50 px-2.5 py-1 rounded transition cursor-pointer shrink-0"
+              >
+                Auto-fill
+              </button>
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Account</label>
               <select

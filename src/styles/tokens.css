@@ -1,17 +1,119 @@
+/**
+ * MESO Design System Tokens
+ * Calibrated precisely for 1920x960 viewport reference & high-density displays
+ */
 :root {
+  /* Legacy & Backward Compatible Aliases */
   --canvas: #F6F7F8;
   --card: #FFFFFF;
-  --brand-green: #2CA01C;
-  --brand-green-dark: #107C41;
+  --brand-green: #007755;
+  --brand-green-dark: #005f43;
   --link-blue: #0077C5;
-  --text: #393A3D;
-  --text-muted: #6B6C72;
-  --border: #C7CBCE;
-  --border-light: #E3E5E8;
-  --badge-green-bg: #DCF0D2;
-  --badge-green-text: #1C7C1C;
-  --alert-pink: #E31C5F;
-  --purple: #7A3CE8;
+  --text: #172b4d;
+  --text-muted: #5e6c84;
+  --border: #dfe1e6;
+  --border-light: #ebecf0;
+  --badge-green-bg: #e3fcef;
+  --badge-green-text: #00875a;
+  --alert-pink: #de350b;
+  --purple: #6c5ce7;
   --radius-card: 8px;
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-card: 0 1px 2px rgba(9, 30, 66, 0.08);
+
+  /* Surfaces & Canvas */
+  --bg-app: #f4f5f8;
+  --bg-surface: #ffffff;
+  --bg-surface-subtle: #f9fafb;
+  --bg-surface-hover: #f1f3f5;
+  --bg-surface-active: #e8eaed;
+  --bg-topbar: #ffffff;
+  --bg-siderail: #0d1e1c;
+  --bg-siderail-item-hover: #1b2e2b;
+  --bg-siderail-item-active: #007755;
+
+  /* Brand Palette (MESO Deep Teal & Accents) */
+  --primary-50: #e6f4ea;
+  --primary-100: #ceead6;
+  --primary-200: #a8dab5;
+  --primary-500: #007755;
+  --primary-600: #005f43;
+  --primary-700: #004732;
+  --primary-text-on-dark: #ffffff;
+
+  /* MESO Assist AI Gradient & Brand Accents */
+  --ai-primary: #6c5ce7;
+  --ai-gradient: linear-gradient(135deg, #6c5ce7 0%, #00b894 100%);
+  --ai-gradient-subtle: linear-gradient(135deg, rgba(108, 92, 231, 0.08) 0%, rgba(0, 184, 148, 0.08) 100%);
+  --ai-border-glow: rgba(108, 92, 231, 0.4);
+
+  /* Indian Localization & Tax Identifiers */
+  --tax-cgst: #0984e3;
+  --tax-sgst: #6c5ce7;
+  --tax-igst: #e17055;
+  --tax-tds: #d63031;
+  --tax-badge-bg: #eff2fe;
+
+  /* Semantic Status Colors */
+  --status-success: #00875a;
+  --status-success-bg: #e3fcef;
+  --status-warning: #ff8b00;
+  --status-warning-bg: #fffae6;
+  --status-danger: #de350b;
+  --status-danger-bg: #ffebe6;
+  --status-info: #0052cc;
+  --status-info-bg: #deebff;
+  --status-neutral: #42526e;
+  --status-neutral-bg: #ebecf0;
+
+  /* Typography */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+
+  --font-size-2xs: 10px;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --font-size-4xl: 28px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --text-primary: #172b4d;
+  --text-secondary: #5e6c84;
+  --text-muted: #7a869a;
+  --text-inverse: #ffffff;
+  --text-link: #0077c5;
+
+  /* Borders & Dividers */
+  --border-color: #dfe1e6;
+  --border-color-subtle: #ebecf0;
+  --border-color-focus: #007755;
+  --border-radius-xs: 2px;
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+  --border-radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(9, 30, 66, 0.08);
+  --shadow-md: 0 3px 6px -1px rgba(9, 30, 66, 0.12), 0 2px 4px -1px rgba(9, 30, 66, 0.08);
+  --shadow-lg: 0 10px 20px -5px rgba(9, 30, 66, 0.15), 0 6px 6px -5px rgba(9, 30, 66, 0.1);
+  --shadow-popover: 0 4px 16px rgba(0, 0, 0, 0.14);
+  --shadow-modal: 0 16px 48px rgba(9, 30, 66, 0.25);
+
+  /* Geometry & Layout Dimensions (1920x960 reference) */
+  --topbar-height: 56px;
+  --siderail-width: 84px;
+  --content-width: 1836px;
+  --content-height: 904px;
+  --drawer-width: 440px;
+  --modal-max-width: 1120px;
 }

@@ -19,6 +19,7 @@ import AssistantDrawer from './components/AssistantDrawer';
 import InvoiceReview from './components/InvoiceReview';
 import InvoiceEditorModal from './components/InvoiceEditorModal';
 import ExpenseModal from './components/ExpenseModal';
+import VendorBillScannerModal from './components/VendorBillScannerModal';
 import BankCategorize from './components/BankCategorize';
 import Reconcile from './components/Reconcile';
 import ReportsMath from './components/ReportsMath';
@@ -194,7 +195,7 @@ const CREATE_TARGETS = {
   // Vendors
   Expense: { modal: 'expenseModal' },
   Check: 'expense_transactions',
-  Bill: 'expense_transactions',
+  Bill: { modal: 'billModal' },
   'Pay bills': 'expense_transactions',
   'Purchase order': 'purchase_orders',
   'Vendor credit': 'bills',
@@ -248,6 +249,7 @@ export default function App() {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [invoiceEditorOpen, setInvoiceEditorOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [billModalOpen, setBillModalOpen] = useState(false);
   const [universalWorkflow, setUniversalWorkflow] = useState(null);
   const [pinnedItems, setPinnedItems] = useState(() => {
     try {
@@ -327,6 +329,7 @@ export default function App() {
         case 'x': e.preventDefault(); setExpenseModalOpen(true); break;
         case 'r': e.preventDefault(); navigate('sales_transactions'); break; // Receive payment
         case 'j': e.preventDefault(); setJournalModalOpen(true); break;
+        case 'b': e.preventDefault(); setBillModalOpen(true); break;
         case 'c': e.preventDefault(); navigate('customers_list'); break;
         case 'u': e.preventDefault(); navigate('payroll'); break;
         case 'v': e.preventDefault(); navigate('vendors'); break;
@@ -380,6 +383,10 @@ export default function App() {
       setExpenseModalOpen(true);
       return;
     }
+    if (target.modal === 'billModal') {
+      setBillModalOpen(true);
+      return;
+    }
     if (target.modal === 'journal') {
       setJournalModalOpen(true);
       return;
@@ -422,13 +429,14 @@ export default function App() {
     if (except !== 'journal') setJournalModalOpen(false);
     if (except !== 'invoiceEditor') setInvoiceEditorOpen(false);
     if (except !== 'expenseModal') setExpenseModalOpen(false);
+    if (except !== 'billModal') setBillModalOpen(false);
     if (except !== 'setup') setSetupDrawerOpen(false);
     if (except !== 'assistant') setAssistantOpen(false);
   }, []);
 
   useEscape(() => closeAllOverlays(), Object.values({
     createMenuOpen, settingsMenuOpen, accountSettingsOpen, additionalInfoOpen,
-    customizeMenusOpen, journalModalOpen, setupDrawerOpen, assistantOpen, invoiceEditorOpen, expenseModalOpen,
+    customizeMenusOpen, journalModalOpen, setupDrawerOpen, assistantOpen, invoiceEditorOpen, expenseModalOpen, billModalOpen,
   }).some(Boolean));
 
   const renderScreen = () => {
@@ -497,6 +505,7 @@ export default function App() {
           <ExpensesView
             initialTab="bills"
             onOpenExpenseModal={() => handleQuickCreateAction('Expense')}
+            onOpenBillModal={() => setBillModalOpen(true)}
             onNavigate={(v) => navigate(v)}
           />
         );
@@ -578,6 +587,7 @@ export default function App() {
           <ExpensesView
             initialTab="overview"
             onOpenExpenseModal={() => handleQuickCreateAction('Expense')}
+            onOpenBillModal={() => setBillModalOpen(true)}
             onNavigate={(v) => navigate(v)}
           />
         );
@@ -794,6 +804,10 @@ export default function App() {
         <ExpenseModal
           isOpen={expenseModalOpen}
           onClose={() => setExpenseModalOpen(false)}
+        />
+        <VendorBillScannerModal
+          isOpen={billModalOpen}
+          onClose={() => setBillModalOpen(false)}
         />
         <UniversalCreateWorkflowModal
           isOpen={!!universalWorkflow}

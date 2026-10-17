@@ -58,6 +58,7 @@ const DEFAULT_VENDOR_ROWS = [
 
 export default function ExpensesView({ 
   onOpenExpenseModal, 
+  onOpenBillModal,
   onNavigate,
   initialTab = 'overview' // 'overview' | 'bills' | 'vendors'
 }) {
@@ -601,7 +602,7 @@ export default function ExpensesView({
                       <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-30 text-xs">
                         <button onClick={() => { setNewExpenseMenuOpen(false); onOpenExpenseModal(); }} className="w-full text-left px-3 py-1.5 hover:bg-gray-100 font-semibold">Expense</button>
                         <button onClick={() => { setNewExpenseMenuOpen(false); alert("New check entry"); }} className="w-full text-left px-3 py-1.5 hover:bg-gray-100">Check</button>
-                        <button onClick={() => { setNewExpenseMenuOpen(false); alert("New bill entry"); }} className="w-full text-left px-3 py-1.5 hover:bg-gray-100">Bill</button>
+                        <button onClick={() => { setNewExpenseMenuOpen(false); onOpenBillModal ? onOpenBillModal() : onOpenExpenseModal(); }} className="w-full text-left px-3 py-1.5 hover:bg-gray-100">Bill</button>
                       </div>
                     )}
                   </div>
@@ -798,7 +799,7 @@ export default function ExpensesView({
                   {/* Add bill green split button */}
                   <div className="inline-flex h-10 rounded-md overflow-hidden bg-[#2ca01c] shadow-xs">
                     <button 
-                      onClick={() => alert("Add new bill dialog")}
+                      onClick={() => { onOpenBillModal ? onOpenBillModal() : onOpenExpenseModal(); }}
                       className="px-4 text-sm font-bold text-white hover:bg-[#258717] transition cursor-pointer"
                     >
                       Add bill
