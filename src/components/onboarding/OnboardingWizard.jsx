@@ -513,7 +513,7 @@ function Screen0Welcome({ onStart }) {
     { label: 'Expenses & Pay Bills', iconUrl: '/app-icons/expenses.png' },
     { label: 'Sales & Get Paid', iconUrl: '/app-icons/sales.png' },
     { label: 'GST Returns', iconUrl: '/app-icons/gst.jpg' },
-    { label: 'TDS & Direct Tax', iconUrl: '/app-icons/tds.png' },
+    { label: 'TDS & Direct Tax', iconUrl: '/app-icons/gst.jpg' },
     { label: 'Bills & MSME Pays', iconUrl: '/app-icons/bills.png' },
     { label: 'Customers', iconUrl: '/app-icons/customers.png' },
     { label: 'Reports', iconUrl: '/app-icons/reports.jpg' },

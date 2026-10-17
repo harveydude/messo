@@ -234,7 +234,15 @@ export default function ExpensesView({
             <section ref={expensesFrameRef} className="space-y-4">
               {/* Header Band */}
               <div className="bg-[#fafbfb] border border-[#e3e5e8] rounded-xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
-                <h1 className="text-[26px] font-bold text-[#393A3D] tracking-tight">Expenses</h1>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
+                    <img src="/app-icons/expenses.png" alt="Expenses & Pay Bills" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h1 className="text-[26px] font-bold text-[#393A3D] tracking-tight">Expenses &amp; Pay Bills</h1>
+                    <p className="text-xs text-gray-500 mt-0.5">Track vendor bills, categorize receipts, and automate payouts</p>
+                  </div>
+                </div>
 
                 <div className="flex items-center space-x-4">
                   <button 

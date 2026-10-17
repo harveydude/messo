@@ -442,7 +442,15 @@ export default function BankTransactionsView({ onNavigate, isEmbedded = false, t
       <div className="flex-1 p-6 max-w-7xl overflow-y-auto space-y-6">
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Bank transactions</h1>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
+              <img src="/app-icons/accounting.png" alt="Accounting" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Bank transactions</h1>
+              <p className="text-xs text-gray-500 mt-0.5">Automated bank feed, reconciliation and AI transaction categorization</p>
+            </div>
+          </div>
 
           <div className="flex items-center space-x-2 text-xs">
             <button 
@@ -471,16 +479,6 @@ export default function BankTransactionsView({ onNavigate, isEmbedded = false, t
             >
               <Sparkles size={13} className="text-[#0077c5]" />
               <span>Explore</span>
-            </button>
-            <button 
-              onClick={() => {
-                if (document.fullscreenElement) document.exitFullscreen();
-                else document.documentElement.requestFullscreen();
-              }}
-              title="Fullscreen"
-              className="p-1.5 text-gray-600 hover:text-gray-900 cursor-pointer"
-            >
-              <Maximize2 size={16} />
             </button>
           </div>
         </div>

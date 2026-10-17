@@ -92,7 +92,7 @@ const APP_GROUPS = [
     key: 'business_tax',
     label: 'TDS & Direct Tax',
     letter: 'T',
-    iconUrl: '/app-icons/tds.png',
+    iconUrl: '/app-icons/gst.jpg',
     badgeBg: '#83243F',
     badgeText: '#FFFFFF',
     defaultView: 'business_tax',
@@ -226,7 +226,7 @@ const PIN_IMAGE_MAP = {
   standard_reports: '/app-icons/reports.jpg',
   reports: '/app-icons/reports.jpg',
   sales_tax: '/app-icons/gst.jpg',
-  business_tax: '/app-icons/tds.png',
+  business_tax: '/app-icons/gst.jpg',
   team: '/app-icons/team.jpg',
   time_entries: '/app-icons/time.jpg',
   customer_hub: '/app-icons/customer_hub.jpg',
@@ -476,8 +476,11 @@ export default function SideRail({
                       <button 
                         type="button"
                         onClick={() => {
-                          if (grp.defaultView) {
-                            setCurrentView(grp.defaultView);
+                          const firstSubTab = (grp.items && grp.items.length > 0)
+                            ? (grp.items[0].view || grp.items[0].id)
+                            : grp.defaultView;
+                          if (firstSubTab) {
+                            setCurrentView(firstSubTab);
                           }
                           setOpenGroups(prev => ({ ...prev, [grp.key]: true }));
                         }}

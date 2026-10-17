@@ -259,10 +259,10 @@ export default function TopBar({
           {/* User & Company Profile Avatar Button */}
           <button 
             onClick={() => setProfileModalOpen(true)}
-            className="w-[30px] h-[30px] rounded-full bg-[#007755] hover:bg-[#005f43] text-white flex items-center justify-center font-bold text-xs shadow-xs ml-1 cursor-pointer transition border border-emerald-400"
+            className="w-[30px] h-[30px] rounded-full bg-black flex items-center justify-center shadow-xs ml-1 cursor-pointer transition border border-cyan-500/40 overflow-hidden"
             title="View Business Profile & Company Details"
           >
-            {initialLetter}
+            <img src="/logo.png" alt="Profile" className="w-full h-full object-contain p-0.5" />
           </button>
         </div>
       </div>
@@ -273,8 +273,8 @@ export default function TopBar({
           <div className="bg-white rounded-xl max-w-[500px] w-full p-6 shadow-2xl border border-gray-200">
             <div className="flex items-center justify-between pb-3.5 border-b border-gray-100 mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 rounded-full bg-[#007755] text-white flex items-center justify-center font-black text-sm">
-                  {initialLetter}
+                <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center p-1 border border-cyan-500/40 shadow-xs shrink-0">
+                  <img src="/logo.png" alt="MESSO Logo" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <h3 className="text-[16px] font-bold text-[#1f2937]">

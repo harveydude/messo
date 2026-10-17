@@ -222,17 +222,22 @@ export default function ChartOfAccountsView({ onNavigate }) {
         <div className="pl-[45px] pr-[40px] pb-12">
           {/* Header Row: Title & Action Buttons */}
           <div className="flex items-start justify-between pt-[34px]">
-            <div>
-              <h1 className="text-[28px] leading-[34px] font-bold text-[#393A3D]">
-                Chart of accounts
-              </h1>
-              {/* Back link */}
-              <button 
-                onClick={() => onNavigate && onNavigate('all_lists')}
-                className="mt-[16px] flex items-center gap-[6px] text-[#0077C5] text-[15px] hover:underline cursor-pointer"
-              >
-                <ChevronLeft size={16} /> All lists
-              </button>
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
+                <img src="/app-icons/accounting.png" alt="Accounting" className="w-full h-full object-cover" />
+              </div>
+              <div>
+                <h1 className="text-[28px] leading-[34px] font-bold text-[#393A3D]">
+                  Chart of accounts
+                </h1>
+                {/* Back link */}
+                <button 
+                  onClick={() => onNavigate && onNavigate('all_lists')}
+                  className="mt-[6px] flex items-center gap-[6px] text-[#0077C5] text-[13.5px] hover:underline cursor-pointer"
+                >
+                  <ChevronLeft size={15} /> All lists
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-[32px] pt-1">

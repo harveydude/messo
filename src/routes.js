@@ -17,8 +17,8 @@
  * because these ids were scattered through the old code.
  */
 export const ROUTES = [
-  { id: 'onboarding', slug: '/', label: 'Setup wizard', aliases: ['/onboarding', '/setup', '/wizard'] },
-  { id: 'dashboard', slug: '/dashboard', label: 'Dashboard', aliases: ['/home'] },
+  { id: 'dashboard', slug: '/', label: 'Dashboard', aliases: ['/dashboard', '/home'] },
+  { id: 'onboarding', slug: '/onboarding', label: 'Setup wizard', aliases: ['/setup', '/wizard'] },
   { id: 'bookmarks', slug: '/bookmarks', label: 'Bookmarks' },
 
   { id: 'bank_transactions', slug: '/banking', label: 'Bank transactions' },

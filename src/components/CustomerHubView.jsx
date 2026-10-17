@@ -240,18 +240,23 @@ export default function CustomerHubView({ onNavigate }) {
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <button
-            onClick={() => onNavigate?.('customers_list')}
-            className="flex items-center gap-1 text-xs font-semibold text-[#0077c5] hover:underline mb-1.5"
-          >
-            <ArrowLeft size={13} />
-            Customers
-          </button>
-          <h1 className="text-xl font-bold text-gray-900">Customer hub</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Everything that has happened with a customer, in date order.
-          </p>
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
+            <img src="/app-icons/customer_hub.jpg" alt="Customer Hub" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <button
+              onClick={() => onNavigate?.('customers_list')}
+              className="flex items-center gap-1 text-xs font-semibold text-[#0077c5] hover:underline mb-0.5"
+            >
+              <ArrowLeft size={13} />
+              Customers
+            </button>
+            <h1 className="text-xl font-bold text-gray-900">Customer hub</h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Everything that has happened with a customer, in date order.
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

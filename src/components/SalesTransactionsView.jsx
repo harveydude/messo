@@ -290,15 +290,17 @@ export default function SalesTransactionsView({
             <section ref={overviewFrameRef} className="space-y-6">
               {/* Top Title & Controls */}
               <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-[#393A3D] tracking-tight">
-                  Sales &amp; Get Paid overview
-                </h1>
-                <button 
-                  className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-white rounded transition cursor-pointer"
-                  title="Expand canvas"
-                >
-                  <Maximize2 size={17} />
-                </button>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
+                    <img src="/app-icons/sales.png" alt="Sales & Get Paid" className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-[#393A3D] tracking-tight">
+                      Sales &amp; Get Paid overview
+                    </h1>
+                    <p className="text-xs text-gray-500 mt-0.5">Track revenue, manage customer invoices, and automate payments</p>
+                  </div>
+                </div>
               </div>
 
               {/* Business Feed Section */}

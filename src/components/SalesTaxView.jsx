@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Search, Printer, Settings, ChevronDown, X, Check, Plus, ArrowRight,
   Landmark, FileText, CircleAlert, Info,
@@ -296,11 +296,16 @@ export default function SalesTaxView({ onNavigate }) {
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* ---------------------------------------------------------- header -- */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Sales tax</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Goods and Services Tax — returns, rates and liability
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
+            <img src="/app-icons/gst.jpg" alt="GST Returns" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">GST Returns</h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Goods and Services Tax — GSTR-1, GSTR-3B, rates and ITC liability
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

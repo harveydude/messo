@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Search, Printer, Settings, ChevronDown, X, Check, ArrowRight,
   Gavel, FileText, CircleAlert, Info, ScrollText,
@@ -274,11 +274,16 @@ export default function BusinessTaxView({ onNavigate }) {
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* ---------------------------------------------------------- header -- */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900">Business tax</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Tax deducted at source, quarterly TDS returns and advance tax
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
+            <img src="/app-icons/gst.jpg" alt="TDS & Direct Tax" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">TDS &amp; Direct Tax</h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Tax deducted at source, quarterly TDS returns (Form 26Q/24Q) and advance tax
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button
