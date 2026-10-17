@@ -35,8 +35,11 @@ export function QuickCreateMenu({ isOpen, onClose, onActionSelect }) {
       title: 'Team',
       width: 161,
       items: [
-        { label: 'Payroll', external: true },
+        'Single time activity',
+        'Weekly timesheet',
+        'Add employee',
         'Add contractor',
+        { label: 'Payroll', external: true },
       ],
     },
     {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Printer, Share2, Sliders, X, Filter, Calendar, ChevronDown, HelpCircle, ArrowDown, Sparkles } from 'lucide-react';
-import dashboardData from '../data/dashboard.json';
 import api from '../api/client';
 
 export default function SearchResultsView({ 
@@ -29,8 +28,7 @@ export default function SearchResultsView({
     });
   }, [query]);
 
-  const searchData = dashboardData.search?.results || {};
-  const defaultTransactions = searchData.transactions || [
+  const defaultTransactions = [
     { date: "09/27/2025", type: "Invoice", refNo: "1037", contact: "Sonnenschein Family Store", dueDate: "10/27/2025", balance: "₹362.07", amount: "₹362.07", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
     { date: "09/27/2025", type: "Invoice", refNo: "1035", contact: "Mark Cho", dueDate: "10/27/2025", balance: "₹314.28", amount: "₹314.28", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },
     { date: "09/27/2025", type: "Invoice", refNo: "1036", contact: "Freeman Sporting Goods:0969 Ocean View Road", dueDate: "10/27/2025", balance: "₹477.50", amount: "₹477.50", memo: "", lastModified: "Oct 24, 2025, 11:58 AM" },

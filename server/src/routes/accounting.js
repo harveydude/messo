@@ -74,7 +74,7 @@ router.get('/journal-entries', async (req, res) => {
           )
         ) as lines
       FROM journal_entries je
-      LEFT JOIN journal_entry_lines jl ON je.id = jl.entry_id
+      LEFT JOIN journal_entry_lines jl ON je.id = jl.journal_entry_id
       GROUP BY je.id
       ORDER BY je.entry_date DESC, je.created_at DESC
     `);
@@ -105,7 +105,8 @@ router.post('/journal-entries', async (req, res) => {
 
     res.json({ success: true, message: 'Journal entry posted and verified', entry: result });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    const isInvariantViolation = err.message.includes('Double-Entry Violation') || err.message.includes('must equal total credits') || err.message.includes('Difference:');
+    res.status(isInvariantViolation ? 422 : 400).json({ success: false, error: err.message });
   }
 });
 

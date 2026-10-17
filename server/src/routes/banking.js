@@ -97,6 +97,10 @@ const matchHandler = async (req, res) => {
 
 router.post('/feed/:id/match', matchHandler);
 router.put('/transactions/:id/match', matchHandler);
+router.post('/match', (req, res) => {
+  req.params.id = req.body.transactionId || req.body.id;
+  return matchHandler(req, res);
+});
 
 // CATEGORIZE Transaction (Pipeline 1: Creates expense/deposit & posts balanced double-entry)
 const categorizeHandler = async (req, res) => {

@@ -33,6 +33,14 @@ export async function getDb() {
   if (!pgliteInstance) {
     const dataDir = path.resolve(__dirname, '../../pgdata');
     console.log(`Using local embedded PostgreSQL on Disk D: ${dataDir}`);
+    const pidFile = path.join(dataDir, 'postmaster.pid');
+    const lockFile = path.join(dataDir, '.s.PGSQL.5432.lock.out');
+    if (fs.existsSync(pidFile)) {
+      try { fs.unlinkSync(pidFile); } catch (e) {}
+    }
+    if (fs.existsSync(lockFile)) {
+      try { fs.unlinkSync(lockFile); } catch (e) {}
+    }
     pgliteInstance = new PGlite(dataDir);
     await pgliteInstance.waitReady;
   }

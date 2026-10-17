@@ -78,29 +78,40 @@ export default function CashFlowCard({
   const xDropStart = xAug + (xSep - xAug) * 0.45;
   const xDropMid = xAug + (xSep - xAug) * 0.75;
 
-  // Solid line up to Oct (Present)
-  const solidLinePath = `
-    M ${getX(0)},${y0}
-    L ${xDropStart},${y0}
-    L ${xDropStart},${getY(-1200)}
-    L ${xDropMid},${getY(-2500)}
-    L ${xDropMid},${yNeg3422}
-    L ${xOct},${yNeg3422}
-  `;
+  // Dynamic calculation of points mapped via y-scale function (getY)
+  const chartPoints = (cashflowData?.points && Array.isArray(cashflowData.points) && cashflowData.points.length > 0)
+    ? cashflowData.points.map((p, idx) => ({
+        x: getX(idx),
+        y: getY(p.balance ?? 0),
+        balance: p.balance ?? 0
+      }))
+    : [
+        { x: getX(0), y: y0, balance: 0 },
+        { x: getX(1), y: y0, balance: 0 },
+        { x: getX(2), y: y0, balance: 0 },
+        { x: getX(3), y: y0, balance: 0 },
+        { x: getX(4), y: y0, balance: 0 },
+        { x: getX(5), y: y0, balance: 0 },
+        { x: getX(6), y: y0, balance: 0 },
+        { x: getX(7), y: y0, balance: 0 },
+        { x: xDropStart, y: y0, balance: 0 },
+        { x: xDropStart, y: getY(-1200), balance: -1200 },
+        { x: xDropMid, y: getY(-2500), balance: -2500 },
+        { x: xDropMid, y: yNeg3422, balance: -3422 },
+        { x: xOct, y: yNeg3422, balance: -3422 },
+      ];
 
-  // Projected line from Oct to Dec
-  const projectedLinePath = `
-    M ${xOct},${yNeg3422}
-    L ${xDec},${yNeg3422}
-  `;
+  const solidLinePath = chartPoints.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x},${pt.y}`, '');
 
-  // Pink negative area fill (between y0 and curve from drop to Dec)
+  const lastPoint = chartPoints[chartPoints.length - 1];
+  const projectedLinePath = `M ${lastPoint.x},${lastPoint.y} L ${xDec},${lastPoint.y}`;
+
+  const firstNegIndex = chartPoints.findIndex(p => p.balance < 0);
+  const startNeg = firstNegIndex > 0 ? chartPoints[firstNegIndex - 1] : chartPoints[0];
   const negativeAreaPath = `
-    M ${xDropStart},${y0}
-    L ${xDropStart},${getY(-1200)}
-    L ${xDropMid},${getY(-2500)}
-    L ${xDropMid},${yNeg3422}
-    L ${xDec},${yNeg3422}
+    M ${startNeg.x},${y0}
+    ${chartPoints.slice(Math.max(0, firstNegIndex)).map(p => `L ${p.x},${p.y}`).join(' ')}
+    L ${xDec},${lastPoint.y}
     L ${xDec},${y0}
     Z
   `;

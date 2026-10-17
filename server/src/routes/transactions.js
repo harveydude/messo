@@ -38,6 +38,8 @@ export async function processTransaction(payload, defaultType = null) {
     totalPaise = BigInt(Math.round(Number(payload.totalAmount || payload.amount || payload.total) * 100));
     if (subtotalPaise === 0n) {
       subtotalPaise = totalPaise;
+    } else if (totalPaise > subtotalPaise - discountPaise) {
+      taxPaise = totalPaise - (subtotalPaise - discountPaise);
     }
   } else {
     const gstRate = payload.isTaxable !== false ? 18 : 0;

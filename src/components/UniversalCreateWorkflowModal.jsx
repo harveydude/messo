@@ -120,6 +120,7 @@ export default function UniversalCreateWorkflowModal({
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
+    if (isSubmitting) return;
     setIsSubmitting(true);
     setErrorMsg(null);
 
@@ -253,6 +254,15 @@ export default function UniversalCreateWorkflowModal({
             email: `${docNumber.toLowerCase().replace(/[^a-z0-9]/g, '')}@supplier.in`,
             phone: '+91 98110 99887',
             openingBalanceInr: numericTotal
+          });
+          break;
+        }
+
+        case 'Add employee': {
+          await api.createContact({
+            type: 'EMPLOYEE',
+            displayName: memo || 'New Team Member',
+            phone: '+91 99000 11223'
           });
           break;
         }

@@ -170,6 +170,7 @@ export default function JournalEntryModal({ isOpen, onClose }) {
   };
 
   const handleSave = async (closeAfter = true) => {
+    if (isSaving) return;
     if (Math.abs(totalDebits - totalCredits) > 0.001) {
       alert(`Double-entry balance violation: Total Debits (₹${totalDebits.toFixed(2)}) must equal Total Credits (₹${totalCredits.toFixed(2)}). Difference: ₹${Math.abs(totalDebits - totalCredits).toFixed(2)}`);
       return;

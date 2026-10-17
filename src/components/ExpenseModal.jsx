@@ -219,6 +219,7 @@ export default function ExpenseModal({ isOpen, onClose, onSaveSuccess }) {
 
   // Handle Save
   const handleSave = async (closeAfter = true) => {
+    if (isSaving) return;
     setIsSaving(true);
     try {
       const parsedLines = lines.filter(l => l.amount || l.description).map(l => ({
@@ -230,7 +231,7 @@ export default function ExpenseModal({ isOpen, onClose, onSaveSuccess }) {
       const totalVal = parsedLines.reduce((s, l) => s + l.amount, 0) || totalAmount || 83500;
 
       // 1. Post to PostgreSQL Backend & Double-Entry Ledger
-      await api.createExpense({
+      const res = await api.createExpense({
         recordType: 'EXPENSE',
         payeeName: payee || 'Books by Bessie',
         paymentAccountId: paymentAccount.toLowerCase().includes('card') ? 'acc_1020' : 'acc_1010',
@@ -241,7 +242,11 @@ export default function ExpenseModal({ isOpen, onClose, onSaveSuccess }) {
         totalInr: totalVal
       });
 
-      // 2. Keep local store hydrated
+      if (!res || res.success === false) {
+        throw new Error(res?.error || 'Failed to record expense in ledger');
+      }
+
+      // 2. Keep local store hydrated only after backend confirms write
       try {
         dispatch({
           type: 'ADD_EXPENSE',
@@ -263,9 +268,8 @@ export default function ExpenseModal({ isOpen, onClose, onSaveSuccess }) {
         onClose?.();
       }
     } catch (err) {
-      console.warn('Expense save error:', err);
-      onSaveSuccess?.();
-      if (closeAfter) onClose?.();
+      console.error('Expense save error:', err);
+      alert('Transaction Error: ' + err.message);
     } finally {
       setIsSaving(false);
     }
