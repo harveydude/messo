@@ -27,6 +27,7 @@ import ReportsMath from './components/ReportsMath';
 import CustomizeBookmarksModal from './components/CustomizeBookmarksModal';
 import UniversalCreateWorkflowModal from './components/UniversalCreateWorkflowModal';
 import OnboardingWizard from './components/onboarding/OnboardingWizard';
+import UnderConstructionView from './components/UnderConstructionView';
 import { StoreProvider } from './store';
 
 /*
@@ -103,11 +104,10 @@ function ScreenLoading() {
  */
 function NotBuiltYet({ feature }) {
   return (
-    <EmptyState
-      title={`${feature} is not built yet`}
-      note="The menu item is in place and the data it needs is already modelled. This screen has not been written."
-      action="Back to dashboard"
-      onAction={() => { window.location.hash = '#/'; }}
+    <UnderConstructionView
+      feature={feature}
+      onNavigate={(v) => { window.location.hash = `#/${v}`; }}
+      onBack={() => { window.location.hash = '#/dashboard'; }}
     />
   );
 }
@@ -737,14 +737,11 @@ export default function App() {
       case 'apps':
         return <FindIntegrationsView />;
       default:
-        // The fallback that turns a typo into a message instead of a white
-        // rectangle. Three dashboard links used to land here.
         return (
-          <EmptyState
-            title="Screen not found"
-            note={`Nothing is registered at “${labelFor(viewId)}”. Pick a screen from the left, or go back to the dashboard.`}
-            action="Back to dashboard"
-            onAction={() => navigate('dashboard')}
+          <UnderConstructionView
+            feature={labelFor(viewId) || viewId}
+            onNavigate={(v) => navigate(v)}
+            onBack={() => navigate('dashboard')}
           />
         );
     }

@@ -508,153 +508,75 @@ export default function OnboardingWizard({ onComplete, onExit }) {
 // SCREEN 0: WELCOME & SYMMETRICAL HONEYCOMB CLOUD (FRAME 000)
 // =========================================================================
 function Screen0Welcome({ onStart }) {
-  const pills = [
-    {
-      label: 'Sales & Get Paid',
-      bg: '#002147',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <rect x="1.5" y="6.5" width="2" height="4" rx="0.5" fill="#00A3BF" />
-          <rect x="5" y="4" width="2" height="6.5" rx="0.5" fill="#00A3BF" />
-          <rect x="8.5" y="1.5" width="2" height="9" rx="0.5" fill="#00A3BF" />
-        </svg>
-      ),
-      style: { left: '175px', top: '5px' }
-    },
-    {
-      label: 'Customer Hub',
-      bg: '#00828A',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <circle cx="6" cy="3" r="1.5" fill="white" />
-          <circle cx="6" cy="9" r="1.5" fill="white" />
-          <circle cx="3" cy="6" r="1.5" fill="white" />
-          <circle cx="9" cy="6" r="1.5" fill="white" />
-        </svg>
-      ),
-      style: { left: '70px', top: '60px' }
-    },
-    {
-      label: 'Business Tax',
-      bg: '#1D2B53',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <circle cx="6" cy="6" r="4.5" stroke="white" strokeWidth="1.2" />
-          <path d="M6 6 L6 1.5 A4.5 4.5 0 0 1 10.5 6 Z" fill="#FF5252" />
-        </svg>
-      ),
-      style: { left: '275px', top: '60px' }
-    },
-    {
-      label: 'Payroll',
-      bg: '#0057B8',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M3.5 2.5 L7.5 6 L3.5 9.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      style: { left: '5px', top: '115px' }
-    },
-    {
-      label: 'Accounting',
-      bg: '#007755',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M2.5 3.5 L9.5 8.5 M2.5 8.5 L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ),
-      style: { left: '165px', top: '115px' }
-    },
-    {
-      label: 'Sales Tax',
-      bg: '#172B4D',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M6 2 C4 4.5 3 6.5 3 8 A3 3 0 0 0 9 8 C9 6.5 8 4.5 6 2 Z" fill="#FF5252" />
-        </svg>
-      ),
-      style: { left: '325px', top: '115px' }
-    },
-    {
-      label: 'Expenses & Pay Bills',
-      bg: '#005F43',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M4 3 L8 6 L4 9" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
-      style: { left: '65px', top: '170px' }
-    },
-    {
-      label: 'Team',
-      bg: '#0052CC',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <circle cx="6" cy="4" r="1.5" fill="white" />
-          <circle cx="3.5" cy="8" r="1.5" fill="white" />
-          <circle cx="8.5" cy="8" r="1.5" fill="white" />
-        </svg>
-      ),
-      style: { left: '280px', top: '170px' }
-    },
-    {
-      label: 'Lending',
-      bg: '#00875A',
-      icon: (
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <rect x="3" y="3" width="6" height="2.5" rx="1.25" fill="white" />
-          <rect x="3" y="6.5" width="6" height="2.5" rx="1.25" fill="white" />
-        </svg>
-      ),
-      style: { left: '185px', top: '225px' }
-    },
+  const modules = [
+    { label: 'Accounting', iconUrl: '/app-icons/accounting.png' },
+    { label: 'Expenses & Pay Bills', iconUrl: '/app-icons/expenses.png' },
+    { label: 'Sales & Get Paid', iconUrl: '/app-icons/sales.png' },
+    { label: 'GST Returns', iconUrl: '/app-icons/gst.jpg' },
+    { label: 'TDS & Direct Tax', iconUrl: '/app-icons/tds.png' },
+    { label: 'Bills & MSME Pays', iconUrl: '/app-icons/bills.png' },
+    { label: 'Customers', iconUrl: '/app-icons/customers.png' },
+    { label: 'Reports', iconUrl: '/app-icons/reports.jpg' },
+    { label: 'Customer Hub', iconUrl: '/app-icons/customer_hub.jpg' },
+    { label: 'Team', iconUrl: '/app-icons/team.jpg' },
+    { label: 'Time Tracking', iconUrl: '/app-icons/time.jpg' },
+    { label: 'Payroll', iconUrl: '/app-icons/payroll.jpg' },
   ];
 
   return (
-    <div className="w-full max-w-[1240px] min-h-[500px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-12 py-6 relative">
+    <div className="w-full max-w-[1240px] min-h-[520px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-12 py-8 relative gap-10">
       {/* Left Column: Brand, Headline & Action */}
-      <div className="max-w-[500px] flex flex-col items-start z-10">
+      <div className="max-w-[500px] flex flex-col items-start z-10 shrink-0">
         {/* Official MESSO Logo */}
         <div className="flex items-center space-x-2.5 mb-8">
-          <div className="w-[26px] h-[26px] rounded bg-black flex items-center justify-center p-0.5 border border-cyan-500/30 shadow-xs">
+          <div className="w-[28px] h-[28px] rounded bg-black flex items-center justify-center p-0.5 border border-cyan-500/30 shadow-xs">
             <img src="/logo.png" alt="MESSO Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="text-[18px] font-bold tracking-tight text-[#1f2937]">
+          <span className="text-[20px] font-bold tracking-tight text-[#1f2937] uppercase">
             MESSO
           </span>
         </div>
 
-        <h1 className="text-[40px] font-bold text-[#1f2937] leading-[1.18] tracking-tight mb-8">
+        <h1 className="text-[38px] sm:text-[42px] font-bold text-[#1f2937] leading-[1.18] tracking-tight mb-5">
           Get set up fast with AI and expert guidance
         </h1>
 
+        <p className="text-[15px] text-[#595959] mb-8 leading-relaxed">
+          Streamline your accounting, GST compliance, invoices, and expenses with India's intelligent ERP platform.
+        </p>
+
         <button
           onClick={onStart}
-          className="h-[42px] px-7 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14px] rounded-[4px] shadow-sm cursor-pointer transition transform active:scale-[0.98]"
+          className="h-[44px] px-8 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14.5px] rounded-[6px] shadow-sm cursor-pointer transition transform active:scale-[0.98]"
         >
           Let's get started
         </button>
       </div>
 
-      {/* Right Column: Exact Diamond Constellation of 9 Floating Pills matching Frame 000 */}
-      <div className="w-full lg:w-[500px] h-[280px] mt-10 lg:mt-0 relative select-none">
-        {pills.map((pill, idx) => (
-          <div 
-            key={idx}
-            className="absolute bg-white rounded-full px-3.5 py-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.07)] border border-[#e5e7eb] flex items-center space-x-2 transition-transform duration-200 hover:scale-105 hover:shadow-md cursor-default select-none"
-            style={pill.style}
-          >
+      {/* Right Column: All 12 HD Circular App Tokens arranged in a sleek modern grid */}
+      <div className="w-full lg:max-w-[540px] p-5 sm:p-6 bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md rounded-3xl border border-gray-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.06)] select-none">
+        <div className="text-[11px] font-bold tracking-wider text-gray-500 uppercase mb-3 px-1">
+          Connected MESSO Modules
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+          {modules.map((mod, idx) => (
             <div 
-              className="w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0 shadow-2xs"
-              style={{ backgroundColor: pill.bg }}
+              key={idx}
+              className="flex items-center space-x-2.5 p-2 rounded-xl bg-white border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-gray-300 hover:scale-[1.02] transition-all duration-200 cursor-default select-none group"
             >
-              {pill.icon}
+              <div className="w-[30px] h-[30px] rounded-full overflow-hidden shrink-0 shadow-xs border border-black/10 bg-gray-900 flex items-center justify-center">
+                <img 
+                  src={mod.iconUrl} 
+                  alt={mod.label} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                />
+              </div>
+              <span className="text-[12px] font-semibold text-gray-800 truncate leading-tight">
+                {mod.label}
+              </span>
             </div>
-            <span className="text-[12px] font-medium text-[#1f2937] whitespace-nowrap">
-              {pill.label}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

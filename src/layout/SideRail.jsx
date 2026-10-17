@@ -16,12 +16,13 @@ import {
   Lock,
 } from 'lucide-react';
 
-/* ── Master App Categories & Subtabs (Standardized across the entire application) ── */
+/* ── Master App Categories & Subtabs (Allotted HD Circular Tokens from Master Specification) ── */
 const APP_GROUPS = [
   {
     key: 'accounting',
     label: 'Accounting',
     letter: 'A',
+    iconUrl: '/app-icons/accounting.png',
     badgeBg: '#00352C',
     badgeText: '#8FF0BD',
     defaultView: 'bank_transactions',
@@ -38,8 +39,9 @@ const APP_GROUPS = [
   },
   {
     key: 'expenses',
-    label: 'Expenses & Bills',
+    label: 'Expenses & Pay Bills',
     letter: 'E',
+    iconUrl: '/app-icons/expenses.png',
     badgeBg: '#0AA574',
     badgeText: '#FFFFFF',
     defaultView: 'expense_transactions',
@@ -57,6 +59,7 @@ const APP_GROUPS = [
     key: 'sales',
     label: 'Sales & Get Paid',
     letter: 'S',
+    iconUrl: '/app-icons/sales.png',
     badgeBg: '#005E5D',
     badgeText: '#FFFFFF',
     defaultView: 'sales_transactions',
@@ -74,9 +77,77 @@ const APP_GROUPS = [
     ],
   },
   {
+    key: 'sales_tax',
+    label: 'GST Returns',
+    letter: 'G',
+    iconUrl: '/app-icons/gst.jpg',
+    badgeBg: '#E5346B',
+    badgeText: '#FFFFFF',
+    defaultView: 'sales_tax',
+    items: [
+      { id: 'sales_tax_overview', label: 'GST Returns (GSTR-1 & 3B)', view: 'sales_tax' },
+    ],
+  },
+  {
+    key: 'business_tax',
+    label: 'TDS & Direct Tax',
+    letter: 'T',
+    iconUrl: '/app-icons/tds.png',
+    badgeBg: '#83243F',
+    badgeText: '#FFFFFF',
+    defaultView: 'business_tax',
+    items: [
+      { id: 'business_tax_overview', label: 'TDS Withholding & 26Q', view: 'business_tax' },
+    ],
+  },
+  {
+    key: 'bills_app',
+    label: 'Bills & MSME Pays',
+    letter: 'B',
+    iconUrl: '/app-icons/bills.png',
+    badgeBg: '#107C41',
+    badgeText: '#FFFFFF',
+    defaultView: 'bills',
+    items: [
+      { id: 'bills_overview', label: 'Unpaid bills', view: 'bills' },
+      { id: 'msme_tracker', label: 'MSME 45-day tracker', view: 'bills' },
+      { id: 'vendor_credits', label: 'Vendor credits', view: 'bills' },
+    ],
+  },
+  {
+    key: 'customers_app',
+    label: 'Customers',
+    letter: 'C',
+    iconUrl: '/app-icons/customers.png',
+    badgeBg: '#00828A',
+    badgeText: '#FFFFFF',
+    defaultView: 'customers_list',
+    items: [
+      { id: 'customers_list_sub', label: 'Customer directory', view: 'customers_list' },
+      { id: 'customer_types_sub', label: 'Customer types', view: 'customers_list' },
+    ],
+  },
+  {
+    key: 'reports_app',
+    label: 'Reports',
+    letter: 'R',
+    iconUrl: '/app-icons/reports.jpg',
+    badgeBg: '#0077C5',
+    badgeText: '#FFFFFF',
+    defaultView: 'standard_reports',
+    items: [
+      { id: 'standard_rep', label: 'Standard reports', view: 'standard_reports' },
+      { id: 'balance_sheet_rep', label: 'Balance sheet', view: 'balance_sheet' },
+      { id: 'pnl_rep', label: 'Profit & Loss', view: 'report_profit_loss' },
+      { id: 'cash_flow_rep', label: 'Cash flow statement', view: 'report_cash_flow' },
+      { id: 'mgmt_rep', label: 'Management reports', view: 'management_reports' },
+    ],
+  },
+  {
     key: 'customer_hub',
     label: 'Customer Hub',
-    letter: 'C',
+    letter: 'H',
+    iconUrl: '/app-icons/customer_hub.jpg',
     badgeBg: '#2E9E5B',
     badgeText: '#FFFFFF',
     defaultView: 'customer_hub',
@@ -91,6 +162,7 @@ const APP_GROUPS = [
     key: 'team',
     label: 'Team',
     letter: 'T',
+    iconUrl: '/app-icons/team.jpg',
     badgeBg: '#12A489',
     badgeText: '#FFFFFF',
     defaultView: 'team',
@@ -102,8 +174,9 @@ const APP_GROUPS = [
   },
   {
     key: 'time',
-    label: 'Time',
+    label: 'Time Tracking',
     letter: '⏱',
+    iconUrl: '/app-icons/time.jpg',
     badgeBg: '#00352C',
     badgeText: '#FFFFFF',
     defaultView: 'time_entries',
@@ -113,31 +186,10 @@ const APP_GROUPS = [
     ],
   },
   {
-    key: 'sales_tax',
-    label: 'Sales Tax',
-    letter: '%',
-    badgeBg: '#E5346B',
-    badgeText: '#FFFFFF',
-    defaultView: 'sales_tax',
-    items: [
-      { id: 'sales_tax_overview', label: 'Sales Tax (GST)', view: 'sales_tax' },
-    ],
-  },
-  {
-    key: 'business_tax',
-    label: 'Business Tax',
-    letter: 'B',
-    badgeBg: '#83243F',
-    badgeText: '#FFFFFF',
-    defaultView: 'business_tax',
-    items: [
-      { id: 'business_tax_overview', label: 'Business Tax (TDS)', view: 'business_tax' },
-    ],
-  },
-  {
     key: 'lending',
     label: 'Lending',
     letter: '₹',
+    iconUrl: '/app-icons/tag_marketing.jpg',
     badgeBg: '#0AA574',
     badgeText: '#FFFFFF',
     defaultView: 'lending',
@@ -150,9 +202,9 @@ const APP_GROUPS = [
 ];
 
 const DEFAULT_PINS = [
-  { id: 'bank_transactions', label: 'Accounting', color: '#107C41', iconKey: 'activity' },
-  { id: 'expense_transactions', label: 'Expenses', color: '#008927', iconKey: 'creditcard' },
-  { id: 'sales_transactions', label: 'Sales', color: '#0077C5', iconKey: 'barchart' },
+  { id: 'bank_transactions', label: 'Accounting', color: '#107C41', iconKey: 'activity', iconUrl: '/app-icons/accounting.png' },
+  { id: 'expense_transactions', label: 'Expenses', color: '#008927', iconKey: 'creditcard', iconUrl: '/app-icons/expenses.png' },
+  { id: 'sales_transactions', label: 'Sales', color: '#0077C5', iconKey: 'barchart', iconUrl: '/app-icons/sales.png' },
 ];
 
 const PIN_ICONS = {
@@ -160,6 +212,27 @@ const PIN_ICONS = {
   creditcard: (sz) => <CreditCard size={sz} />,
   barchart: (sz) => <BarChart2 size={sz} />,
   default: (sz) => <LayoutGrid size={sz} />,
+};
+
+const PIN_IMAGE_MAP = {
+  bank_transactions: '/app-icons/accounting.png',
+  expense_transactions: '/app-icons/expenses.png',
+  sales_transactions: '/app-icons/sales.png',
+  invoices: '/app-icons/sales.png',
+  vendors: '/app-icons/expenses.png',
+  bills: '/app-icons/bills.png',
+  bills_view: '/app-icons/bills.png',
+  customers_list: '/app-icons/customers.png',
+  standard_reports: '/app-icons/reports.jpg',
+  reports: '/app-icons/reports.jpg',
+  sales_tax: '/app-icons/gst.jpg',
+  business_tax: '/app-icons/tds.png',
+  team: '/app-icons/team.jpg',
+  time_entries: '/app-icons/time.jpg',
+  customer_hub: '/app-icons/customer_hub.jpg',
+  payroll: '/app-icons/payroll.jpg',
+  marketing: '/app-icons/tag_marketing.jpg',
+  lending: '/app-icons/tag_marketing.jpg',
 };
 
 const FONT = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -181,11 +254,14 @@ export default function SideRail({
     accounting: true,
     expenses: false,
     sales: false,
+    sales_tax: false,
+    business_tax: false,
+    bills_app: false,
+    customers_app: false,
+    reports_app: false,
     customer_hub: false,
     team: false,
     time: false,
-    sales_tax: false,
-    business_tax: false,
     lending: false,
   });
 
@@ -305,6 +381,7 @@ export default function SideRail({
 
           {pins.map((pin) => {
             const iconFn = PIN_ICONS[pin.iconKey] || PIN_ICONS.default;
+            const imgUrl = pin.iconUrl || PIN_IMAGE_MAP[pin.id];
             return (
               <RailItem
                 key={pin.id}
@@ -326,12 +403,18 @@ export default function SideRail({
                 }}
                 active={currentView === pin.id}
               >
-                <span
-                  className="w-[22px] h-[22px] rounded-md flex items-center justify-center text-white shadow-xs"
-                  style={{ backgroundColor: pin.color }}
-                >
-                  {iconFn(12)}
-                </span>
+                {imgUrl ? (
+                  <span className="w-[24px] h-[24px] rounded-full overflow-hidden flex items-center justify-center shadow-xs border border-black/10 bg-gray-900">
+                    <img src={imgUrl} alt={pin.label} className="w-full h-full object-cover" />
+                  </span>
+                ) : (
+                  <span
+                    className="w-[22px] h-[22px] rounded-md flex items-center justify-center text-white shadow-xs"
+                    style={{ backgroundColor: pin.color || '#6B6C72' }}
+                  >
+                    {iconFn(12)}
+                  </span>
+                )}
               </RailItem>
             );
           })}
@@ -400,12 +483,18 @@ export default function SideRail({
                         }}
                         className="flex-1 h-full flex items-center text-left cursor-pointer min-w-0"
                       >
-                        <span 
-                          className="w-[20px] h-[20px] rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: grp.badgeBg, color: grp.badgeText }}
-                        >
-                          {grp.letter}
-                        </span>
+                        {grp.iconUrl ? (
+                          <span className="w-[22px] h-[22px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-900">
+                            <img src={grp.iconUrl} alt={grp.label} className="w-full h-full object-cover" />
+                          </span>
+                        ) : (
+                          <span 
+                            className="w-[20px] h-[20px] rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: grp.badgeBg, color: grp.badgeText }}
+                          >
+                            {grp.letter}
+                          </span>
+                        )}
                         <span className="ml-[14px] text-[15px] font-medium text-[#393A3D] truncate">
                           {grp.label}
                         </span>
@@ -479,8 +568,8 @@ export default function SideRail({
               })}
               className="w-full h-[52px] flex items-center px-4 hover:bg-[#E9ECEF] transition cursor-pointer text-left"
             >
-              <span className="w-[20px] h-[20px] rounded-full bg-[#12141D] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                P
+              <span className="w-[22px] h-[22px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-900">
+                <img src="/app-icons/payroll.jpg" alt="Payroll" className="w-full h-full object-cover" />
               </span>
               <span className="ml-[14px] text-[15px] font-medium text-[#393A3D]">Payroll</span>
               <Gem size={16} className="ml-auto text-[#6B6C72]" />
@@ -494,8 +583,8 @@ export default function SideRail({
               })}
               className="w-full h-[52px] flex items-center px-4 hover:bg-[#E9ECEF] transition cursor-pointer text-left"
             >
-              <span className="w-[20px] h-[20px] rounded-full bg-[#12A489] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                M
+              <span className="w-[22px] h-[22px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-900">
+                <img src="/app-icons/tag_marketing.jpg" alt="Marketing" className="w-full h-full object-cover" />
               </span>
               <span className="ml-[14px] text-[15px] font-medium text-[#393A3D]">Marketing</span>
               <Gem size={16} className="ml-auto text-[#6B6C72]" />
