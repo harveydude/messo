@@ -92,7 +92,7 @@ app.use(idempotency);
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    service: 'Meso Continuous Accounting ERP Engine (2026 Edition)',
+    service: 'MESSO Continuous Accounting ERP Engine (2026 Edition)',
     timestamp: new Date().toISOString(),
     currency: 'INR (₹)'
   });
@@ -101,7 +101,7 @@ app.get('/health', (req, res) => {
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
-    service: 'Meso Continuous Accounting ERP Engine (2026 Edition)',
+    service: 'MESSO Continuous Accounting ERP Engine (2026 Edition)',
     timestamp: new Date().toISOString(),
     currency: 'INR (₹)'
   });
