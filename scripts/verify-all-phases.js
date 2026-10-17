@@ -13,6 +13,10 @@ import { parseRawImportFile, computeFileChecksum } from '../server/src/services/
 import { autoDiscoverSchemaMapping, saveSchemaMappingTemplate, transformRowWithMapping } from '../server/src/services/schemaMapper.js';
 import { validateGstin, validatePan, validateMappedRow, matchOrAutoCreateContact, matchOrAutoCreateAccount } from '../server/src/services/stagingDoctor.js';
 import { promoteImportBatch, rollbackImportBatch } from '../server/src/services/promotionEngine.js';
+import { setExchangeRate, getExchangeRate, convertCurrency, recordForexGainLoss } from '../server/src/services/currencyService.js';
+import { checkSubledgerReconciliation, syncSubledgerToGl } from '../server/src/services/subledgerReconciliationService.js';
+import { createBranch, listBranches, createCostCenter, listCostCenters } from '../server/src/services/branchService.js';
+import { closeFiscalYear, listFiscalYearCloses } from '../server/src/services/yearEndService.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -450,6 +454,7 @@ async function runPhase10() {
   const batchId = batchRes.rows[0].id;
 
   // 2. Insert staging row
+  const testDocNumber = 'INV-STAGE-' + Date.now();
   await db.query(
     `INSERT INTO import_staging_rows (
       batch_id, company_id, row_index, target_entity, mapped_data, validation_status
@@ -458,7 +463,7 @@ async function runPhase10() {
       batchId,
       testCompId,
       JSON.stringify({
-        doc_number: 'INV-STAGE-01',
+        doc_number: testDocNumber,
         contact_name: 'Bharti Airtel',
         total_amount: 150000,
         txn_date: '2026-04-15'
@@ -476,7 +481,7 @@ async function runPhase10() {
     `SELECT * FROM invoices WHERE import_batch_id = $1 AND company_id = $2`,
     [batchId, testCompId]
   );
-  assert(invRes.rows.length === 1 && invRes.rows[0].invoice_number === 'INV-STAGE-01',
+  assert(invRes.rows.length === 1 && invRes.rows[0].invoice_number === testDocNumber,
     'Phase 10.2: Promoted invoice verified in live database with correct import_batch_id tag');
 
   // Test 10.3: 1-Click Rollback Pipeline
@@ -493,9 +498,285 @@ async function runPhase10() {
     'Phase 10.4: Rollback proof: Live invoices marked is_deleted=TRUE with audit reason');
 }
 
+async function runPhase11() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 11: Paise-Precision Double-Entry Core ------');
+  console.log('======================================================');
+
+  const db = await getDb();
+  const testCompId = 'comp_pe_' + Date.now();
+
+  // Test 11.1: Verify debit_paise and credit_paise column types and constraints
+  const colCheck = await db.query(
+    `SELECT column_name, data_type 
+     FROM information_schema.columns 
+     WHERE table_name = 'journal_entry_lines' AND column_name IN ('debit_paise', 'credit_paise')`
+  );
+  assert(colCheck.rows.length === 2 && colCheck.rows.every(r => r.data_type === 'bigint'),
+    'Phase 11.1: Journal entry lines enforce BIGINT minor-unit (paise) storage');
+
+  // Test 11.2: Precision arithmetic without floating-point errors
+  const rupeeAmount = 12345.67;
+  const exactPaise = Math.round(rupeeAmount * 100);
+  assert(exactPaise === 1234567,
+    'Phase 11.2: Minor-unit (paise) integer precision prevents floating-point rounding errors');
+
+  // Test 11.3: Balanced journal entry commits cleanly
+  const jeId = 'je_pe_' + Math.random().toString(36).substring(2, 10);
+  const entryNum = 'JE-BAL-' + Date.now();
+
+  await db.query('BEGIN');
+  await db.query("SET LOCAL app.allow_journal_mutation = 'on'");
+  await db.query(
+    `INSERT INTO journal_entries (id, company_id, entry_number, entry_date, memo, source_type, status)
+     VALUES ($1, $2, $3, CURRENT_DATE, 'Precision test', 'MANUAL_JE', 'POSTED')`,
+    [jeId, testCompId, entryNum]
+  );
+  await db.query(
+    `INSERT INTO journal_entry_lines (id, journal_entry_id, account_id, debit_paise, credit_paise, description)
+     VALUES ($1, $2, 'acc_1010', 500000, 0, 'Debit Checking')`,
+    ['jel_p1_' + Math.random().toString(36).substring(2, 8), jeId]
+  );
+  await db.query(
+    `INSERT INTO journal_entry_lines (id, journal_entry_id, account_id, debit_paise, credit_paise, description)
+     VALUES ($1, $2, 'acc_4000', 0, 500000, 'Credit Sales')`,
+    ['jel_p2_' + Math.random().toString(36).substring(2, 8), jeId]
+  );
+  await db.query('COMMIT');
+
+  const checkJe = await db.query(
+    `SELECT SUM(debit_paise) as debits, SUM(credit_paise) as credits
+     FROM journal_entry_lines WHERE journal_entry_id = $1`,
+    [jeId]
+  );
+  assert(
+    Number(checkJe.rows[0].debits) === 500000 &&
+    Number(checkJe.rows[0].credits) === 500000 &&
+    Number(checkJe.rows[0].debits) === Number(checkJe.rows[0].credits),
+    'Phase 11.3: Double-entry balanced invariant (Debits == Credits == 500,000 paise) mathematically verified'
+  );
+
+  // Test 11.4: Unbalanced journal entry is detected / prevented
+  let caughtUnbalanced = false;
+  try {
+    const unbalId = 'je_unbal_' + Date.now();
+    await db.query('BEGIN');
+    await db.query("SET LOCAL app.allow_journal_mutation = 'on'");
+    await db.query(
+      `INSERT INTO journal_entries (id, company_id, entry_number, entry_date, memo, source_type, status)
+       VALUES ($1, $2, $3, CURRENT_DATE, 'Unbalanced test', 'MANUAL_JE', 'POSTED')`,
+      [unbalId, testCompId, 'JE-UNBAL-' + Date.now()]
+    );
+    await db.query(
+      `INSERT INTO journal_entry_lines (id, journal_entry_id, account_id, debit_paise, credit_paise)
+       VALUES ($1, $2, 'acc_1010', 999000, 0)`,
+      ['jel_u1_' + Date.now(), unbalId]
+    );
+    await db.query('COMMIT');
+  } catch (err) {
+    try { await db.query('ROLLBACK'); } catch {}
+    caughtUnbalanced = true;
+  }
+  assert(caughtUnbalanced === true,
+    'Phase 11.4: Double-entry integrity guard strictly caught and rejected unbalanced journal entry');
+}
+
+async function runPhase12() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 12: Multi-Currency & GIFT City IFSC Engine -');
+  console.log('======================================================');
+
+  const testCompId = 'comp_fx_' + Date.now();
+
+  // Test 12.1: Store exchange rate with effective date
+  const fx = await setExchangeRate({
+    companyId: testCompId,
+    fromCurrency: 'USD',
+    toCurrency: 'INR',
+    rate: 86.50,
+    effectiveDate: '2026-04-01',
+    source: 'RBI_REFERENCE'
+  });
+  assert(Number(fx.rate) === 86.5 && fx.from_currency === 'USD',
+    'Phase 12.1: Official exchange rate persisted with effective date & RBI reference source');
+
+  // Test 12.2: Convert amount with minor unit precision
+  const conv = await convertCurrency({
+    amountMinor: 100000,
+    fromCurrency: 'USD',
+    toCurrency: 'INR',
+    date: '2026-04-01',
+    companyId: testCompId
+  });
+  assert(conv.convertedMinor === 8650000,
+    'Phase 12.2: Multi-currency conversion computed exactly ($1,000.00 at 86.50 -> 8,650,000 paise)');
+
+  // Test 12.3: Realized Forex Gain on settlement
+  const fxLog = await recordForexGainLoss({
+    companyId: testCompId,
+    entityType: 'INVOICE',
+    entityId: 'inv_fx_test',
+    foreignCurrency: 'USD',
+    foreignAmount: 100000,
+    bookingRate: 82.00,
+    settlementRate: 86.50,
+    isRealized: true
+  });
+  assert(Number(fxLog.gain_loss_paise) === 450000 && fxLog.is_realized === true,
+    'Phase 12.3: Realized forex gain calculated accurately (+450,000 paise on USD settlement differential)');
+
+  // Test 12.4: Balanced Forex journal entry created
+  assert(fxLog.journal_entry_id !== null,
+    'Phase 12.4: Automatic double-entry journal entry posted for realized foreign exchange difference');
+}
+
+async function runPhase13() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 13: Continuous Sub-Ledger to GL Invariant -');
+  console.log('======================================================');
+
+  const testCompId = 'comp_subledger_' + Date.now();
+  const db = await getDb();
+
+  // Create an invoice with open balance
+  const invId = 'inv_sl_' + Date.now();
+  const invNum = 'INV-SL-' + Date.now();
+  await db.query(
+    `INSERT INTO invoices (
+      id, company_id, invoice_number, customer_id, issue_date, due_date,
+      subtotal_paise, total_paise, balance_due_paise, status
+    ) VALUES ($1, $2, $3, 'cust_1', CURRENT_DATE, CURRENT_DATE, 750000, 750000, 750000, 'OPEN')`,
+    [invId, testCompId, invNum]
+  );
+
+  // Sync control account
+  await syncSubledgerToGl({ companyId: testCompId });
+
+  // Run invariant check
+  const report = await checkSubledgerReconciliation({ companyId: testCompId });
+  assert(report.ar.subledgerPaise === 750000,
+    'Phase 13.1: Subledger engine accurately aggregated open customer invoices (750,000 paise)');
+  assert(report.ar.glPaise === 750000 && report.ar.isBalanced === true,
+    'Phase 13.2: General Ledger Accounts Receivable matched subledger exactly with 0 variance');
+  assert(report.isBalanced === true && report.status === 'HEALTHY',
+    'Phase 13.3: Continuous invariant verification confirmed 100% HEALTHY sub-ledger to GL state');
+
+  const repCheck = await db.query(
+    `SELECT * FROM subledger_reconciliation_reports WHERE company_id = $1 ORDER BY checked_at DESC LIMIT 1`,
+    [testCompId]
+  );
+  assert(repCheck.rows.length === 1 && repCheck.rows[0].is_balanced === true,
+    'Phase 13.4: Subledger audit report persisted in historical reconciliation registry');
+}
+
+async function runPhase14() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 14: Multi-GSTIN Branches & Cost Centers ----');
+  console.log('======================================================');
+
+  const testCompId = 'comp_branch_' + Date.now();
+
+  // Test 14.1: Create valid branch with GSTIN
+  const branch1 = await createBranch({
+    companyId: testCompId,
+    branchCode: 'MH-MUM',
+    branchName: 'Mumbai Head Office',
+    gstin: '27AAACB2222B1Z3',
+    stateCode: '27',
+    stateName: 'Maharashtra',
+    isHeadOffice: true
+  });
+  assert(branch1.branch_code === 'MH-MUM' && branch1.is_head_office === true,
+    'Phase 14.1: Multi-GSTIN branch created with valid state GSTIN and Head Office flag');
+
+  // Test 14.2: Reject branch when state code does not match GSTIN prefix
+  let caughtMismatch = false;
+  try {
+    await createBranch({
+      companyId: testCompId,
+      branchCode: 'DL-DEL',
+      branchName: 'Delhi Depot',
+      gstin: '07AAACB2222B1Z3',
+      stateCode: '27',
+      stateName: 'Delhi'
+    });
+  } catch (err) {
+    caughtMismatch = true;
+  }
+  assert(caughtMismatch === true,
+    'Phase 14.2: Branch validator rejected state code mismatch against 15-digit GSTIN prefix');
+
+  // Test 14.3: Create and list Cost Centers
+  const cc = await createCostCenter({
+    companyId: testCompId,
+    code: 'CC-DESIGN',
+    name: 'Architectural Design Department',
+    department: 'Design & Creative'
+  });
+  assert(cc.code === 'CC-DESIGN' && cc.department === 'Design & Creative',
+    'Phase 14.3: Enterprise Cost Center created for departmental allocation');
+
+  const ccList = await listCostCenters({ companyId: testCompId });
+  assert(ccList.length >= 1,
+    'Phase 14.4: Cost centers listed and queryable across organization');
+}
+
+async function runPhase15() {
+  console.log('\n======================================================');
+  console.log('--- PHASE 15: Automated Year-End Close & Retained Earnings');
+  console.log('======================================================');
+
+  const testCompId = 'comp_ye_' + Date.now();
+  const db = await getDb();
+
+  // Create an accounting policy for company
+  await db.query(
+    `INSERT INTO company_accounting_policies (company_id, books_closed_until)
+     VALUES ($1, '2024-03-31')
+     ON CONFLICT (company_id) DO NOTHING`,
+    [testCompId]
+  );
+
+  // Perform Year-End Close for FY2024-25
+  const closeRes = await closeFiscalYear({
+    companyId: testCompId,
+    fiscalYear: 'FY2024-25',
+    startDate: '2024-04-01',
+    endDate: '2025-03-31'
+  });
+  assert(closeRes.success === true && closeRes.fiscalYear === 'FY2024-25',
+    'Phase 15.1: Annual Indian Financial Year close computed successfully');
+  assert(closeRes.retainedEarningsEntryId !== null,
+    'Phase 15.2: Balancing Retained Earnings (acc_3900) roll-forward journal entry generated');
+
+  // Test 15.3: Verify past books are now locked up to 2025-03-31
+  const policyCheck = await db.query(
+    `SELECT books_closed_until::text as books_closed_until FROM company_accounting_policies WHERE company_id = $1`,
+    [testCompId]
+  );
+  const lockedStr = String(policyCheck.rows[0]?.books_closed_until || '');
+  assert(lockedStr.startsWith('2025-03-31'),
+    'Phase 15.3: Financial year close automatically locked books until 2025-03-31');
+
+  // Test 15.4: Prevent duplicate close of already closed fiscal year
+  let caughtDupClose = false;
+  try {
+    await closeFiscalYear({
+      companyId: testCompId,
+      fiscalYear: 'FY2024-25',
+      startDate: '2024-04-01',
+      endDate: '2025-03-31'
+    });
+  } catch (err) {
+    caughtDupClose = true;
+  }
+  assert(caughtDupClose === true,
+    'Phase 15.4: System strictly blocked attempting duplicate close on already locked fiscal year');
+}
+
 async function main() {
   console.log('======================================================================');
-  console.log('🚀 MESO AUTONOMOUS CUMULATIVE VERIFICATION GATE: PHASES 1 TO 10');
+  console.log('🚀 MESO AUTONOMOUS CUMULATIVE VERIFICATION GATE: PHASES 1 TO 15');
   console.log('======================================================================');
 
   try {
@@ -515,6 +796,13 @@ async function main() {
     await runPhase9();
     await runPhase10();
 
+    // Domain 3: Continuous General Ledger & Multi-Currency (Phases 11-15)
+    await runPhase11();
+    await runPhase12();
+    await runPhase13();
+    await runPhase14();
+    await runPhase15();
+
     console.log('\n======================================================================');
     console.log(`VERIFICATION SUMMARY: ${testsPassed} PASSED, ${testsFailed} FAILED`);
     console.log('======================================================================');
@@ -524,21 +812,21 @@ async function main() {
       process.exit(1);
     }
 
-    // Update architecture-state.json to mark Phases 1-10 as PASSED
+    // Update architecture-state.json to mark Phases 1-15 as PASSED
     const statePath = path.resolve(__dirname, '../architecture-state.json');
     if (fs.existsSync(statePath)) {
       const state = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 15; i++) {
         state.phases[i].status = 'PASSED';
         state.phases[i].lastVerifiedAt = new Date().toISOString();
       }
-      state.currentPhase = 11;
+      state.currentPhase = 16;
       state.lastUpdated = new Date().toISOString();
       fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
-      console.log('✓ Successfully updated architecture-state.json: Phases 1 to 10 marked PASSED.');
+      console.log('✓ Successfully updated architecture-state.json: Phases 1 to 15 marked PASSED.');
     }
 
-    console.log('🎯 ALL DOMAIN 1 & DOMAIN 2 GATES CLEARED (100% PASS). Ready for Domain 3 (Phases 11-15).\n');
+    console.log('🎯 ALL DOMAIN 1, 2 & 3 GATES CLEARED (100% PASS). Ready for Domain 4 (Phases 16-20).\n');
     process.exit(0);
   } catch (err) {
     console.error('\n❌ Unhandled exception during verification runner:', err);

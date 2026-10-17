@@ -386,6 +386,40 @@ export const api = {
     body: JSON.stringify({ batchId }),
   }),
   getImportBatches: () => request('/import/batches'),
+
+  // Domain 3: Continuous General Ledger, Multi-Currency & Branches (Phases 11-15)
+  getExchangeRate: (from = 'USD', to = 'INR', date) => request(`/ledger/exchange-rates?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${date ? `&date=${encodeURIComponent(date)}` : ''}`),
+  setExchangeRate: (data) => request('/ledger/exchange-rates', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  convertCurrency: (data) => request('/ledger/convert', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  recordForexGainLoss: (data) => request('/ledger/forex-gain-loss', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  checkSubledgerReconciliation: () => request('/ledger/reconciliation/check'),
+  syncSubledgerToGl: () => request('/ledger/reconciliation/sync', {
+    method: 'POST',
+  }),
+  getBranches: () => request('/ledger/branches'),
+  createBranch: (data) => request('/ledger/branches', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getCostCenters: () => request('/ledger/cost-centers'),
+  createCostCenter: (data) => request('/ledger/cost-centers', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  closeFiscalYear: (data) => request('/ledger/year-end-close', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  getFiscalYearCloses: () => request('/ledger/fiscal-years'),
 };
 
 export default api;

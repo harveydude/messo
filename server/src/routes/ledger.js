@@ -1,203 +1,166 @@
-import express from 'express';
-import { getDb } from '../db/db.js';
-import { postJournalEntry } from '../services/ledgerService.js';
+/**
+ * Domain 3 API Routes: Continuous Double-Entry General Ledger, Multi-Currency,
+ * Sub-Ledger Reconciliation, Multi-GSTIN Branches & Year-End Close (Phases 11-15)
+ */
 
-const router = express.Router();
+import { Router } from 'express';
+import { extractUserCompany, requireRole } from '../middleware/rbac.js';
+import { setExchangeRate, getExchangeRate, convertCurrency, recordForexGainLoss } from '../services/currencyService.js';
+import { checkSubledgerReconciliation, syncSubledgerToGl } from '../services/subledgerReconciliationService.js';
+import { createBranch, listBranches, createCostCenter, listCostCenters } from '../services/branchService.js';
+import { closeFiscalYear, listFiscalYearCloses } from '../services/yearEndService.js';
 
-const toInr = (paise) => (Math.abs(Number(paise || 0)) / 100).toFixed(2);
+const router = Router();
+router.use(extractUserCompany);
 
-// GET Chart of Accounts
-router.get('/accounts', async (req, res) => {
+// ==================== PHASE 12: MULTI-CURRENCY & FOREX ====================
+router.get('/exchange-rates', async (req, res) => {
   try {
-    const db = await getDb();
-    const result = await db.query(`
-      SELECT * FROM accounts
-      ORDER BY code ASC
-    `);
-
-    const formatted = result.rows.map(acc => ({
-      ...acc,
-      balance_inr: (Number(acc.balance_paise) / 100).toFixed(2),
-    }));
-
-    res.json({ success: true, accounts: formatted });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// GET Journal Entries
-router.get('/journal-entries', async (req, res) => {
-  try {
-    const db = await getDb();
-    const entries = await db.query(`
-      SELECT je.*,
-        json_agg(
-          json_build_object(
-            'id', jl.id,
-            'account_id', jl.account_id,
-            'account_name', a.name,
-            'account_code', a.code,
-            'debit_inr', (jl.debit_paise::numeric / 100),
-            'credit_inr', (jl.credit_paise::numeric / 100),
-            'description', jl.description
-          )
-        ) as lines
-      FROM journal_entries je
-      LEFT JOIN journal_entry_lines jl ON je.id = jl.journal_entry_id
-      LEFT JOIN chart_of_accounts a ON jl.account_id = a.id
-      GROUP BY je.id
-      ORDER BY je.entry_date DESC, je.created_at DESC
-    `);
-
-    res.json({ success: true, entries: entries.rows });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// POST Manual Journal Entry
-router.post('/journal-entries', async (req, res) => {
-  try {
-    const { entryNumber, entryDate, narration, lines } = req.body;
-
-    if (!lines || lines.length < 2) {
-      return res.status(400).json({ success: false, error: 'A journal entry must contain at least 2 lines' });
-    }
-
-    const formattedLines = lines.map(l => ({
-      accountId: l.accountId,
-      debitPaise: Math.round(Number(l.debit || 0) * 100),
-      creditPaise: Math.round(Number(l.credit || 0) * 100),
-      description: l.description || '',
-    }));
-
-    const result = await postJournalEntry({
-      entryNumber: entryNumber || `JE-MAN-${Date.now().toString().slice(-4)}`,
-      entryDate: entryDate || new Date().toISOString().split('T')[0],
-      docType: 'journal',
-      narration: narration || 'Manual Journal Entry',
-      lines: formattedLines,
+    const { from = 'USD', to = 'INR', date } = req.query;
+    const rate = await getExchangeRate({
+      companyId: req.companyId,
+      fromCurrency: from,
+      toCurrency: to,
+      date
     });
-
-    res.json({ success: true, message: 'Journal entry posted successfully', entry: result });
+    res.json({ success: true, from, to, rate });
   } catch (err) {
-    const isInvariantViolation = err.message.includes('Double-Entry Violation') || err.message.includes('must equal total credits') || err.message.includes('Difference:');
-    res.status(isInvariantViolation ? 422 : 400).json({ success: false, error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// GET Profit & Loss Statement
-router.get('/profit-loss', async (req, res) => {
+router.post('/exchange-rates', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FINANCE_MANAGER']), async (req, res) => {
   try {
-    const db = await getDb();
-
-    const accountsRes = await db.query(`
-      SELECT code, name, type, sub_type, balance_paise
-      FROM accounts
-      WHERE type IN ('income', 'expense')
-      ORDER BY type, code ASC
-    `);
-
-    let totalIncomePaise = 0;
-    let totalExpensePaise = 0;
-    const incomeItems = [];
-    const expenseItems = [];
-
-    for (const row of accountsRes.rows) {
-      const paise = Number(row.balance_paise || 0);
-      const item = {
-        code: row.code,
-        name: row.name,
-        amount: toInr(paise),
-        amountPaise: paise
-      };
-
-      if (row.type === 'income') {
-        totalIncomePaise += paise;
-        incomeItems.push(item);
-      } else {
-        totalExpensePaise += paise;
-        expenseItems.push(item);
-      }
-    }
-
-    const netProfitPaise = totalIncomePaise - totalExpensePaise;
-
-    res.json({
-      success: true,
-      reportName: 'Profit and Loss',
-      currency: 'INR (₹)',
-      income: {
-        items: incomeItems,
-        total: toInr(totalIncomePaise)
-      },
-      expenses: {
-        items: expenseItems,
-        total: toInr(totalExpensePaise)
-      },
-      netProfit: {
-        amount: toInr(netProfitPaise),
-        isPositive: netProfitPaise >= 0
-      }
+    const { fromCurrency, toCurrency = 'INR', rate, effectiveDate, source } = req.body;
+    const saved = await setExchangeRate({
+      companyId: req.companyId,
+      fromCurrency,
+      toCurrency,
+      rate,
+      effectiveDate,
+      source,
+      user: req.user
     });
+    res.status(201).json({ success: true, exchangeRate: saved });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 
-// GET Balance Sheet Statement
-router.get('/balance-sheet', async (req, res) => {
+router.post('/convert', async (req, res) => {
   try {
-    const db = await getDb();
-
-    const accountsRes = await db.query(`
-      SELECT code, name, type, sub_type, balance_paise
-      FROM accounts
-      WHERE type IN ('asset', 'liability', 'equity')
-      ORDER BY type, code ASC
-    `);
-
-    let totalAssetsPaise = 0;
-    let totalLiabilitiesPaise = 0;
-    let totalEquityPaise = 0;
-
-    const assets = [];
-    const liabilities = [];
-    const equity = [];
-
-    for (const row of accountsRes.rows) {
-      const paise = Number(row.balance_paise || 0);
-      const item = {
-        code: row.code,
-        name: row.name,
-        amount: toInr(paise),
-        subType: row.sub_type
-      };
-
-      if (row.type === 'asset') {
-        totalAssetsPaise += paise;
-        assets.push(item);
-      } else if (row.type === 'liability') {
-        totalLiabilitiesPaise += paise;
-        liabilities.push(item);
-      } else if (row.type === 'equity') {
-        totalEquityPaise += paise;
-        equity.push(item);
-      }
-    }
-
-    res.json({
-      success: true,
-      reportName: 'Balance Sheet',
-      currency: 'INR (₹)',
-      assets: { items: assets, total: toInr(totalAssetsPaise) },
-      liabilities: { items: liabilities, total: toInr(totalLiabilitiesPaise) },
-      equity: { items: equity, total: toInr(totalEquityPaise) },
-      totalLiabilitiesAndEquity: toInr(totalLiabilitiesPaise + totalEquityPaise)
+    const { amountMinor, fromCurrency, toCurrency, date } = req.body;
+    const conversion = await convertCurrency({
+      amountMinor,
+      fromCurrency,
+      toCurrency,
+      date,
+      companyId: req.companyId
     });
+    res.json({ success: true, ...conversion });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.post('/forex-gain-loss', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FINANCE_MANAGER']), async (req, res) => {
+  try {
+    const log = await recordForexGainLoss({
+      companyId: req.companyId,
+      ...req.body,
+      user: req.user
+    });
+    res.status(201).json({ success: true, forexLog: log });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ==================== PHASE 13: SUBLEDGER TO GL RECONCILIATION ====================
+router.get('/reconciliation/check', async (req, res) => {
+  try {
+    const report = await checkSubledgerReconciliation({
+      companyId: req.companyId,
+      recordReport: true
+    });
+    res.json({ success: true, report });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/reconciliation/sync', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT']), async (req, res) => {
+  try {
+    const report = await syncSubledgerToGl({ companyId: req.companyId });
+    res.json({ success: true, report });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==================== PHASE 14: BRANCHES & COST CENTERS ====================
+router.get('/branches', async (req, res) => {
+  try {
+    const branches = await listBranches({ companyId: req.companyId });
+    res.json({ success: true, branches });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/branches', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FINANCE_MANAGER']), async (req, res) => {
+  try {
+    const branch = await createBranch({
+      companyId: req.companyId,
+      ...req.body
+    });
+    res.status(201).json({ success: true, branch });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/cost-centers', async (req, res) => {
+  try {
+    const costCenters = await listCostCenters({ companyId: req.companyId });
+    res.json({ success: true, costCenters });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/cost-centers', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FINANCE_MANAGER']), async (req, res) => {
+  try {
+    const cc = await createCostCenter({
+      companyId: req.companyId,
+      ...req.body
+    });
+    res.status(201).json({ success: true, costCenter: cc });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ==================== PHASE 15: YEAR-END CLOSE ====================
+router.post('/year-end-close', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT']), async (req, res) => {
+  try {
+    const result = await closeFiscalYear({
+      companyId: req.companyId,
+      ...req.body,
+      user: req.user
+    });
+    res.status(201).json({ success: true, closeRecord: result });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.get('/fiscal-years', async (req, res) => {
+  try {
+    const closes = await listFiscalYearCloses({ companyId: req.companyId });
+    res.json({ success: true, fiscalYearCloses: closes });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
