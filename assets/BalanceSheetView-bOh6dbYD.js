@@ -1,0 +1,1 @@
+import{t as e}from"./BalanceSheetReportView-CZa2QfqM.js";import{rt as t,s as n}from"./index-CKjq5f-d.js";t();var r=n();function i({onBack:t}){return(0,r.jsx)(e,{onBack:t||(()=>{window.location.hash=`#/reports`})})}export{i as default};
