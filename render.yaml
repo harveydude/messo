@@ -1,7 +1,7 @@
 services:
   # 1. Frontend Static Site (React 19 + Tailwind SPA on Render Free Tier)
   - type: web
-    name: quickbooks-india-ui
+    name: messo-ui
     runtime: static
     buildCommand: npm install && npm run build
     staticPublishPath: dist
@@ -13,12 +13,12 @@ services:
       - key: VITE_API_URL
         fromService:
           type: web
-          name: quickbooks-india-api
+          name: messo-api
           property: host
 
   # 2. Backend Web Service (Express API + Continuous Accounting Engine on Render Free Tier)
   - type: web
-    name: quickbooks-india-api
+    name: messo-api
     runtime: node
     plan: free
     rootDir: server
@@ -33,5 +33,5 @@ services:
       - key: FRONTEND_URL
         fromService:
           type: web
-          name: quickbooks-india-ui
+          name: messo-ui
           property: host
