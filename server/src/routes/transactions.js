@@ -3,6 +3,7 @@ import { getDb } from '../db/db.js';
 import { postJournalEntry, logAudit, toInr } from '../services/ledgerService.js';
 import { calculateGST } from '../services/gstService.js';
 import { randomUUID } from 'crypto';
+import executor from '../services/workflowExecutor.js';
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ export async function processTransaction(payload, defaultType = null) {
   const docNumber = payload.docNumber || payload.invoiceNumber || payload.billNumber || payload.refNo || `${txnType.slice(0, 3)}-${Date.now().toString().slice(-4)}`;
   const txnDate = payload.txnDate || payload.date || payload.issueDate || payload.paymentDate || payload.expense_date || new Date().toISOString().split('T')[0];
   const dueDate = payload.dueDate || (['INVOICE', 'BILL'].includes(txnType) ? new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] : null);
-  const contactId = payload.contactId || payload.customerId || payload.vendorId || null;
+  const contactId = payload.contactId || payload.customerId || payload.customer_id || payload.vendorId || payload.vendor_id || null;
   const memo = payload.memo || payload.notes || payload.description || '';
   const currency = payload.currency || 'INR';
 
@@ -394,17 +395,45 @@ export async function processTransaction(payload, defaultType = null) {
     }
   }
 
+  const docType = payload.doc_type || payload.docType || (
+    txnType === 'ESTIMATE' ? 'estimate' :
+    txnType === 'SALES_ORDER' ? 'sales_order' :
+    txnType === 'PURCHASE_ORDER' ? 'purchase_order' :
+    txnType === 'CREDIT_MEMO' ? 'credit_memo' :
+    txnType === 'DELAYED_CREDIT' ? 'delayed_credit' :
+    txnType === 'DELAYED_CHARGE' ? 'delayed_charge' :
+    txnType.toLowerCase()
+  );
+  const docStatus = payload.doc_status || payload.docStatus || 'DRAFT';
+  const companyId = payload.company_id || payload.companyId || 'comp_1';
+
   // 1. Post to unified transactions table
   await db.query(`
     INSERT INTO transactions (
-      id, txn_type, doc_number, txn_date, due_date, contact_id, memo,
-      is_posting, subtotal, tax_amount, total_amount, balance_due, currency, status
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'OPEN')
+      id, company_id, txn_type, doc_number, txn_date, due_date, contact_id, memo,
+      is_posting, subtotal, tax_amount, total_amount, balance_due, currency, status,
+      doc_type, doc_status, status_history
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'OPEN', $15, $16, $17)
     ON CONFLICT (id) DO NOTHING
   `, [
-    txnId, txnType, docNumber, txnDate, dueDate, contactId, memo,
-    isPosting, subtotalNumeric, taxNumeric, totalNumeric, totalNumeric, currency
+    txnId, companyId, txnType, docNumber, txnDate, dueDate, contactId, memo,
+    isPosting, subtotalNumeric, taxNumeric, totalNumeric, totalNumeric, currency,
+    docType, docStatus, JSON.stringify([{ to: docStatus, at: new Date().toISOString() }])
   ]);
+
+  // 1b. Post lines into transaction_lines for conversions
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    const lineId = `tl_${randomUUID()}`;
+    const qty = Number(l.qty || l.quantity || 1);
+    const rate = Number(l.rate || l.price || l.amount || 0);
+    const amt = qty * rate;
+    await db.query(`
+      INSERT INTO transaction_lines (id, transaction_id, description, quantity, rate, amount, sort_order, tax_rate_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (id) DO NOTHING
+    `, [lineId, txnId, l.description || l.memo || '', qty, rate, amt, i, l.tax_rate_id || l.taxRateId || null]);
+  }
 
   // 2. Post to Double-Entry Ledger if posting is TRUE
   let jeRecord = null;
@@ -435,11 +464,13 @@ export async function processTransaction(payload, defaultType = null) {
 
   return {
     success: true,
-    message: `${txnType} executed successfully`,
+    id: txnId,
     transactionId: txnId,
     docNumber,
     totalAmount: totalNumeric,
     isPosting,
+    doc_type: docType,
+    doc_status: docStatus,
     journalEntryId: jeRecord?.id || null
   };
 }
@@ -702,5 +733,18 @@ router.post('/other/pay-down-credit-card', async (req, res) => {
     res.status(400).json({ success: false, error: err.message });
   }
 });
+
+export async function executeWorkflow(workflow, payload, ctx = {}) {
+  const normWorkflow = String(workflow || '').toUpperCase().replace(/-/g, '_');
+  const body = {
+    ...payload,
+    txnType: normWorkflow,
+    company_id: ctx.companyId || payload.company_id || 'comp_1',
+    created_by: ctx.actor || payload.created_by || 'system:recurring',
+  };
+  const result = await processTransaction(body);
+  return { id: result.transactionId, docNumber: result.docNumber, data: result, ...result };
+}
+executor.setExecutor(executeWorkflow);
 
 export default router;

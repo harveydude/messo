@@ -8,7 +8,8 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "test:integrity": "node tests/verify-integrity.js",
-    "test:ledger": "node verify-ledger.js"
+    "test:ledger": "node verify-ledger.js",
+    "test:taxonomy": "node tests/verify-taxonomy.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.14",
@@ -16,6 +17,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "multer": "^2.4.0",
     "pg": "^8.13.1"
   }
 }

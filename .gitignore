@@ -30,3 +30,4 @@ dist-ssr
 server/.env
 server/node_modules
 server/pgdata
+server/data

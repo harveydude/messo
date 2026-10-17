@@ -29,6 +29,8 @@ import contactsRouter from './routes/contacts.js';
 import catalogRouter from './routes/catalog.js';
 import operationsRouter from './routes/operations.js';
 import transactionsRouter from './routes/transactions.js';
+import taxonomyRouter from './routes/taxonomy.js';
+import { startRecurringRunner } from './jobs/recurringRunner.js';
 
 import { idempotency } from './middleware/integrity.js';
 
@@ -138,6 +140,7 @@ app.use('/api/catalog', catalogRouter);
 
 // Operations & Utility Routes
 app.use('/api', operationsRouter);
+app.use('/api', taxonomyRouter);
 
 // Serve Frontend Static Build if available (SPA Fallback)
 if (fs.existsSync(distPath)) {
@@ -189,6 +192,7 @@ async function startServer() {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`✓ Meso master backend running on http://127.0.0.1:${PORT}`);
       console.log(`✓ All 2026 ERP workflows & double-entry pipelines active.`);
+      startRecurringRunner();
     });
   } catch (err) {
     console.error('Failed to start server:', err);

@@ -21,6 +21,7 @@ const bodyHash = (req) =>
 
 export async function idempotency(req, res, next) {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
+  if ((req.headers['content-type'] || '').startsWith('multipart/')) return next();
   const key = req.header('idempotency-key') || req.header('Idempotency-Key');
   if (!key) {
     if (process.env.IDEMPOTENCY_REQUIRED === '1') {
