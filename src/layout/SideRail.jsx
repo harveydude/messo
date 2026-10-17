@@ -37,10 +37,10 @@ const APP_SUBMENUS = {
       { label: 'Expense Transaction', view: 'expense_transactions' },
       { label: 'Vendors', view: 'vendors' },
       { label: 'Bills', view: 'bills' },
-      { label: 'Bill Payments', view: 'bills' },
+      { label: 'Bill Payments & MSME', view: 'bills' },
       { label: 'Mileage', view: 'mileage' },
       { label: 'Contractors', view: 'team' },
-      { label: '1099-S', action: '1099-S filing forms and reports' },
+      { label: 'TDS & Withholding', view: 'business_tax' },
     ],
   },
   sales: {
@@ -51,9 +51,8 @@ const APP_SUBMENUS = {
       { label: 'Invoices', view: 'invoices' },
       { label: 'Recurring payments', view: 'recurring_transactions' },
       { label: 'Sales Order', view: 'orders' },
-      { label: 'Sales Channel', action: 'Connected sales channels: Amazon, Shopify, Flipkart' },
-      { label: 'Meso Payouts', action: 'Meso payouts: UPI and Bank settlements' },
-      { label: 'Channel Payouts', action: 'Marketplace channel disbursements' },
+      { label: 'Sales Channels & Apps', view: 'apps' },
+      { label: 'Meso Payouts', view: 'bank_transactions' },
       { label: 'Product and Services', view: 'products_services' },
     ],
   },
@@ -63,7 +62,6 @@ const APP_SUBMENUS = {
       { label: 'Overview', view: 'customer_hub' },
       { label: 'Customers', view: 'customers_list' },
       { label: 'Estimates', view: 'estimates' },
-      { label: 'Reviews', action: 'Customer reviews and ratings' },
     ],
   },
   team: {
@@ -78,29 +76,28 @@ const APP_SUBMENUS = {
     title: 'Time',
     items: [
       { label: 'Time Entries', view: 'time_entries' },
-      { label: 'Schedule', action: 'Time schedule and shift planner' },
+      { label: 'Schedule', view: 'time_entries' },
     ],
   },
   sales_tax: {
-    title: 'Sales Tax',
+    title: 'GST Compliance',
     items: [
-      { label: 'Overview', view: 'sales_tax' },
+      { label: 'GSTR-1 & GSTR-3B Overview', view: 'sales_tax' },
     ],
   },
   business_tax: {
-    title: 'Business Tax',
+    title: 'Business & Direct Tax',
     items: [
-      { label: 'Overview', view: 'business_tax' },
-      { label: 'Summary', view: 'business_tax' },
-      { label: 'Tax Summary', view: 'business_tax' },
+      { label: 'TDS Overview & Register', view: 'business_tax' },
+      { label: 'Section 194C / 194J', view: 'business_tax' },
+      { label: 'Presumptive Tax (44AD)', view: 'business_tax' },
     ],
   },
   lending: {
     title: 'Lending',
     items: [
       { label: 'Overview', view: 'lending' },
-      { label: 'Term Loan', action: 'Term loan details & application' },
-      { label: 'PPP Center', action: 'PPP Center' },
+      { label: 'Term Loan Center', view: 'lending' },
     ],
   },
 };

@@ -57,11 +57,11 @@
   },
   "bank": {
     "asOf": "As of today",
-    "todaysBalance": "-₹3,422",
+    "todaysBalance": "₹1,043.28",
     "accounts": [
       {
         "name": "Checking",
-        "bankBalance": "-₹3,621.93",
+        "bankBalance": "₹3,621.93",
         "inBooks": "₹1,201.00",
         "updated": "Updated moments ago",
         "reviewLink": "25 to review"

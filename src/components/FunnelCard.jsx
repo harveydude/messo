@@ -18,7 +18,8 @@ import { ChevronDown, ChevronRight, Check } from 'lucide-react';
 export default function FunnelCard({
   funnelData,
   privacyEnabled = false,
-  onRequestPayment
+  onRequestPayment,
+  onNavigate
 }) {
   const [selectedPeriod, setSelectedPeriod] = useState(funnelData?.period || 'This period');
   const [showPeriodMenu, setShowPeriodMenu] = useState(false);
@@ -109,6 +110,7 @@ export default function FunnelCard({
           count={funnelData?.outstandingCount}
           countLabel="invoices open"
           formatAmount={formatAmount}
+          onClick={() => onNavigate && onNavigate('invoices')}
         />
 
         <div className="flex justify-center text-[#6B6C72]">
@@ -123,6 +125,7 @@ export default function FunnelCard({
           countLabel="settled"
           formatAmount={formatAmount}
           done
+          onClick={() => onNavigate && onNavigate('sales_transactions')}
         />
       </div>
 
@@ -150,9 +153,14 @@ export default function FunnelCard({
  * render is a different component every render, which remounts its subtree and
  * throws away DOM state.
  */
-function Stage({ title, amount, count, countLabel, formatAmount, done }) {
+function Stage({ title, amount, count, countLabel, formatAmount, done, onClick }) {
   return (
-    <div className="h-full bg-white border border-[#C7CBCE] rounded-[8px] p-[20px] flex flex-col justify-between relative overflow-hidden">
+    <div 
+      onClick={onClick}
+      className={`h-full bg-white border border-[#C7CBCE] rounded-[8px] p-[20px] flex flex-col justify-between relative overflow-hidden transition ${
+        onClick ? 'cursor-pointer hover:border-[#8D9096] hover:shadow-2xs' : ''
+      }`}
+    >
       <div className={`absolute top-0 left-0 right-0 h-[4px] ${done ? 'bg-[#2CA01C]' : 'bg-[#E8A33D]'}`} />
       <div>
         <div className="text-[15px] font-medium text-[#393A3D]">{title}</div>

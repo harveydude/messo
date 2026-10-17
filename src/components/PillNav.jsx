@@ -7,34 +7,17 @@ import {
   Clock,
   FileText,
   ChevronRight,
+  Landmark,
 } from 'lucide-react';
 
-/**
- * The dashboard's app pills.
- *
- * WHAT WAS WRONG, AND WHY IT MATTERED
- *
- * Three of the eight pills pointed at the wrong screen and two shared one id:
- * "Team" and "Time" both went to time, "Sales Tax" went to the Sales overview,
- * and "Business Tax" went to the Reports list. Clicking a pill named for one
- * thing and silently landing on another is worse than the pill not existing --
- * the user concludes the app is broken, or worse, that the figure they are
- * looking at belongs to the screen they asked for.
- *
- * There is no Sales Tax or Business Tax screen, so those pills are gone rather
- * than relabelled onto something unrelated. When the GST screens are built they
- * come back, pointing at themselves. A navigation that tells the truth about
- * what exists is worth more than one that covers every label.
- *
- * Keys are the pill id, not the array index. Index keys make a reordering move
- * the wrong row's state along with it.
- */
 const PILLS = [
   { id: 'bank_transactions', label: 'Accounting', color: '#2CA01C', icon: Activity },
   { id: 'expense_transactions', label: 'Expenses & Pay Bills', color: '#107C41', icon: CreditCard },
   { id: 'sales_transactions', label: 'Sales & Get Paid', color: '#0E9F9F', icon: BarChart2 },
+  { id: 'sales_tax', label: 'GST Returns (GSTR-1/3B)', color: '#7C3AED', icon: Landmark },
+  { id: 'business_tax', label: 'TDS & Direct Tax', color: '#D97706', icon: FileText },
+  { id: 'bills', label: 'Bills & MSME Pay', color: '#0077C5', icon: CreditCard },
   { id: 'customers_list', label: 'Customers', color: '#0E9F9F', icon: Users },
-  { id: 'time_entries', label: 'Time', color: '#0E9F9F', icon: Clock },
   { id: 'standard_reports', label: 'Reports', color: '#E5446D', icon: FileText },
 ];
 

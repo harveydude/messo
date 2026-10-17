@@ -134,7 +134,7 @@ export default function BankCard({
         </button>
 
         <div className="flex items-center space-x-3 text-[#393A3D]">
-          <button onClick={() => alert('Bank account settings')} className="hover:text-black p-1 cursor-pointer" title="Bank settings">
+          <button onClick={onOpenRegisters} className="hover:text-black p-1 cursor-pointer" title="Bank registers & accounts">
             <Settings size={20} />
           </button>
           <div className="relative" ref={moreRef}>
@@ -154,16 +154,10 @@ export default function BankCard({
                   Go to registers
                 </button>
                 <button
-                  onClick={() => { alert('Connect another bank account'); setShowMoreMenu(false); }}
+                  onClick={() => { onOpenRegisters && onOpenRegisters(); setShowMoreMenu(false); }}
                   className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
                 >
-                  Connect bank
-                </button>
-                <button
-                  onClick={() => { alert('Widget removed'); setShowMoreMenu(false); }}
-                  className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
-                >
-                  Remove widget
+                  View all accounts
                 </button>
               </div>
             )}

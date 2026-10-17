@@ -24,7 +24,7 @@ function getMockFallback(endpoint, options = {}) {
   if (endpoint.includes('/dashboard/metrics')) {
     return {
       success: true,
-      profit_and_loss: { period: 'Last month', posted_income: 8347.00, posted_expenses: 6953.00, net_profit: 1393.00 },
+      profit_and_loss: { period: 'Last month', posted_income: 8347.00, posted_expenses: 6953.00, net_profit: 1394.00 },
       expenses: {
         period: 'Last 30 days',
         total_spending: 1117.00,
@@ -36,19 +36,28 @@ function getMockFallback(endpoint, options = {}) {
           { name: 'Other', percentage: 9, percent: 9, color: '#F97316' }
         ]
       },
-      cash_flow_trend: { current_cash_balance: -3422.00, time_horizon: '12 months' },
+      cash_flow_trend: { current_cash_balance: 1043.28, time_horizon: '12 months' },
       metrics: {
-        pnl: { amount: '₹1,393.00', marginBadge: '78%', trendText: '↑ Up 673% from prior month' },
+        pnl: { amount: '₹1,394.00', marginBadge: '17%', trendText: '↑ Up 8% from prior month' },
         funnel: { outstanding: '₹2,385.00', outstandingCount: 4, paid: '₹8,347.00', paidCount: 8, period: 'This month' },
         bank: {
-          todaysBalance: '-₹3,422.00',
+          todaysBalance: '₹1,043.28',
           accounts: [
-            { name: 'Checking (HDFC)', bankBalance: '-₹3,621.93', inBooks: '₹1,201.00', updated: 'Updated moments ago', to_review_count: 25 },
+            { name: 'Checking (HDFC)', bankBalance: '₹3,621.93', inBooks: '₹1,201.00', updated: 'Updated moments ago', to_review_count: 25 },
             { name: 'Mastercard Credit Account', bankBalance: '₹304.96', inBooks: '₹157.72', updated: 'Updated moments ago', to_review_count: 5 }
           ]
         },
-        accountsPayable: { total: '₹1,602.67', asOf: 'As of today' },
-        cashflow: { amount: '-₹3,422.00' }
+        accountsPayable: {
+          total: '₹1,602.67',
+          asOf: 'As of today',
+          aging: [
+            { label: 'Current', amount: 641.07, color: '#2CA01C' },
+            { label: '1-7 days', amount: 560.93, color: '#4E9FD4' },
+            { label: '8-14 days', amount: 160.27, color: '#E8A33D' },
+            { label: '15+ days', amount: 240.40, color: '#E53E3E' }
+          ]
+        },
+        cashflow: { amount: '₹1,043.28' }
       }
     };
   }

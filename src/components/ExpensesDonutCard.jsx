@@ -228,16 +228,10 @@ export default function ExpensesDonutCard({
                 See full report
               </button>
               <button
-                onClick={() => { alert('Customize widget coming soon'); setShowMoreMenu(false); }}
+                onClick={() => { onNavigate && onNavigate('chart_of_accounts'); setShowMoreMenu(false); }}
                 className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
               >
-                Customize widget
-              </button>
-              <button
-                onClick={() => { alert('Widget removed'); setShowMoreMenu(false); }}
-                className="px-3 py-2 text-[13px] text-[#393A3D] hover:bg-[#F0F1F3] cursor-pointer w-full text-left"
-              >
-                Remove widget
+                View expense accounts
               </button>
             </div>
           )}

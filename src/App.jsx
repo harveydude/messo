@@ -53,6 +53,9 @@ const TeamView = lazy(() => import('./components/TeamView'));
 const PayrollView = lazy(() => import('./components/PayrollView'));
 const ReportsView = lazy(() => import('./components/ReportsView'));
 const BalanceSheetView = lazy(() => import('./components/BalanceSheetView'));
+const BalanceSheetReportView = lazy(() => import('./components/BalanceSheetReportView'));
+const ProfitLossReportView = lazy(() => import('./components/ProfitLossReportView'));
+const CashFlowReportView = lazy(() => import('./components/CashFlowReportView'));
 const ManagementReportsView = lazy(() => import('./components/ManagementReportsView'));
 const AuditLogView = lazy(() => import('./components/AuditLogView'));
 const BusinessFeedView = lazy(() => import('./components/BusinessFeedView'));
@@ -220,10 +223,10 @@ const CREATE_TARGETS = {
 /** Items the dashboard's own Create-actions row sends. */
 const CREATE_ACTION_TARGETS = {
   'Get paid online': 'sales_transactions',
-  'Create invoice': 'sales_transactions',
-  'Record expense': 'expense_transactions',
+  'Create invoice': { modal: 'invoiceEditor' },
+  'Record expense': { modal: 'expenseModal' },
   'Add bank deposit': 'bank_transactions',
-  'Create check': 'expense_transactions',
+  'Create check': { modal: 'expenseModal' },
   'Show all': { openMenu: true },
 };
 
@@ -608,8 +611,14 @@ export default function App() {
         return <PayrollView onNavigate={(v) => navigate(v)} />;
       case 'standard_reports':
         return <ReportsView onOpenBalanceSheet={() => navigate('balance_sheet')} onNavigate={(v, q) => navigate(v, q)} />;
+      case 'report_profit_loss':
+      case 'profit_and_loss':
+        return <ProfitLossReportView onBack={() => navigate('standard_reports')} onNavigateReport={(v) => navigate(v)} />;
+      case 'report_cash_flow':
+      case 'cash_flow':
+        return <CashFlowReportView onBack={() => navigate('standard_reports')} onNavigateReport={(v) => navigate(v)} />;
       case 'balance_sheet':
-        return <BalanceSheetView onBack={() => navigate('standard_reports')} />;
+        return <BalanceSheetReportView onBack={() => navigate('standard_reports')} onNavigateReport={(v) => navigate(v)} />;
       case 'management_reports':
         return <ManagementReportsView />;
       // Previously unreachable: the Audit log menu item opened Reports instead,

@@ -106,15 +106,16 @@ export default function CashFlowCard({
   const lastPoint = chartPoints[chartPoints.length - 1];
   const projectedLinePath = `M ${lastPoint.x},${lastPoint.y} L ${xDec},${lastPoint.y}`;
 
+  const hasNegative = chartPoints.some(p => p.balance < 0);
   const firstNegIndex = chartPoints.findIndex(p => p.balance < 0);
   const startNeg = firstNegIndex > 0 ? chartPoints[firstNegIndex - 1] : chartPoints[0];
-  const negativeAreaPath = `
+  const negativeAreaPath = hasNegative ? `
     M ${startNeg.x},${y0}
     ${chartPoints.slice(Math.max(0, firstNegIndex)).map(p => `L ${p.x},${p.y}`).join(' ')}
     L ${xDec},${lastPoint.y}
     L ${xDec},${y0}
     Z
-  `;
+  ` : '';
 
   return (
     <div className="bg-white border border-[#C7CBCE] rounded-[8px] p-[24px] shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col justify-between">
@@ -171,8 +172,9 @@ export default function CashFlowCard({
               {formatAmount(amount)}
             </span>
             <button 
-              onClick={() => onNavigate && onNavigate('bank_transactions')}
+              onClick={() => onNavigate && onNavigate('report_cash_flow')}
               className="text-[#393A3D] hover:text-[#0077C5] p-1 cursor-pointer"
+              title="View full Cash Flow Statement"
             >
               <ArrowRight size={20} />
             </button>

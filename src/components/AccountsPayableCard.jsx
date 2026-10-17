@@ -169,10 +169,10 @@ export default function AccountsPayableCard({
       {/* Footer */}
       <div className="pt-4 mt-2">
         <button 
-          onClick={() => onNavigate && onNavigate('expense_transactions')}
+          onClick={() => onNavigate && onNavigate('bills')}
           className="text-[14px] text-[#0077C5] hover:underline font-medium cursor-pointer"
         >
-          {apData?.footerLink || "Go to report"}
+          {apData?.footerLink || "View open bills & vendor balances"}
         </button>
       </div>
     </div>

@@ -528,6 +528,7 @@ export default function DashboardView({
                 funnelData={dashboardData.funnel}
                 privacyEnabled={privacyEnabled}
                 onRequestPayment={() => onOpenCreateModal('Invoice')}
+                onNavigate={onNavigate}
               />
 
               <BankCard
