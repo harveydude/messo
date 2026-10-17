@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Bookmark,
@@ -9,32 +9,148 @@ import {
   CreditCard,
   BarChart2,
   Sliders,
-  Diamond,
+  ChevronDown,
+  Gem,
+  PanelLeftClose,
   X,
   Lock,
 } from 'lucide-react';
 
-/* ── App list for the small My Apps flyout ── */
-const APPS = [
-  { key: 'accounting', label: 'Accounting', letter: 'A', color: '#107C41', defaultView: 'chart_of_accounts' },
-  { key: 'expenses', label: 'Expenses & Bills', letter: 'E', color: '#008927', defaultView: 'expense_transactions' },
-  { key: 'sales', label: 'Sales & Get Paid', letter: 'S', color: '#0077C5', defaultView: 'sales_transactions' },
-  { key: 'customer_hub', label: 'Customer Hub', letter: 'C', color: '#673AB7', defaultView: 'customer_hub' },
-  { key: 'team', label: 'Team', letter: 'T', color: '#1976D2', defaultView: 'team' },
-  { key: 'time', label: 'Time', letter: '⏱', color: '#006064', defaultView: 'time_entries' },
-  { key: 'taxes', label: 'Sales Tax', letter: '%', color: '#D81B60', defaultView: 'sales_tax' },
-  { key: 'business_tax', label: 'Business Tax', letter: 'B', color: '#4A148C', defaultView: 'business_tax' },
-  { key: 'lending', label: 'Lending', letter: '₹', color: '#2E7D32', defaultView: 'lending' },
-];
-
-/* ── Premium features gated behind upgrade modal ── */
-const PREMIUM_MODULES = [
-  { key: 'payroll', label: 'Payroll', desc: 'Automated multi-state payroll, PF/ESI filing, and direct bank disbursement.' },
-  { key: 'marketing', label: 'Marketing', desc: 'Automated email/SMS campaign automation, lead capture, and ROI analytics.' },
+/* ── Master App Categories & Subtabs (Standardized across the entire application) ── */
+const APP_GROUPS = [
+  {
+    key: 'accounting',
+    label: 'Accounting',
+    letter: 'A',
+    badgeBg: '#00352C',
+    badgeText: '#8FF0BD',
+    defaultView: 'bank_transactions',
+    items: [
+      { id: 'bank_transactions', label: 'Bank transactions', view: 'bank_transactions' },
+      { id: 'integration_transactions', label: 'Integration transactions', view: 'find_integrations' },
+      { id: 'receipts', label: 'Receipts', view: 'expense_transactions' },
+      { id: 'reconcile', label: 'Reconcile', view: 'reconcile' },
+      { id: 'rules', label: 'Rules', view: 'rules' },
+      { id: 'chart_of_accounts', label: 'Chart of accounts', view: 'chart_of_accounts' },
+      { id: 'recurring_transactions', label: 'Recurring transactions', view: 'recurring_transactions' },
+      { id: 'my_accountant', label: 'My accountant', view: 'accountant' },
+    ],
+  },
+  {
+    key: 'expenses',
+    label: 'Expenses & Bills',
+    letter: 'E',
+    badgeBg: '#0AA574',
+    badgeText: '#FFFFFF',
+    defaultView: 'expense_transactions',
+    items: [
+      { id: 'expense_transactions', label: 'Expense transactions', view: 'expense_transactions' },
+      { id: 'vendors', label: 'Vendors', view: 'vendors' },
+      { id: 'bills', label: 'Bills', view: 'bills' },
+      { id: 'bill_payments', label: 'Bill payments', view: 'bills' },
+      { id: 'mileage', label: 'Mileage', view: 'mileage' },
+      { id: 'contractors', label: 'Contractors', view: 'team' },
+      { id: '1099s', label: '1099s', view: 'business_tax' },
+    ],
+  },
+  {
+    key: 'sales',
+    label: 'Sales & Get Paid',
+    letter: 'S',
+    badgeBg: '#005E5D',
+    badgeText: '#FFFFFF',
+    defaultView: 'sales_transactions',
+    items: [
+      { id: 'overview', label: 'Overview', view: 'sales_transactions' },
+      { id: 'sales_transactions', label: 'Sales transactions', view: 'sales_transactions' },
+      { id: 'invoices', label: 'Invoices', view: 'invoices' },
+      { id: 'estimates', label: 'Estimates', view: 'estimates' },
+      { id: 'recurring_payments', label: 'Recurring payments', view: 'recurring_transactions' },
+      { id: 'orders', label: 'Sales orders', view: 'orders' },
+      { id: 'sales_channels', label: 'Sales channels', view: 'find_integrations' },
+      { id: 'messo_payouts', label: 'MESSO payouts', view: 'sales_transactions' },
+      { id: 'channel_payouts', label: 'Channel payouts', view: 'sales_transactions' },
+      { id: 'products_services', label: 'Products & services', view: 'products_services' },
+    ],
+  },
+  {
+    key: 'customer_hub',
+    label: 'Customer Hub',
+    letter: 'C',
+    badgeBg: '#2E9E5B',
+    badgeText: '#FFFFFF',
+    defaultView: 'customer_hub',
+    items: [
+      { id: 'hub_overview', label: 'Overview', view: 'customer_hub' },
+      { id: 'customers_list', label: 'Customers', view: 'customers_list' },
+      { id: 'hub_estimates', label: 'Estimates', view: 'estimates' },
+      { id: 'reviews', label: 'Reviews', view: 'customer_hub' },
+    ],
+  },
+  {
+    key: 'team',
+    label: 'Team',
+    letter: 'T',
+    badgeBg: '#12A489',
+    badgeText: '#FFFFFF',
+    defaultView: 'team',
+    items: [
+      { id: 'employees', label: 'Employees', view: 'team' },
+      { id: 'team_contractors', label: 'Contractors', view: 'team' },
+      { id: 'workers_comp', label: "Workers' Compensation", view: 'team' },
+    ],
+  },
+  {
+    key: 'time',
+    label: 'Time',
+    letter: '⏱',
+    badgeBg: '#00352C',
+    badgeText: '#FFFFFF',
+    defaultView: 'time_entries',
+    items: [
+      { id: 'time_entries', label: 'Time entries', view: 'time_entries' },
+      { id: 'time_schedule', label: 'Schedule', view: 'time_entries' },
+    ],
+  },
+  {
+    key: 'sales_tax',
+    label: 'Sales Tax',
+    letter: '%',
+    badgeBg: '#E5346B',
+    badgeText: '#FFFFFF',
+    defaultView: 'sales_tax',
+    items: [
+      { id: 'sales_tax_overview', label: 'Sales Tax (GST)', view: 'sales_tax' },
+    ],
+  },
+  {
+    key: 'business_tax',
+    label: 'Business Tax',
+    letter: 'B',
+    badgeBg: '#83243F',
+    badgeText: '#FFFFFF',
+    defaultView: 'business_tax',
+    items: [
+      { id: 'business_tax_overview', label: 'Business Tax (TDS)', view: 'business_tax' },
+    ],
+  },
+  {
+    key: 'lending',
+    label: 'Lending',
+    letter: '₹',
+    badgeBg: '#0AA574',
+    badgeText: '#FFFFFF',
+    defaultView: 'lending',
+    items: [
+      { id: 'lending_overview', label: 'Overview', view: 'lending' },
+      { id: 'term_loan', label: 'Term Loan', view: 'lending' },
+      { id: 'credit_line', label: 'Credit Line', view: 'lending' },
+    ],
+  },
 ];
 
 const DEFAULT_PINS = [
-  { id: 'chart_of_accounts', label: 'Accounting', color: '#107C41', iconKey: 'activity' },
+  { id: 'bank_transactions', label: 'Accounting', color: '#107C41', iconKey: 'activity' },
   { id: 'expense_transactions', label: 'Expenses', color: '#008927', iconKey: 'creditcard' },
   { id: 'sales_transactions', label: 'Sales', color: '#0077C5', iconKey: 'barchart' },
 ];
@@ -57,29 +173,38 @@ export default function SideRail({
   pinnedItems,
   onPinnedChange,
 }) {
-  const [myAppsOpen, setMyAppsOpen] = useState(false);
+  // Global sidebar collapse state (expanded by default, collapsible anytime)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Track accordion state for each group (Accounting, Expenses, Sales expanded by default)
+  const [openGroups, setOpenGroups] = useState({
+    accounting: true,
+    expenses: false,
+    sales: false,
+    customer_hub: false,
+    team: false,
+    time: false,
+    sales_tax: false,
+    business_tax: false,
+    lending: false,
+  });
+
+  // Premium modal state
   const [premiumModalModule, setPremiumModalModule] = useState(null);
 
-  const flyoutRef = useRef(null);
-  const myAppsBtnRef = useRef(null);
-
-  // Close flyout on click outside
+  // Automatically expand the group that matches the currentView
   useEffect(() => {
-    const handleOutside = (e) => {
-      if (
-        flyoutRef.current && 
-        !flyoutRef.current.contains(e.target) && 
-        myAppsBtnRef.current && 
-        !myAppsBtnRef.current.contains(e.target)
-      ) {
-        setMyAppsOpen(false);
+    for (const grp of APP_GROUPS) {
+      if (grp.items.some(it => it.view === currentView || it.id === currentView)) {
+        setOpenGroups(prev => ({ ...prev, [grp.key]: true }));
+        break;
       }
-    };
-    if (myAppsOpen) {
-      document.addEventListener('mousedown', handleOutside);
     }
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [myAppsOpen]);
+  }, [currentView]);
+
+  const toggleGroup = (key) => {
+    setOpenGroups(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const pins = pinnedItems && pinnedItems.length > 0 ? pinnedItems : DEFAULT_PINS;
 
@@ -88,13 +213,21 @@ export default function SideRail({
     if (id === 'feed') return currentView === 'feed';
     if (id === 'reports') return currentView === 'reports' || currentView.startsWith('report_');
     if (id === 'bookmarks') return currentView === 'bookmarks';
-    if (id === 'apps') return myAppsOpen;
+    if (id === 'apps') return !sidebarCollapsed;
     return currentView === id;
   };
 
+  const isItemActive = (it) => {
+    if (it.id === currentView) return true;
+    if (it.view === currentView && !APP_GROUPS.some(g => g.items.some(x => x !== it && x.id === currentView))) return true;
+    if (currentView === 'sales' && it.id === 'sales_transactions') return true;
+    if (currentView === 'expenses' && it.id === 'expense_transactions') return true;
+    return false;
+  };
+
   return (
-    <div className="relative shrink-0 select-none" style={{ fontFamily: FONT }}>
-      {/* ── PRIMARY LEFT RAIL (Only 84px wide, clean and minimal) ── */}
+    <div className="flex h-full shrink-0 select-none" style={{ fontFamily: FONT }}>
+      {/* ── 1. PRIMARY LEFT RAIL (84px wide, always persistent) ── */}
       <aside 
         className="w-[84px] bg-white border-r border-[#E3E5E8] flex flex-col items-center py-3 px-1 shrink-0 z-20 h-full overflow-y-auto"
         style={{ scrollbarWidth: 'none' }}
@@ -117,10 +250,7 @@ export default function SideRail({
         {/* Navigation Rail Items */}
         <RailItem
           label="Bookmarks"
-          onClick={() => {
-            setMyAppsOpen(false);
-            setCurrentView('bookmarks');
-          }}
+          onClick={() => setCurrentView('bookmarks')}
           active={isRailActive('bookmarks')}
         >
           <Bookmark size={18} />
@@ -128,10 +258,7 @@ export default function SideRail({
 
         <RailItem
           label="Dashboard"
-          onClick={() => {
-            setMyAppsOpen(false);
-            setCurrentView('dashboard');
-          }}
+          onClick={() => setCurrentView('dashboard')}
           active={isRailActive('dashboard')}
           boxed
         >
@@ -140,10 +267,7 @@ export default function SideRail({
 
         <RailItem
           label="Feed"
-          onClick={() => {
-            setMyAppsOpen(false);
-            setCurrentView('feed');
-          }}
+          onClick={() => setCurrentView('feed')}
           active={isRailActive('feed')}
         >
           <Activity size={18} />
@@ -151,26 +275,21 @@ export default function SideRail({
 
         <RailItem
           label="Reports"
-          onClick={() => {
-            setMyAppsOpen(false);
-            setCurrentView('reports');
-          }}
+          onClick={() => setCurrentView('reports')}
           active={isRailActive('reports')}
         >
           <TrendingUp size={18} />
         </RailItem>
 
-        {/* My Apps Button (Toggles small flyout menu) */}
-        <div ref={myAppsBtnRef} className="w-full flex justify-center">
-          <RailItem
-            label="My apps"
-            onClick={() => setMyAppsOpen(!myAppsOpen)}
-            active={myAppsOpen}
-            boxed
-          >
-            <Grid size={18} />
-          </RailItem>
-        </div>
+        {/* My Apps Button (toggles the unified sidebar open/closed) */}
+        <RailItem
+          label="My apps"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          active={!sidebarCollapsed}
+          boxed
+        >
+          <Grid size={18} />
+        </RailItem>
 
         {/* PINNED Section */}
         <div className="w-full pt-3 mt-1 border-t border-[#E3E5E8] flex flex-col items-center">
@@ -186,20 +305,26 @@ export default function SideRail({
 
           {pins.map((pin) => {
             const iconFn = PIN_ICONS[pin.iconKey] || PIN_ICONS.default;
-            const isPinActive = currentView === pin.id || 
-              (pin.label === 'Accounting' && ['chart_of_accounts', 'bank_transactions', 'rules', 'reconcile'].includes(currentView)) ||
-              (pin.label === 'Expenses' && ['expense_transactions', 'vendors', 'bills', 'mileage'].includes(currentView)) ||
-              (pin.label === 'Sales' && ['sales_transactions', 'invoices', 'estimates', 'orders', 'products_services'].includes(currentView));
-
             return (
               <RailItem
                 key={pin.id}
                 label={pin.label}
                 onClick={() => {
-                  setMyAppsOpen(false);
-                  setCurrentView(pin.id);
+                  setSidebarCollapsed(false);
+                  if (pin.label === 'Accounting') {
+                    setCurrentView('bank_transactions');
+                    setOpenGroups(prev => ({ ...prev, accounting: true }));
+                  } else if (pin.label === 'Expenses') {
+                    setCurrentView('expense_transactions');
+                    setOpenGroups(prev => ({ ...prev, expenses: true }));
+                  } else if (pin.label === 'Sales') {
+                    setCurrentView('sales_transactions');
+                    setOpenGroups(prev => ({ ...prev, sales: true }));
+                  } else {
+                    setCurrentView(pin.id);
+                  }
                 }}
-                active={isPinActive}
+                active={currentView === pin.id}
               >
                 <span
                   className="w-[22px] h-[22px] rounded-md flex items-center justify-center text-white shadow-xs"
@@ -224,81 +349,162 @@ export default function SideRail({
         </div>
       </aside>
 
-      {/* ── SMALL MY APPS FLYOUT (Opens next to My Apps icon) ── */}
-      {myAppsOpen && (
-        <div
-          ref={flyoutRef}
-          className="fixed left-[84px] top-[180px] w-[210px] bg-white border border-[#E3E5E8] rounded-lg shadow-2xl py-2 px-1 z-50 animate-in fade-in zoom-in-95 duration-100"
+      {/* ── 2. UNIFIED GLOBAL SECONDARY SIDEBAR (263px, #F4F5F8, exact Chart of Accounts styling) ── */}
+      {!sidebarCollapsed && (
+        <aside 
+          className="w-[263px] shrink-0 bg-[#F4F5F8] border-r border-[#E3E5E8] flex flex-col pt-[18px] overflow-y-auto z-10 transition-all duration-150"
+          style={{ scrollbarWidth: 'thin' }}
         >
-          {/* Header */}
-          <div className="px-3 pb-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between border-b border-gray-100 mb-1">
-            <span>MY APPS</span>
-            <button
-              type="button"
-              onClick={() => setMyAppsOpen(false)}
-              className="text-gray-400 hover:text-gray-700 p-0.5 rounded cursor-pointer"
-            >
-              <X size={13} />
-            </button>
-          </div>
-
-          {/* App list items */}
-          <div className="space-y-0.5">
-            {APPS.map((app) => (
-              <button
-                key={app.key}
-                type="button"
-                onClick={() => {
-                  setMyAppsOpen(false);
-                  setCurrentView(app.defaultView);
-                }}
-                className="w-full flex items-center px-2.5 py-1.5 rounded-md text-left text-xs font-medium text-gray-800 hover:bg-[#F4F5F8] transition cursor-pointer space-x-2.5 group"
-              >
-                <span
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                  style={{ backgroundColor: app.color }}
-                >
-                  {app.letter}
-                </span>
-                <span className="truncate group-hover:text-[#008927]">{app.label}</span>
-              </button>
-            ))}
-
-            {/* Premium Modules */}
-            <div className="pt-2 mt-1 border-t border-gray-100 px-2 pb-0.5">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-                  PREMIUM
-                </span>
-                <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1 rounded">
-                  PRO
-                </span>
-              </div>
-              {PREMIUM_MODULES.map((pm) => (
+          <div className="px-2 flex-1">
+            {/* Header row: "MY APPS" + Sliders + Collapse Button */}
+            <div className="h-[30px] flex items-center justify-between px-3 mb-1">
+              <span className="text-[12px] font-semibold tracking-[1.2px] text-[#6B6C72] uppercase">
+                MY APPS
+              </span>
+              <div className="flex items-center space-x-1">
                 <button
-                  key={pm.key}
                   type="button"
-                  onClick={() => {
-                    setMyAppsOpen(false);
-                    setPremiumModalModule(pm);
-                  }}
-                  className="w-full flex items-center justify-between px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50 rounded transition cursor-pointer"
+                  onClick={onToggleCustomize}
+                  className="text-[#6B6C72] hover:text-[#393A3D] p-1 rounded transition cursor-pointer"
+                  title="Organize apps"
                 >
-                  <div className="flex items-center space-x-2">
-                    <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-bold">
-                      <Lock size={9} />
-                    </span>
-                    <span>{pm.label}</span>
-                  </div>
-                  <Diamond size={11} className="text-amber-500" />
+                  <Sliders size={15} />
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => setSidebarCollapsed(true)}
+                  className="text-[#6B6C72] hover:text-[#393A3D] p-1 rounded transition cursor-pointer"
+                  title="Collapse sidebar"
+                >
+                  <PanelLeftClose size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* App Groups list */}
+            <div className="space-y-1">
+              {APP_GROUPS.map((grp) => {
+                const isOpen = !!openGroups[grp.key];
+
+                return (
+                  <div key={grp.key} className="w-full">
+                    {/* Category Header Row with Down Arrow to split into sub-tabs */}
+                    <div className="w-full h-[44px] flex items-center px-3 rounded-full hover:bg-[#E9ECEF] transition group">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          if (grp.defaultView) {
+                            setCurrentView(grp.defaultView);
+                          }
+                          setOpenGroups(prev => ({ ...prev, [grp.key]: true }));
+                        }}
+                        className="flex-1 h-full flex items-center text-left cursor-pointer min-w-0"
+                      >
+                        <span 
+                          className="w-[20px] h-[20px] rounded-full text-[10px] font-bold flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: grp.badgeBg, color: grp.badgeText }}
+                        >
+                          {grp.letter}
+                        </span>
+                        <span className="ml-[14px] text-[15px] font-medium text-[#393A3D] truncate">
+                          {grp.label}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleGroup(grp.key);
+                        }}
+                        title={isOpen ? "Collapse" : "Expand"}
+                        className="w-[28px] h-[28px] flex items-center justify-center text-[#6B6C72] hover:text-[#393A3D] hover:bg-black/5 rounded-full transition cursor-pointer shrink-0 ml-1"
+                      >
+                        <ChevronDown 
+                          size={16} 
+                          className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+                        />
+                      </button>
+                    </div>
+
+                    {/* Sub tabs (Split up when arrow is clicked) */}
+                    {isOpen && (
+                      <div className="space-y-[1px] mt-0.5">
+                        {grp.items.map((sub) => {
+                          const active = isItemActive(sub);
+
+                          if (active) {
+                            return (
+                              <div 
+                                key={sub.id} 
+                                className="h-[38px] my-1 flex items-center pl-[46px] pr-3 rounded-full bg-[#E0E3E8] text-[15px] font-semibold text-[#393A3D] cursor-pointer"
+                              >
+                                {sub.label}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <button
+                              key={sub.id}
+                              type="button"
+                              onClick={() => {
+                                if (sub.view === 'accountant') {
+                                  alert("Accountant View: Switched to trial balance and chart verification tools.");
+                                } else {
+                                  setCurrentView(sub.view);
+                                }
+                              }}
+                              className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer"
+                            >
+                              {sub.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
+
+          {/* Pinned Payroll & Marketing rows at bottom with Gem icon */}
+          <div className="mt-auto pt-2">
+            <div className="border-t border-[#D9D9D9] mx-2" />
+            <button 
+              type="button"
+              onClick={() => setPremiumModalModule({
+                label: 'Payroll',
+                desc: 'Automated multi-state payroll, PF/ESI statutory compliance, and direct employee bank disbursement.'
+              })}
+              className="w-full h-[52px] flex items-center px-4 hover:bg-[#E9ECEF] transition cursor-pointer text-left"
+            >
+              <span className="w-[20px] h-[20px] rounded-full bg-[#12141D] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                P
+              </span>
+              <span className="ml-[14px] text-[15px] font-medium text-[#393A3D]">Payroll</span>
+              <Gem size={16} className="ml-auto text-[#6B6C72]" />
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => setPremiumModalModule({
+                label: 'Marketing',
+                desc: 'Automated email/SMS campaign automation, lead capture, and customer engagement pipelines.'
+              })}
+              className="w-full h-[52px] flex items-center px-4 hover:bg-[#E9ECEF] transition cursor-pointer text-left"
+            >
+              <span className="w-[20px] h-[20px] rounded-full bg-[#12A489] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                M
+              </span>
+              <span className="ml-[14px] text-[15px] font-medium text-[#393A3D]">Marketing</span>
+              <Gem size={16} className="ml-auto text-[#6B6C72]" />
+            </button>
+          </div>
+        </aside>
       )}
 
-      {/* ── PREMIUM FEATURE UPGRADE MODAL ── */}
+      {/* ── 3. PREMIUM FEATURE UPGRADE MODAL ── */}
       {premiumModalModule && (
         <div 
           className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
@@ -310,13 +516,13 @@ export default function SideRail({
           >
             <button
               onClick={() => setPremiumModalModule(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition"
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition cursor-pointer"
             >
               <X size={18} />
             </button>
 
             <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-4 shadow-xs">
-              <Diamond size={24} />
+              <Gem size={24} />
             </div>
 
             <h3 className="text-[18px] font-bold text-gray-900 mb-1">
@@ -337,17 +543,19 @@ export default function SideRail({
 
             <div className="flex items-center justify-end gap-3">
               <button
+                type="button"
                 onClick={() => setPremiumModalModule(null)}
-                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg transition"
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 rounded-lg transition cursor-pointer"
               >
                 Close
               </button>
               <button
+                type="button"
                 onClick={() => {
                   setPremiumModalModule(null);
                   setCurrentView('pricing');
                 }}
-                className="px-4 py-2 text-sm font-semibold text-white bg-[#008927] hover:bg-[#00701F] rounded-lg shadow-xs transition"
+                className="px-4 py-2 text-sm font-semibold text-white bg-[#008927] hover:bg-[#00701F] rounded-lg shadow-xs transition cursor-pointer"
               >
                 View Plans & Upgrade
               </button>

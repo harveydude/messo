@@ -28,8 +28,7 @@ export default function RulesView({ onNavigate }) {
   const [rules, setRules] = useState(INITIAL_RULES);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRules, setSelectedRules] = useState({});
-  const [accountingNavOpen, setAccountingNavOpen] = useState(true);
-  const [salesNavOpen, setSalesNavOpen] = useState(true);
+
 
   // Drawer state
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -53,28 +52,7 @@ export default function RulesView({ onNavigate }) {
   const [autoAdd, setAutoAdd] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
-  // Nav Groups for secondary sidebar
-  const navGroups = [
-    { label: 'Expenses & Bills', color: '#0AA574', view: 'expense_transactions' },
-    { label: 'Sales & Get Paid', color: '#005E5D', view: 'sales_transactions', hasSub: true },
-    { label: 'Customer Hub', color: '#2E9E5B', view: 'customers_list' },
-    { label: 'Team', color: '#12A489' },
-    { label: 'Time', color: '#00352C', view: 'time_entries' },
-    { label: 'Sales Tax', color: '#E5346B' },
-    { label: 'Business Tax', color: '#83243F' },
-    { label: 'Lending', color: '#0AA574' }
-  ];
 
-  const salesSubItems = [
-    'Overview',
-    'Sales transactions',
-    'Invoices',
-    'Sales orders',
-    'Sales channels',
-    'Meso payouts',
-    'Channel payouts',
-    'Products & services'
-  ];
 
   // Validation
   const hasNameError = nameTouched && !ruleName.trim();
@@ -164,156 +142,7 @@ export default function RulesView({ onNavigate }) {
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-white select-none relative">
-      {/* 1. SECONDARY NAVIGATION SIDEBAR (263px, #F4F5F8) */}
-      <aside className="w-[263px] shrink-0 bg-[#F4F5F8] border-r border-[#E3E5E8] flex flex-col pt-[18px] overflow-y-auto">
-        <div className="px-2 flex-1">
-          {/* Header row: "MY APPS" */}
-          <div className="h-[30px] flex items-center justify-between px-3">
-            <span className="text-[12px] font-semibold tracking-[1.2px] text-[#6B6C72] uppercase">
-              MY APPS
-            </span>
-            <button className="text-[#6B6C72] hover:text-[#393A3D] p-1 rounded transition cursor-pointer" title="Organize apps">
-              <Sliders size={15} />
-            </button>
-          </div>
 
-          {/* Group 1: Accounting */}
-          <button 
-            onClick={() => setAccountingNavOpen(o => !o)}
-            className="w-full h-[44px] flex items-center px-3 rounded-full hover:bg-[#E9ECEF] transition cursor-pointer mt-1"
-          >
-            <span className="w-[20px] h-[20px] rounded-full bg-[#00352C] text-[#8FF0BD] text-[10px] font-bold flex items-center justify-center shrink-0">
-              A
-            </span>
-            <span className="ml-[14px] text-[16px] font-medium text-[#393A3D]">Accounting</span>
-            <ChevronDown 
-              size={16} 
-              className={`ml-auto text-[#393A3D] transition-transform duration-200 ${accountingNavOpen ? 'rotate-180' : ''}`} 
-            />
-          </button>
-
-          {accountingNavOpen && (
-            <div className="space-y-[1px] mt-0.5">
-              <button 
-                onClick={() => onNavigate && onNavigate('bank_transactions')}
-                className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer"
-              >
-                Bank transactions
-              </button>
-              <button className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer">
-                Integration transactions
-              </button>
-              <button className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer">
-                Receipts
-              </button>
-              <button className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer">
-                Reconcile
-              </button>
-
-              {/* RULES — ACTIVE STATE (Pill bg #E0E3E8) */}
-              <div className="h-[38px] my-1 flex items-center pl-[46px] pr-3 rounded-full bg-[#E0E3E8] text-[15px] font-semibold text-[#393A3D] cursor-pointer">
-                Rules
-              </div>
-
-              <button 
-                onClick={() => onNavigate && onNavigate('chart_of_accounts')}
-                className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer"
-              >
-                Chart of accounts
-              </button>
-              <button 
-                onClick={() => onNavigate && onNavigate('recurring_transactions')}
-                className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer"
-              >
-                Recurring transactions
-              </button>
-              <button className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer">
-                My accountant
-              </button>
-            </div>
-          )}
-
-          {/* Group: Expenses & Bills */}
-          <div className="mt-3 space-y-1">
-            <button className="w-full h-[44px] flex items-center px-3 rounded-full hover:bg-[#E9ECEF] transition cursor-pointer">
-              <span className="w-[20px] h-[20px] rounded-full bg-[#0AA574] text-white text-[10px] font-bold flex items-center justify-center shrink-0">E</span>
-              <span className="ml-[14px] text-[15px] text-[#393A3D] truncate">Expenses & Bills</span>
-              <ChevronDown size={16} className="ml-auto text-[#6B6C72] shrink-0" />
-            </button>
-
-            {/* Group: Sales & Get Paid (Expanded in Screenshot 1!) */}
-            <button 
-              onClick={() => setSalesNavOpen(o => !o)}
-              className="w-full h-[44px] flex items-center px-3 rounded-full hover:bg-[#E9ECEF] transition cursor-pointer"
-            >
-              <span className="w-[20px] h-[20px] rounded-full bg-[#005E5D] text-white text-[10px] font-bold flex items-center justify-center shrink-0">S</span>
-              <span className="ml-[14px] text-[15px] text-[#393A3D] truncate">Sales & Get Paid</span>
-              <ChevronDown size={16} className={`ml-auto text-[#6B6C72] shrink-0 transition-transform ${salesNavOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {salesNavOpen && (
-              <div className="space-y-[1px] mt-0.5 pl-2">
-                {salesSubItems.map((item) => (
-                  <button 
-                    key={item}
-                    onClick={() => {
-                      if (item === 'Sales transactions' || item === 'Invoices') {
-                        onNavigate?.('sales_transactions');
-                      } else if (item === 'Products & services') {
-                        onNavigate?.('products_services');
-                      } else {
-                        // No screen for this one yet. Previously the click did
-                        // nothing at all, which reads as a broken menu.
-                        onNavigate?.('not_built');
-                      }
-                    }}
-                    className="w-full h-[38px] flex items-center pl-[44px] pr-3 text-[14px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Other Groups */}
-            {navGroups.slice(2).map((g) => (
-              <button 
-                key={g.label}
-                onClick={() => g.view && onNavigate && onNavigate(g.view)}
-                className="w-full h-[44px] flex items-center px-3 rounded-full hover:bg-[#E9ECEF] transition cursor-pointer"
-              >
-                <span 
-                  className="w-[20px] h-[20px] rounded-full text-white text-[10px] font-bold flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: g.color }}
-                >
-                  {g.label[0]}
-                </span>
-                <span className="ml-[14px] text-[15px] text-[#393A3D] truncate">{g.label}</span>
-                <ChevronDown size={16} className="ml-auto text-[#6B6C72] shrink-0" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Pinned Payroll & Marketing rows at bottom */}
-        <div className="mt-auto">
-          <div className="border-t border-[#D9D9D9] mx-2" />
-          <button className="w-full h-[52px] flex items-center px-4 hover:bg-[#E9ECEF] transition cursor-pointer">
-            <span className="w-[20px] h-[20px] rounded-full bg-[#12141D] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-              P
-            </span>
-            <span className="ml-[14px] text-[15px] font-medium text-[#393A3D]">Payroll</span>
-            <Gem size={16} className="ml-auto text-[#6B6C72]" />
-          </button>
-          <button className="w-full h-[52px] flex items-center px-4 hover:bg-[#E9ECEF] transition cursor-pointer">
-            <span className="w-[20px] h-[20px] rounded-full bg-[#12A489] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-              M
-            </span>
-            <span className="ml-[14px] text-[15px] font-medium text-[#393A3D]">Marketing</span>
-            <Gem size={16} className="ml-auto text-[#6B6C72]" />
-          </button>
-        </div>
-      </aside>
 
       {/* 2. MAIN CANVAS AREA (Rules List View) */}
       <main className="flex-1 min-w-0 overflow-y-auto bg-white">
