@@ -27,57 +27,75 @@ import {
   Mail,
   Smile,
   Meh,
-  Frown
+  Frown,
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 
+// Comprehensive Indian Industries Catalog (NIC Classifications)
+const INDIAN_INDUSTRIES = [
+  'Information Technology & Software Services (IT/ITeS)',
+  'Advertising, Media & Digital Marketing Agency',
+  'Retail, FMCG & Supermarket Wholesale',
+  'E-Commerce & Online Direct-to-Consumer (D2C)',
+  'Manufacturing, Engineering & Industrial Goods',
+  'Healthcare, Pharmaceuticals, Hospitals & Clinics',
+  'Construction, Real Estate & Civil Infrastructure',
+  'Logistics, Warehousing & Supply Chain Fleet',
+  'Chartered Accountancy, Legal, Tax & Financial Advisory',
+  'Food & Beverage, Restaurants, Cafes & Cloud Kitchens',
+  'Hospitality, Hotels & Travel Tourism',
+  'Banking, Financial Services & Fintech (BFSI)',
+  'Education, Coaching Institutes & EdTech',
+  'Textiles, Garments & Fashion Apparel',
+  'Agriculture, Organic Farming & Agri-Commodities',
+  'Automotive Sales, Dealerships & Service Stations',
+  'Renewable Energy, Solar Power & CleanTech',
+  'Export & Import Trading (EXIM / Merchant)',
+  'Telecommunications, ISP & Cable Networks',
+  'Entertainment, Film Production & Event Management',
+  'Gems, Jewellery & Precious Metals',
+  'Chemicals, Petrochemicals & Polymers',
+  'Security, Facility Management & Staffing Services',
+  'Other Specialized Professional Services'
+];
+
 /**
- * MESO / QUICKBOOKS ONBOARDING WIZARD
- * Exact 1:1 pixel-coordinate replication of the 13 reference screens:
- * - Screen 0: Welcome Screen (9 Floating Pills)
- * - Screen 1: Business Name
- * - Screen 2: Prior Software
- * - Screen 3: Website Automation (BETA)
- * - Screen 4: Company Profile Details
- * - Screen 5: Role & Team Size
- * - Screen 6: Expert 1-on-1 Setup Call
- * - Screen 7: Choose Automation Path (Invoices vs Banking)
- * - Screen 8: Streamline Customer Payments
- * - Screen 9: In-Person Tap to Pay & Mobile App
- * - Screen 10: Bank & Credit Card Connect (All-in-one experience)
- * - Screen 11: Feature Selection Checklist (11 Cards)
- * - Screen 12: Frame 094 ("Getting your all-in-one platform" with animated cyan underline)
+ * MESO ONBOARDING WIZARD
+ * 100% Meso Indian Cloud localized setup flow.
+ * No QuickBooks / Intuit references. Pure ₹ INR currency.
+ * Zero pre-filled defaults, mandatory step validation, non-overlapping floating cloud,
+ * and Frame 094 animated cyan underline.
  */
 export default function OnboardingWizard({ onComplete, onExit }) {
   // Wizard steps: 0 to 12
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Form Data State
+  // Form Data State - ALL EMPTY BY DEFAULT
   const [formData, setFormData] = useState({
-    businessName: 'Pallet Town Creative Co.',
-    priorSoftware: 'peachtree',
-    website: 'https://pallettowncreative.in',
-    industry: 'Advertising, Marketing & Brand Strategy',
-    taxType: 'sole_proprietor',
-    annualRevenue: 'revenue_50l_1_5cr',
-    role: 'owner',
-    employeeCount: '1_5',
-    phoneNumber: '(555) 019-2834',
-    selectedFeatures: [
-      'customers',
-      'invoices',
-      'banking',
-      'bills',
-      'estimates',
-      'sales'
-    ],
+    businessName: '',
+    priorSoftware: '',
+    website: '',
+    industry: '',
+    taxType: '',
+    annualRevenue: '',
+    role: '',
+    employeeCount: '',
+    phoneNumber: '',
+    selectedFeatures: [],
   });
 
-  // UI state
+  // UI & Validation States
+  const [stepError, setStepError] = useState('');
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showExpertTooltip, setShowExpertTooltip] = useState(true);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showDisclaimerPopover, setShowDisclaimerPopover] = useState(false);
+  const [isDiscoveringData, setIsDiscoveringData] = useState(false);
   const [phoneSubmitted, setPhoneSubmitted] = useState(false);
 
   const updateField = (field, value) => {
+    setStepError('');
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -93,8 +111,72 @@ export default function OnboardingWizard({ onComplete, onExit }) {
     });
   };
 
-  const handleNext = () => {
-    if (currentStep < 12) {
+  // Step Validation & Forward Progress
+  const validateAndProceed = (targetStep) => {
+    setStepError('');
+
+    // Step 1: Legal Business Name must not be empty
+    if (currentStep === 1) {
+      if (!formData.businessName || !formData.businessName.trim()) {
+        setStepError('Please enter your legal business name to proceed.');
+        return;
+      }
+    }
+
+    // Step 2: Prior Software must be chosen
+    if (currentStep === 2) {
+      if (!formData.priorSoftware) {
+        setStepError('Please select an option or choose "Nothing, I\'m new to this".');
+        return;
+      }
+    }
+
+    // Step 3: Website auto-discovery simulation
+    if (currentStep === 3) {
+      if (formData.website && formData.website.trim()) {
+        setIsDiscoveringData(true);
+        setTimeout(() => {
+          setIsDiscoveringData(false);
+          // Auto-suggest industry if not yet filled
+          if (!formData.industry) {
+            updateField('industry', 'Information Technology & Software Services (IT/ITeS)');
+          }
+          if (!formData.taxType) {
+            updateField('taxType', 'pvt_ltd');
+          }
+          setCurrentStep(targetStep !== undefined ? targetStep : currentStep + 1);
+        }, 1100);
+        return;
+      }
+    }
+
+    // Step 4: Company Profile (Tax Type & Revenue mandatory)
+    if (currentStep === 4) {
+      if (!formData.taxType) {
+        setStepError('Please select your business tax type.');
+        return;
+      }
+      if (!formData.annualRevenue) {
+        setStepError('Please select your annual revenue bracket.');
+        return;
+      }
+    }
+
+    // Step 5: Role & Team Size mandatory
+    if (currentStep === 5) {
+      if (!formData.role) {
+        setStepError('Please select your role in the business.');
+        return;
+      }
+      if (!formData.employeeCount) {
+        setStepError('Please select your team size.');
+        return;
+      }
+    }
+
+    if (targetStep !== undefined) {
+      setCurrentStep(targetStep);
+    } else if (currentStep < 12) {
       setCurrentStep((prev) => prev + 1);
     } else {
       if (onComplete) onComplete(formData);
@@ -102,6 +184,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
   };
 
   const handleBack = () => {
+    setStepError('');
     if (currentStep > 0) {
       setCurrentStep((prev) => prev - 1);
     } else if (onExit) {
@@ -113,27 +196,27 @@ export default function OnboardingWizard({ onComplete, onExit }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Enter' && currentStep > 0 && currentStep < 12 && e.target.tagName !== 'TEXTAREA') {
-        handleNext();
+        validateAndProceed();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentStep, formData]);
 
-  // Compute progress bar fill percentage
+  // Compute progress percentage
   const getProgressPercentage = () => {
     switch (currentStep) {
-      case 1: return 6;
-      case 2: return 14;
-      case 3: return 22;
-      case 4: return 30;
-      case 5: return 38;
-      case 6: return 46;
-      case 7: return 54;
-      case 8: return 62;
-      case 9: return 70;
-      case 10: return 78;
-      case 11: return 86;
+      case 1: return 8;
+      case 2: return 16;
+      case 3: return 24;
+      case 4: return 32;
+      case 5: return 40;
+      case 6: return 48;
+      case 7: return 56;
+      case 8: return 64;
+      case 9: return 72;
+      case 10: return 80;
+      case 11: return 88;
       case 12: return 100;
       default: return 0;
     }
@@ -146,17 +229,17 @@ export default function OnboardingWizard({ onComplete, onExit }) {
       {currentStep > 0 && currentStep < 12 && (
         <header className="w-full pt-3 pb-2 px-6 sm:px-10 flex flex-col z-20">
           <div className="flex items-center justify-between w-full h-[40px] mb-2">
-            {/* Logo Cluster */}
+            {/* Meso Brand Cluster */}
             <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => setCurrentStep(0)}>
-              <div className="w-[30px] h-[30px] rounded-full bg-[#007755] flex items-center justify-center text-white font-bold text-[15px] shadow-sm tracking-tighter">
-                qb
+              <div className="w-[30px] h-[30px] rounded-full bg-[#007755] flex items-center justify-center text-white font-black text-[15px] shadow-sm tracking-tight">
+                M
               </div>
               <div className="flex flex-col leading-tight">
-                <span className="text-[10px] font-bold tracking-widest text-[#4b5563] uppercase">
-                  INTUIT
+                <span className="text-[10px] font-bold tracking-widest text-[#007755] uppercase">
+                  MESO
                 </span>
                 <span className="text-[16px] font-bold text-[#1f2937] tracking-tight -mt-1">
-                  quickbooks
+                  cloud
                 </span>
               </div>
             </div>
@@ -166,19 +249,19 @@ export default function OnboardingWizard({ onComplete, onExit }) {
               Get started
             </div>
 
-            {/* Right side 'Contact experts' for screens 6-11 */}
+            {/* Right side 'Contact CA Experts' */}
             {currentStep >= 6 ? (
               <div className="flex items-center space-x-2">
                 <img 
                   src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=80&auto=format&fit=crop&q=60" 
-                  alt="Expert" 
+                  alt="CA Specialist" 
                   className="w-7 h-7 rounded-full object-cover border border-[#c7d1d9]"
                 />
                 <button 
-                  onClick={() => alert('Connecting you with a verified setup expert...')}
+                  onClick={() => alert('Connecting you with an Indian Chartered Accountant specialist...')}
                   className="text-[13px] font-medium text-[#1f2937] hover:text-[#007755] cursor-pointer"
                 >
-                  Contact experts
+                  Contact CA experts
                 </button>
               </div>
             ) : (
@@ -186,7 +269,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
             )}
           </div>
 
-          {/* Full-width Progress Bar */}
+          {/* Full-width Thin Progress Track */}
           <div className="w-full h-[6px] bg-[#eef2f5] border border-[#d2d9df] rounded-full overflow-hidden p-[1px]">
             <div 
               className="h-full bg-[#007755] rounded-full transition-all duration-500 ease-out"
@@ -206,8 +289,11 @@ export default function OnboardingWizard({ onComplete, onExit }) {
           <Screen1BusinessName 
             businessName={formData.businessName}
             onChange={(val) => updateField('businessName', val)}
+            showDisclaimer={showDisclaimerPopover}
+            setShowDisclaimer={setShowDisclaimerPopover}
+            stepError={stepError}
             onBack={handleBack}
-            onNext={handleNext}
+            onNext={() => validateAndProceed()}
           />
         )}
 
@@ -215,8 +301,9 @@ export default function OnboardingWizard({ onComplete, onExit }) {
           <Screen2PriorSoftware 
             selected={formData.priorSoftware}
             onSelect={(val) => updateField('priorSoftware', val)}
+            stepError={stepError}
             onBack={handleBack}
-            onNext={handleNext}
+            onNext={() => validateAndProceed()}
           />
         )}
 
@@ -224,9 +311,11 @@ export default function OnboardingWizard({ onComplete, onExit }) {
           <Screen3Website 
             website={formData.website}
             onChange={(val) => updateField('website', val)}
+            isDiscovering={isDiscoveringData}
+            stepError={stepError}
             onBack={handleBack}
-            onNext={handleNext}
-            onSkip={handleNext}
+            onNext={() => validateAndProceed()}
+            onSkip={() => setCurrentStep(4)}
           />
         )}
 
@@ -236,9 +325,10 @@ export default function OnboardingWizard({ onComplete, onExit }) {
             industry={formData.industry}
             taxType={formData.taxType}
             annualRevenue={formData.annualRevenue}
+            stepError={stepError}
             onUpdate={updateField}
             onBack={handleBack}
-            onNext={handleNext}
+            onNext={() => validateAndProceed()}
           />
         )}
 
@@ -246,20 +336,18 @@ export default function OnboardingWizard({ onComplete, onExit }) {
           <Screen5RoleAndTeam 
             role={formData.role}
             employeeCount={formData.employeeCount}
+            stepError={stepError}
             onUpdate={updateField}
             onBack={handleBack}
-            onNext={handleNext}
+            onNext={() => validateAndProceed()}
           />
         )}
 
         {currentStep === 6 && (
           <Screen6ExpertCall 
             onBack={handleBack}
-            onSchedule={() => {
-              alert('Setup consultation scheduled for ' + formData.businessName + '!');
-              handleNext();
-            }}
-            onSkip={handleNext}
+            onSchedule={() => setShowScheduleModal(true)}
+            onSkip={() => setCurrentStep(7)}
           />
         )}
 
@@ -287,7 +375,14 @@ export default function OnboardingWizard({ onComplete, onExit }) {
             phoneNumber={formData.phoneNumber}
             phoneSubmitted={phoneSubmitted}
             onChangePhone={(val) => updateField('phoneNumber', val)}
-            onSubmitPhone={() => setPhoneSubmitted(true)}
+            onSubmitPhone={() => {
+              if (!formData.phoneNumber) {
+                setStepError('Please enter a phone number to receive the link.');
+                return;
+              }
+              setPhoneSubmitted(true);
+            }}
+            stepError={stepError}
             onBack={handleBack}
             onNext={() => setCurrentStep(10)}
             onSkip={() => setCurrentStep(10)}
@@ -298,7 +393,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
           <Screen10BankConnect 
             onBack={handleBack}
             onLinkAccounts={() => {
-              alert('Account link initialized. Proceeding to feature customization.');
+              alert('Redirecting to RBI/NPCI Account Aggregator gateway (HDFC, ICICI, SBI)...');
               setCurrentStep(11);
             }}
             onSkip={() => setCurrentStep(11)}
@@ -324,7 +419,33 @@ export default function OnboardingWizard({ onComplete, onExit }) {
         )}
       </main>
 
-      {/* 3. PERSISTENT 'How\'s setup going?' TAB */}
+      {/* 3. SCHEDULE MODAL: 'This feature will be soon available' */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-[440px] w-full p-6 shadow-2xl border border-gray-200 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-full bg-[#e6f4ea] text-[#007755] flex items-center justify-center mx-auto mb-4">
+              <Clock size={24} />
+            </div>
+            <h3 className="text-[20px] font-bold text-[#1f2937] mb-2">
+              This feature will be soon available
+            </h3>
+            <p className="text-[13.5px] text-[#6b7280] leading-relaxed mb-6">
+              Our 1-to-1 Chartered Accountant consultation scheduler is currently in private preview for Indian businesses. You will receive an invitation email once available.
+            </p>
+            <button
+              onClick={() => {
+                setShowScheduleModal(false);
+                setCurrentStep(7);
+              }}
+              className="w-full h-[40px] bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14px] rounded-[6px] shadow-sm cursor-pointer transition"
+            >
+              Got it, continue setup
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. PERSISTENT 'How\'s setup going?' TAB */}
       {currentStep < 12 && (
         <div className="fixed bottom-0 right-8 z-30">
           <button
@@ -348,11 +469,11 @@ export default function OnboardingWizard({ onComplete, onExit }) {
                 </button>
               </div>
               <p className="text-[12px] text-[#6b7280] mb-3">
-                We're tailoring the experience to your business. How are things feeling?
+                We're tailoring Meso to your exact business workflow. Let us know how it's going:
               </p>
               <div className="flex justify-between items-center px-4 py-2 bg-gray-50 rounded-md border border-gray-200 mb-3">
                 <button 
-                  onClick={() => { alert('Glad it is going great!'); setShowHelpModal(false); }}
+                  onClick={() => { alert('Glad setup is going great!'); setShowHelpModal(false); }}
                   className="flex flex-col items-center hover:scale-110 transition text-green-600"
                 >
                   <Smile size={24} />
@@ -366,7 +487,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
                   <span className="text-[10px] mt-1 text-gray-600">Okay</span>
                 </button>
                 <button 
-                  onClick={() => { alert('Our support team is ready to help.'); setShowHelpModal(false); }}
+                  onClick={() => { alert('Our CA support desk is ready to help.'); setShowHelpModal(false); }}
                   className="flex flex-col items-center hover:scale-110 transition text-red-500"
                 >
                   <Frown size={24} />
@@ -383,35 +504,35 @@ export default function OnboardingWizard({ onComplete, onExit }) {
 }
 
 // =========================================================================
-// SCREEN 0: WELCOME & FLOATING PILLS CLUSTER
+// SCREEN 0: WELCOME & NON-OVERLAPPING FLOATING PILLS CLOUD
 // =========================================================================
 function Screen0Welcome({ onStart }) {
   const pills = [
-    { label: 'Sales & Get Paid', icon: BarChart2, bg: '#003366', text: '#fff', x: '58%', y: '34%' },
-    { label: 'Customer Hub', icon: Users, bg: '#00a3bf', text: '#fff', x: '52%', y: '43%' },
-    { label: 'Business Tax', icon: PieChart, bg: '#332a7c', text: '#fff', x: '67%', y: '43%' },
-    { label: 'Payroll', icon: ArrowRight, bg: '#0077c5', text: '#fff', x: '49%', y: '51%' },
-    { label: 'Accounting', icon: Building2, bg: '#005f43', text: '#fff', x: '60%', y: '51%' },
-    { label: 'Sales Tax', icon: Percent, bg: '#0d2b45', text: '#fff', x: '71%', y: '51%' },
-    { label: 'Expenses & Pay Bills', icon: ArrowRight, bg: '#005f43', text: '#fff', x: '55%', y: '58%' },
-    { label: 'Team', icon: Users, bg: '#0052cc', text: '#fff', x: '69%', y: '58%' },
-    { label: 'Lending', icon: CreditCard, bg: '#00875a', text: '#fff', x: '62%', y: '65%' },
+    { label: 'Sales & GST Invoicing', icon: BarChart2, bg: '#003366', tag: 'Billing' },
+    { label: 'Customer Hub (CRM)', icon: Users, bg: '#00a3bf', tag: 'Clients' },
+    { label: 'Business Tax & TDS', icon: PieChart, bg: '#332a7c', tag: 'Direct Tax' },
+    { label: 'Payroll (EPF & ESI)', icon: ArrowRight, bg: '#0077c5', tag: 'Staff' },
+    { label: 'General Ledger Accounting', icon: Building2, bg: '#005f43', tag: 'Ledger' },
+    { label: 'GST (CGST / SGST / IGST)', icon: Percent, bg: '#0d2b45', tag: 'Indirect Tax' },
+    { label: 'Expenses & Vendor Bills', icon: ArrowRight, bg: '#005f43', tag: 'AP' },
+    { label: 'Team & Access Control', icon: Users, bg: '#0052cc', tag: 'Security' },
+    { label: 'Banking & Auto-Reconcile', icon: CreditCard, bg: '#00875a', tag: 'Bank Feeds' },
   ];
 
   return (
-    <div className="w-full max-w-[1400px] min-h-[580px] flex flex-col lg:flex-row items-center justify-between px-8 relative">
+    <div className="w-full max-w-[1400px] min-h-[580px] flex flex-col lg:flex-row items-center justify-between px-8 py-4 relative">
       {/* Left Column: Headline, Brand & Action */}
       <div className="max-w-[560px] flex flex-col items-start z-10">
-        <div className="flex items-center space-x-2.5 mb-12">
-          <div className="w-[34px] h-[34px] rounded-full bg-[#007755] flex items-center justify-center text-white font-bold text-[17px] shadow-sm tracking-tighter">
-            qb
+        <div className="flex items-center space-x-2.5 mb-10">
+          <div className="w-[36px] h-[36px] rounded-full bg-[#007755] flex items-center justify-center text-white font-black text-[18px] shadow-sm tracking-tight">
+            M
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-[11px] font-bold tracking-widest text-[#4b5563] uppercase">
-              INTUIT
+            <span className="text-[11px] font-bold tracking-widest text-[#007755] uppercase">
+              MESO
             </span>
-            <span className="text-[19px] font-bold text-[#1f2937] tracking-tight -mt-1">
-              quickbooks
+            <span className="text-[20px] font-bold text-[#1f2937] tracking-tight -mt-1">
+              cloud
             </span>
           </div>
         </div>
@@ -422,45 +543,49 @@ function Screen0Welcome({ onStart }) {
 
         <button
           onClick={onStart}
-          className="h-[44px] px-7 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14.5px] rounded-[4px] shadow-sm cursor-pointer transition transform active:scale-[0.98]"
+          className="h-[46px] px-8 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[15px] rounded-[4px] shadow-sm cursor-pointer transition transform active:scale-[0.98]"
         >
           Let's get started
         </button>
       </div>
 
-      {/* Right Column: Floating Cloud of 9 Pills */}
-      <div className="w-full lg:w-[680px] h-[460px] relative mt-10 lg:mt-0 flex items-center justify-center">
-        {pills.map((p, idx) => (
-          <div
-            key={idx}
-            className="absolute bg-white rounded-full px-3.5 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.08)] border border-[#f0f2f5] flex items-center space-x-2.5 transition-all duration-300 hover:shadow-lg hover:scale-105 cursor-default select-none animate-pulse"
-            style={{
-              left: p.x,
-              top: p.y,
-              transform: 'translate(-50%, -50%)',
-              animationDuration: `${3 + (idx % 3)}s`
-            }}
-          >
-            <div 
-              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] shadow-2xs"
-              style={{ backgroundColor: p.bg }}
+      {/* Right Column: Clean Non-Overlapping Structured Grid of 9 Pills */}
+      <div className="w-full lg:w-[640px] mt-10 lg:mt-0 p-6 bg-gradient-to-br from-[#f8fafc] to-[#eef7f4] rounded-3xl border border-[#dfe6e4] shadow-xs">
+        <div className="text-[11px] font-bold text-[#007755] uppercase tracking-wider mb-4 px-1">
+          Connected Modules in Your Suite
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3.5">
+          {pills.map((p, idx) => (
+            <div
+              key={idx}
+              className="bg-white rounded-xl p-3 shadow-sm border border-[#e5e7eb] flex items-center space-x-3 transition-all duration-200 hover:shadow-md hover:border-[#007755] cursor-default select-none"
             >
-              <p.icon size={13} strokeWidth={2.5} />
+              <div 
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[12px] shadow-2xs shrink-0"
+                style={{ backgroundColor: p.bg }}
+              >
+                <p.icon size={16} strokeWidth={2.2} />
+              </div>
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-[13px] font-semibold text-[#1f2937] truncate">
+                  {p.label}
+                </span>
+                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                  {p.tag}
+                </span>
+              </div>
             </div>
-            <span className="text-[13px] font-medium text-[#1f2937] pr-1">
-              {p.label}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
 // =========================================================================
-// SCREEN 1: BUSINESS NAME
+// SCREEN 1: BUSINESS NAME (STARTS EMPTY + DISCLAIMER)
 // =========================================================================
-function Screen1BusinessName({ businessName, onChange, onBack, onNext }) {
+function Screen1BusinessName({ businessName, onChange, showDisclaimer, setShowDisclaimer, stepError, onBack, onNext }) {
   return (
     <div className="w-full max-w-[700px] flex flex-col pt-6">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
@@ -470,19 +595,54 @@ function Screen1BusinessName({ businessName, onChange, onBack, onNext }) {
         With this, we'll make sure your legal business name shows up in the right places.
       </p>
 
-      <div className="mb-8">
-        <label className="flex items-center space-x-1.5 text-[12.5px] text-[#595959] mb-2 font-normal">
+      <div className="mb-6 relative">
+        <div className="flex items-center space-x-1.5 text-[12.5px] text-[#595959] mb-2 font-normal">
           <span>Your legal business name</span>
-          <Info size={13} className="text-[#6b7280] cursor-pointer" />
-        </label>
+          <button 
+            type="button" 
+            onClick={() => setShowDisclaimer(!showDisclaimer)}
+            className="text-[#6b7280] hover:text-[#007755] cursor-pointer"
+            title="Legal Name Disclaimer"
+          >
+            <Info size={14} />
+          </button>
+        </div>
+
+        {/* Disclaimer Popover */}
+        {showDisclaimer && (
+          <div className="absolute left-0 top-10 w-[380px] bg-[#1e293b] text-white p-4 rounded-[8px] shadow-xl text-[12px] z-50 leading-relaxed border border-gray-700 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold text-[12.5px] text-[#38bdf8] flex items-center gap-1.5">
+                <Sparkles size={14} />
+                MCA &amp; GSTIN Legal Entity Name
+              </span>
+              <button onClick={() => setShowDisclaimer(false)} className="text-gray-400 hover:text-white">
+                <X size={14} />
+              </button>
+            </div>
+            <p className="text-gray-200 text-[11.5px]">
+              Enter the exact name registered with the Ministry of Corporate Affairs (MCA) or on your GST Registration Certificate. This name will appear on all statutory GST tax invoices, GSTR-1 &amp; GSTR-3B filings, audit trails, and official bank reconciliation logs.
+            </p>
+          </div>
+        )}
+
         <input
           type="text"
           value={businessName}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="No company name"
+          placeholder="Enter legal business or company name..."
           autoFocus
-          className="w-full h-[42px] px-3.5 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] focus:ring-1 focus:ring-[#007755] transition"
+          className={`w-full h-[44px] px-3.5 text-[14.5px] text-[#1f2937] border rounded-[4px] outline-none transition ${
+            stepError ? 'border-red-500 focus:ring-1 focus:ring-red-500' : 'border-[#c7d1d9] focus:border-[#007755] focus:ring-1 focus:ring-[#007755]'
+          }`}
         />
+
+        {stepError && (
+          <div className="flex items-center space-x-1.5 text-red-600 text-[12px] mt-2">
+            <AlertCircle size={14} />
+            <span>{stepError}</span>
+          </div>
+        )}
       </div>
 
       <div className="w-full border-t border-[#e5e7eb] pt-6 flex items-center space-x-3.5">
@@ -504,28 +664,29 @@ function Screen1BusinessName({ businessName, onChange, onBack, onNext }) {
 }
 
 // =========================================================================
-// SCREEN 2: WHAT WERE YOU USING BEFORE
+// SCREEN 2: WHAT WERE YOU USING BEFORE (INDIAN ERPs & UNSELECTED BY DEFAULT)
 // =========================================================================
-function Screen2PriorSoftware({ selected, onSelect, onBack, onNext }) {
+function Screen2PriorSoftware({ selected, onSelect, stepError, onBack, onNext }) {
   const options = [
     { id: 'nothing', title: "Nothing, I'm new to this", icon: HelpCircle },
-    { id: 'desktop', title: 'QuickBooks Desktop™', icon: Smartphone },
-    { id: 'peachtree', title: 'Sage 50 or Peachtree', icon: FileText },
-    { id: 'another', title: 'Another bookkeeping software', icon: Smartphone },
-    { id: 'spreadsheets', title: 'Spreadsheets', icon: BarChart2 },
+    { id: 'tally', title: 'Tally Prime / Tally ERP 9', icon: Building2 },
+    { id: 'zoho', title: 'Zoho Books', icon: FileText },
+    { id: 'busy', title: 'Busy Accounting Software', icon: Smartphone },
+    { id: 'spreadsheets', title: 'Spreadsheets / Excel', icon: BarChart2 },
     { id: 'pen_paper', title: 'Something else (like pen & paper)', icon: FileText },
   ];
 
   return (
     <div className="w-full max-w-[700px] flex flex-col pt-6">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
-        What were you using before QuickBooks?
+        What were you using before Meso?
       </h2>
       <p className="text-[14.5px] text-[#595959] mb-8">
-        We'll bring over any data we can find to give you a head start.
+        We'll bring over any master ledgers, vouchers, and contacts to give you a head start.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-8">
+      {/* 2-Column Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4">
         {options.map((opt) => {
           const isSelected = selected === opt.id;
           const Icon = opt.icon;
@@ -539,7 +700,7 @@ function Screen2PriorSoftware({ selected, onSelect, onBack, onNext }) {
                   : 'border-[#e5e7eb] hover:border-[#9ca3af] bg-white'
               }`}
             >
-              <div className="text-[#007755]">
+              <div className={`${isSelected ? 'text-[#007755]' : 'text-gray-500'}`}>
                 <Icon size={22} strokeWidth={1.75} />
               </div>
               <span className="text-[13.5px] font-medium text-[#1f2937]">
@@ -549,6 +710,13 @@ function Screen2PriorSoftware({ selected, onSelect, onBack, onNext }) {
           );
         })}
       </div>
+
+      {stepError && (
+        <div className="flex items-center space-x-1.5 text-red-600 text-[12px] mb-4">
+          <AlertCircle size={14} />
+          <span>{stepError}</span>
+        </div>
+      )}
 
       <div className="w-full border-t border-[#e5e7eb] pt-6 flex items-center space-x-3.5">
         <button
@@ -569,9 +737,9 @@ function Screen2PriorSoftware({ selected, onSelect, onBack, onNext }) {
 }
 
 // =========================================================================
-// SCREEN 3: WEBSITE AUTOMATION (BETA)
+// SCREEN 3: WEBSITE AUTOMATION (STARTS EMPTY + AUTO-DISCOVERY)
 // =========================================================================
-function Screen3Website({ website, onChange, onBack, onNext, onSkip }) {
+function Screen3Website({ website, onChange, isDiscovering, stepError, onBack, onNext, onSkip }) {
   return (
     <div className="w-full max-w-[700px] flex flex-col pt-6">
       <div className="mb-2">
@@ -584,7 +752,7 @@ function Screen3Website({ website, onChange, onBack, onNext, onSkip }) {
         Let's automate the basics. What's your website?
       </h2>
       <p className="text-[14.5px] text-[#595959] mb-8">
-        We'll find details like your business name, industry, and size so you don't have to enter them yourself.
+        We'll discover details like your registered office, industry classification, and size so you don't have to enter them yourself.
       </p>
 
       <div className="mb-8">
@@ -595,10 +763,17 @@ function Screen3Website({ website, onChange, onBack, onNext, onSkip }) {
           type="text"
           value={website}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="https://example.com"
+          placeholder="e.g. https://mybusiness.in"
           autoFocus
           className="w-full h-[42px] px-3.5 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] focus:ring-1 focus:ring-[#007755] transition"
         />
+
+        {isDiscovering && (
+          <div className="flex items-center space-x-2 text-[#007755] text-[12px] font-medium mt-2.5 animate-pulse">
+            <Sparkles size={14} />
+            <span>Discovering MCA registry data, GSTIN jurisdiction &amp; business classifications...</span>
+          </div>
+        )}
       </div>
 
       <div className="w-full border-t border-[#e5e7eb] pt-6 flex items-center justify-between">
@@ -611,9 +786,10 @@ function Screen3Website({ website, onChange, onBack, onNext, onSkip }) {
           </button>
           <button
             onClick={onNext}
-            className="h-[38px] px-7 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[13.5px] rounded-[4px] shadow-sm cursor-pointer transition"
+            disabled={isDiscovering}
+            className="h-[38px] px-7 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[13.5px] rounded-[4px] shadow-sm cursor-pointer transition disabled:opacity-50"
           >
-            Next
+            {isDiscovering ? 'Analyzing...' : 'Next'}
           </button>
         </div>
 
@@ -629,20 +805,27 @@ function Screen3Website({ website, onChange, onBack, onNext, onSkip }) {
 }
 
 // =========================================================================
-// SCREEN 4: TELL US MORE ABOUT YOUR BUSINESS
+// SCREEN 4: COMPANY PROFILE (DYNAMIC NAME + FULL INDIAN INDUSTRIES + START EMPTY)
 // =========================================================================
-function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue, onUpdate, onBack, onNext }) {
+function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue, stepError, onUpdate, onBack, onNext }) {
+  const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
+  const [industrySearch, setIndustrySearch] = useState(industry || '');
+
+  const filteredIndustries = INDIAN_INDUSTRIES.filter(item => 
+    item.toLowerCase().includes(industrySearch.toLowerCase())
+  );
+
   return (
     <div className="w-full max-w-[700px] flex flex-col pt-4">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
-        Tell us more about {businessName || 'Pallet Town Creative Co.'}
+        Tell us more about {businessName || 'your business'}
       </h2>
       <p className="text-[14.5px] text-[#595959] mb-6">
-        This info will help us make better suggestions for your business.
+        This info will help us tailor Indian GST calculation, Chart of Accounts, and compliance schedules.
       </p>
 
-      {/* Field 1: Industry */}
-      <div className="mb-5">
+      {/* Field 1: Industry with Search & Dropdown */}
+      <div className="mb-5 relative">
         <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
           Industry (optional)
         </label>
@@ -650,21 +833,46 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
           <Search size={15} className="absolute left-3.5 top-3 text-[#9ca3af]" />
           <input
             type="text"
-            value={industry}
-            onChange={(e) => onUpdate('industry', e.target.value)}
-            placeholder="Construction, retail, salon, etc."
+            value={industrySearch}
+            onFocus={() => setShowIndustryDropdown(true)}
+            onChange={(e) => {
+              setIndustrySearch(e.target.value);
+              onUpdate('industry', e.target.value);
+              setShowIndustryDropdown(true);
+            }}
+            placeholder="Search Indian industry classification (e.g. IT, Retail, Healthcare)..."
             className="w-full h-[42px] pl-10 pr-3.5 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] focus:ring-1 focus:ring-[#007755] transition"
           />
         </div>
         <span className="block text-[11.5px] text-[#6b7280] mt-1">
           Begin entering your industry and select the option that fits best.
         </span>
+
+        {/* Industry Suggestions Menu */}
+        {showIndustryDropdown && filteredIndustries.length > 0 && (
+          <div className="absolute left-0 top-full mt-1 w-full max-h-56 overflow-y-auto bg-white border border-[#c7d1d9] rounded-md shadow-xl z-50 py-1">
+            {filteredIndustries.map((ind, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setIndustrySearch(ind);
+                  onUpdate('industry', ind);
+                  setShowIndustryDropdown(false);
+                }}
+                className="w-full text-left px-3.5 py-2 text-[13px] text-[#1f2937] hover:bg-[#e6f4ea] hover:text-[#007755] transition"
+              >
+                {ind}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Field 2: Business Tax Type */}
+      {/* Field 2: Business Tax Type (Starts Empty) */}
       <div className="mb-5">
         <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
-          Business tax type
+          Business tax type <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <select
@@ -672,24 +880,26 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
             onChange={(e) => onUpdate('taxType', e.target.value)}
             className="w-full h-[42px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] bg-white appearance-none outline-none focus:border-[#007755] transition cursor-pointer"
           >
-            <option value="">Select...</option>
-            <option value="sole_proprietor">Sole Proprietorship</option>
-            <option value="partnership">Partnership Firm</option>
-            <option value="pvt_ltd">Private Limited Company (Pvt Ltd)</option>
-            <option value="llp">Limited Liability Partnership (LLP)</option>
-            <option value="nonprofit">Nonprofit Organization</option>
+            <option value="">Select tax type...</option>
+            <option value="sole_proprietor">Sole Proprietorship (Individual PAN)</option>
+            <option value="partnership">Partnership Firm (Deed Registered)</option>
+            <option value="pvt_ltd">Private Limited Company (Pvt Ltd / MCA Registered)</option>
+            <option value="llp">Limited Liability Partnership (LLP / Form 3)</option>
+            <option value="public_ltd">Public Limited Company</option>
+            <option value="huf">Hindu Undivided Family (HUF)</option>
+            <option value="trust_ngo">Trust / NGO / Society (Section 8)</option>
           </select>
           <ChevronDown size={16} className="absolute right-3.5 top-3.5 text-[#6b7280] pointer-events-none" />
         </div>
         <span className="block text-[11.5px] text-[#6b7280] mt-1">
-          LLC isn't shown because an LLC can be created alongside another business type. For example: sole proprietor as a single member LLC.
+          Entity constitution determines PAN entity classification (4th character validation) and tax filing requirements.
         </span>
       </div>
 
-      {/* Field 3: Annual Revenue */}
-      <div className="mb-7">
+      {/* Field 3: Annual Revenue Bracket (Starts Empty) */}
+      <div className="mb-6">
         <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
-          What was your company's annual revenue last year?
+          What was your company's annual revenue last year? <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <select
@@ -697,16 +907,23 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
             onChange={(e) => onUpdate('annualRevenue', e.target.value)}
             className="w-full h-[42px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] bg-white appearance-none outline-none focus:border-[#007755] transition cursor-pointer"
           >
-            <option value="">Select...</option>
-            <option value="revenue_under_10l">Under ₹10,00,000 (Under $15k)</option>
-            <option value="revenue_10l_50l">₹10,00,000 - ₹50,00,000 ($15k - $75k)</option>
-            <option value="revenue_50l_1_5cr">₹50,00,000 - ₹1,50,00,000 ($75k - $200k)</option>
-            <option value="revenue_1_5cr_5cr">₹1,50,00,000 - ₹5,00,00,000 ($200k - $700k)</option>
-            <option value="revenue_over_5cr">Over ₹5,00,00,000 (Over $700k)</option>
+            <option value="">Select annual turnover...</option>
+            <option value="revenue_under_10l">Under ₹10 Lakhs (Below GST Threshold)</option>
+            <option value="revenue_10l_50l">₹10 Lakhs - ₹50 Lakhs (Micro Enterprise)</option>
+            <option value="revenue_50l_1_5cr">₹50 Lakhs - ₹1.5 Crores (Small Enterprise / Composition Scheme)</option>
+            <option value="revenue_1_5cr_5cr">₹1.5 Crores - ₹5 Crores (Regular GST)</option>
+            <option value="revenue_over_5cr">Over ₹5 Crores (Mandatory e-Invoicing &amp; e-Way Bill)</option>
           </select>
           <ChevronDown size={16} className="absolute right-3.5 top-3.5 text-[#6b7280] pointer-events-none" />
         </div>
       </div>
+
+      {stepError && (
+        <div className="flex items-center space-x-1.5 text-red-600 text-[12px] mb-4">
+          <AlertCircle size={14} />
+          <span>{stepError}</span>
+        </div>
+      )}
 
       <div className="w-full border-t border-[#e5e7eb] pt-6 flex items-center space-x-3.5">
         <button
@@ -727,9 +944,9 @@ function Screen4CompanyProfile({ businessName, industry, taxType, annualRevenue,
 }
 
 // =========================================================================
-// SCREEN 5: ROLE & EMPLOYEES
+// SCREEN 5: ROLE & EMPLOYEES (STARTS EMPTY + VALIDATION)
 // =========================================================================
-function Screen5RoleAndTeam({ role, employeeCount, onUpdate, onBack, onNext }) {
+function Screen5RoleAndTeam({ role, employeeCount, stepError, onUpdate, onBack, onNext }) {
   return (
     <div className="w-full max-w-[700px] flex flex-col pt-6">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
@@ -742,7 +959,7 @@ function Screen5RoleAndTeam({ role, employeeCount, onUpdate, onBack, onNext }) {
       {/* Field 1: Role */}
       <div className="mb-6">
         <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
-          What's your role?
+          What's your role? <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <select
@@ -750,21 +967,22 @@ function Screen5RoleAndTeam({ role, employeeCount, onUpdate, onBack, onNext }) {
             onChange={(e) => onUpdate('role', e.target.value)}
             className="w-full h-[42px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] bg-white appearance-none outline-none focus:border-[#007755] transition cursor-pointer"
           >
-            <option value="">Select...</option>
-            <option value="owner">Owner / Founder</option>
-            <option value="accountant">Accountant / Bookkeeper</option>
-            <option value="cfo">Finance Director / CFO</option>
-            <option value="manager">Operations Manager</option>
-            <option value="other">Other</option>
+            <option value="">Select your role...</option>
+            <option value="owner">Business Owner / Managing Director</option>
+            <option value="accountant">Designated Accountant / In-House Bookkeeper</option>
+            <option value="cfo">Chief Financial Officer (CFO) / Finance Head</option>
+            <option value="consultant">Practicing CA / External Auditor</option>
+            <option value="manager">Operations &amp; Billing Manager</option>
+            <option value="other">Other Role</option>
           </select>
           <ChevronDown size={16} className="absolute right-3.5 top-3.5 text-[#6b7280] pointer-events-none" />
         </div>
       </div>
 
       {/* Field 2: Employee Count */}
-      <div className="mb-8">
+      <div className="mb-6">
         <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
-          How many employees?
+          How many employees? <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <select
@@ -772,16 +990,23 @@ function Screen5RoleAndTeam({ role, employeeCount, onUpdate, onBack, onNext }) {
             onChange={(e) => onUpdate('employeeCount', e.target.value)}
             className="w-full h-[42px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] bg-white appearance-none outline-none focus:border-[#007755] transition cursor-pointer"
           >
-            <option value="">Select...</option>
-            <option value="just_me">Just me</option>
-            <option value="1_5">1-5 employees</option>
-            <option value="6_15">6-15 employees</option>
-            <option value="16_50">16-50 employees</option>
-            <option value="50_plus">50+ employees</option>
+            <option value="">Select number of employees...</option>
+            <option value="just_me">Just me (Solo entrepreneur)</option>
+            <option value="1_5">1-5 employees (Micro team)</option>
+            <option value="6_15">6-15 employees (Small team)</option>
+            <option value="16_50">16-50 employees (EPF applicability threshold)</option>
+            <option value="50_plus">50+ employees (Full statutory payroll)</option>
           </select>
           <ChevronDown size={16} className="absolute right-3.5 top-3.5 text-[#6b7280] pointer-events-none" />
         </div>
       </div>
+
+      {stepError && (
+        <div className="flex items-center space-x-1.5 text-red-600 text-[12px] mb-4">
+          <AlertCircle size={14} />
+          <span>{stepError}</span>
+        </div>
+      )}
 
       <div className="w-full border-t border-[#e5e7eb] pt-6 flex items-center space-x-3.5">
         <button
@@ -802,7 +1027,7 @@ function Screen5RoleAndTeam({ role, employeeCount, onUpdate, onBack, onNext }) {
 }
 
 // =========================================================================
-// SCREEN 6: EXPERT 1-TO-1 CALL
+// SCREEN 6: EXPERT 1-TO-1 CA CALL
 // =========================================================================
 function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
   return (
@@ -813,7 +1038,7 @@ function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
           An expert can get you up and running fast
         </h2>
         <p className="text-[14px] text-[#595959] leading-relaxed mb-6">
-          Your subscription comes with a 1-to-1 personalized setup call. A setup expert will customize your account, find the right tools for your business, and help you start using QuickBooks with confidence.
+          Your Meso subscription includes a 1-to-1 personalized setup call with a qualified Chartered Accountant. They will help customize your Chart of Accounts, set up GSTIN branches, and configure TDS withholding.
         </p>
 
         <div className="mb-8">
@@ -821,19 +1046,19 @@ function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
           <ul className="space-y-1.5 text-[13.5px] text-[#374151]">
             <li className="flex items-center space-x-2">
               <span className="text-[#007755] font-bold">•</span>
-              <span>Keep your business organized</span>
+              <span>Keep your books organized under MCA audit trail rules</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="text-[#007755] font-bold">•</span>
-              <span>Automate your accounting with AI</span>
+              <span>Automate GST reconciliation with Meso Assist AI</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="text-[#007755] font-bold">•</span>
-              <span>Track income and expenses</span>
+              <span>Track vendor TDS thresholds under Section 194C &amp; 194J</span>
             </li>
             <li className="flex items-center space-x-2">
               <span className="text-[#007755] font-bold">•</span>
-              <span>Discover features that work for you</span>
+              <span>Discover automated features tailored to your industry</span>
             </li>
           </ul>
         </div>
@@ -869,17 +1094,17 @@ function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
           <div className="flex items-end space-x-2">
             <img
               src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"
-              alt="Expert 1"
+              alt="CA Expert 1"
               className="w-16 h-20 rounded-t-full object-cover border-2 border-white shadow-xs"
             />
             <img
               src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=140&auto=format&fit=crop&q=80"
-              alt="Expert 2"
+              alt="CA Expert 2"
               className="w-20 h-24 rounded-t-full object-cover border-2 border-white shadow-md z-10 -mx-1"
             />
             <img
               src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
-              alt="Expert 3"
+              alt="CA Expert 3"
               className="w-16 h-20 rounded-t-full object-cover border-2 border-white shadow-xs"
             />
           </div>
@@ -893,7 +1118,7 @@ function Screen6ExpertCall({ onBack, onSchedule, onSkip }) {
 }
 
 // =========================================================================
-// SCREEN 7: CHOOSE FIRST AUTOMATION PATH
+// SCREEN 7: CHOOSE FIRST AUTOMATION PATH (₹ RUPEES ONLY + WORKING TARGETS)
 // =========================================================================
 function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoicePath, onSelectBankPath, onBack }) {
   return (
@@ -908,7 +1133,7 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
             </button>
           </div>
           <p className="text-gray-300 text-[11px]">
-            Set up with confidence. Our team of experts is here to help every step of the way.
+            Set up with confidence. Our team of CA specialists is here to guide your setup every step of the way.
           </p>
         </div>
       )}
@@ -933,26 +1158,27 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
               </div>
               <div className="w-[190px] bg-white rounded-[6px] p-3 shadow-md border border-[#e5e7eb] flex flex-col">
                 <div className="flex justify-between items-center mb-1 text-[10px] text-gray-400 font-semibold uppercase">
-                  <span>INVOICE</span>
+                  <span>TAX INVOICE</span>
                   <div className="flex space-x-1">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" />
                     <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block" />
                     <span className="w-2.5 h-2.5 rounded-full bg-green-600 inline-block" />
                   </div>
                 </div>
-                <div className="text-[18px] font-bold text-[#1f2937] mb-2">$1,250</div>
+                {/* ₹ RUPEES */}
+                <div className="text-[18px] font-bold text-[#1f2937] mb-2">₹1,25,000</div>
                 <div className="w-full h-2 bg-[#f3f4f6] rounded-sm mb-1.5" />
                 <div className="w-3/4 h-2 bg-[#f3f4f6] rounded-sm mb-3" />
                 <div className="flex items-center space-x-1.5 text-[8px] text-gray-500 font-medium">
-                  <span className="border border-gray-300 rounded px-1">Apple Pay</span>
-                  <span className="border border-gray-300 rounded px-1">VISA</span>
                   <span className="border border-gray-300 rounded px-1">UPI</span>
+                  <span className="border border-gray-300 rounded px-1">RuPay</span>
+                  <span className="border border-gray-300 rounded px-1">NEFT</span>
                 </div>
               </div>
             </div>
 
             <p className="text-[15px] font-semibold text-[#1f2937] text-center mb-5">
-              Personalize your invoices and make them payable
+              Personalize your GST invoices and collect instant UPI payments
             </p>
           </div>
 
@@ -978,9 +1204,10 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
             <div className="w-full h-[180px] bg-[#eef7f9] rounded-[6px] p-4 flex flex-col items-center justify-center relative mb-5 overflow-hidden border border-[#d9ebf0]">
               <div className="w-[190px] bg-white rounded-[6px] p-3 shadow-md border border-[#e5e7eb] flex flex-col">
                 <span className="text-[10px] text-gray-400 font-semibold uppercase mb-1">
-                  PROFIT & LOSS:
+                  PROFIT &amp; LOSS:
                 </span>
-                <div className="text-[18px] font-bold text-[#1f2937] mb-3">$2,500</div>
+                {/* ₹ RUPEES */}
+                <div className="text-[18px] font-bold text-[#1f2937] mb-3">₹2,50,000</div>
                 <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden mb-2">
                   <div className="w-3/4 h-full bg-[#108000]" />
                 </div>
@@ -991,7 +1218,7 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
             </div>
 
             <p className="text-[15px] font-semibold text-[#1f2937] text-center mb-5">
-              Link a bank or credit card to automate accounting
+              Link an Indian bank or corporate card to automate accounting
             </p>
           </div>
 
@@ -1025,7 +1252,7 @@ function Screen7ChoosePath({ showExpertTooltip, onCloseTooltip, onSelectInvoiceP
 }
 
 // =========================================================================
-// SCREEN 8: STREAMLINE YOUR CUSTOMER PAYMENTS
+// SCREEN 8: STREAMLINE YOUR PAYMENTS (₹ RUPEES ONLY)
 // =========================================================================
 function Screen8Payments({ businessName, onBack, onSetUpPayments, onSkip }) {
   return (
@@ -1033,10 +1260,10 @@ function Screen8Payments({ businessName, onBack, onSetUpPayments, onSkip }) {
       {/* Left Details */}
       <div className="max-w-[480px]">
         <h2 className="text-[32px] font-bold text-[#1f2937] leading-[1.2] mb-3">
-          Now, let's streamline your payments in QuickBooks
+          Now, let's streamline your payments in Meso
         </h2>
         <p className="text-[14.5px] text-[#595959] leading-relaxed mb-8">
-          Set up custom invoices and payments that flow right into your books, getting you ready for AI automation and organization.
+          Set up custom GST invoices and automated UPI payment links that reconcile directly into your ledger upon receipt.
         </p>
 
         <div className="border-t border-[#e5e7eb] pt-6 flex items-center justify-between">
@@ -1064,30 +1291,30 @@ function Screen8Payments({ businessName, onBack, onSetUpPayments, onSkip }) {
         </div>
       </div>
 
-      {/* Right Graphic: Dynamic Invoice Preview Card */}
+      {/* Right Graphic: Dynamic Invoice Preview Card with ₹ RUPEES */}
       <div className="relative mt-8 md:mt-0 flex items-center justify-center">
         <div className="w-[280px] h-[280px] rounded-full bg-[#dcf3f8] flex items-center justify-center p-6 shadow-xs">
-          <div className="w-[220px] bg-white rounded-[12px] p-5 shadow-lg border-2 border-[#007755] flex flex-col items-center">
+          <div className="w-[230px] bg-white rounded-[12px] p-5 shadow-lg border-2 border-[#007755] flex flex-col items-center">
             <span className="text-[10px] font-bold text-[#6b7280] tracking-wider uppercase mb-1">
-              INVOICE 1001
+              TAX INVOICE #1001
             </span>
             <div className="text-[24px] font-black text-[#1f2937] mb-4">
-              $1,250.00
+              ₹1,25,000.00
             </div>
             <button 
               onClick={onSetUpPayments}
               className="w-full py-2 bg-[#007755] text-white font-bold text-[12.5px] rounded-[4px] mb-4 shadow-sm"
             >
-              Pay online
+              Pay via UPI / Card
             </button>
             <div className="flex items-center space-x-1.5 text-[8.5px] text-gray-500 font-semibold">
-              <span>Apple Pay</span>
-              <span>•</span>
-              <span>VISA</span>
-              <span>•</span>
-              <span>Mastercard</span>
-              <span>•</span>
               <span>UPI</span>
+              <span>•</span>
+              <span>RuPay</span>
+              <span>•</span>
+              <span>NetBanking</span>
+              <span>•</span>
+              <span>NEFT</span>
             </div>
           </div>
         </div>
@@ -1097,9 +1324,9 @@ function Screen8Payments({ businessName, onBack, onSetUpPayments, onSkip }) {
 }
 
 // =========================================================================
-// SCREEN 9: MOBILE APP & TAP TO PAY
+// SCREEN 9: MOBILE APP & TAP TO PAY (₹ RUPEES ONLY)
 // =========================================================================
-function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onSubmitPhone, onBack, onNext, onSkip }) {
+function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onSubmitPhone, stepError, onBack, onNext, onSkip }) {
   return (
     <div className="w-full max-w-[860px] flex flex-col md:flex-row items-center justify-between pt-4">
       {/* Left Details */}
@@ -1108,39 +1335,39 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
           Accept in-person payment and get updates on invoices
         </h2>
         <p className="text-[14px] text-[#595959] leading-relaxed mb-6">
-          With the mobile app, accept contactless payments with Tap to Pay on iPhone*, card reader, and more. And get real-time updates when invoices are viewed and paid.
+          With the Meso mobile companion, accept UPI QR payments, soundbox confirmations, and card taps. Get instantaneous mobile push notifications when customers view or settle invoices.
         </p>
 
         <div className="mb-6">
           <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
-            Your phone number
+            Your mobile number
           </label>
           <div className="relative max-w-[280px]">
             <input
               type="text"
               value={phoneNumber}
               onChange={(e) => onChangePhone(e.target.value)}
-              placeholder="(000) 000-0000"
+              placeholder="+91 98765 43210"
               className="w-full h-[40px] px-3.5 pr-10 text-[14px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] transition"
             />
-            <div className="absolute right-3 top-2.5 w-5 h-4 bg-red-600 rounded-[2px] flex items-center justify-center text-white text-[8px] font-bold">
-              •••
+            <div className="absolute right-3 top-2.5 w-5 h-4 bg-[#007755] rounded-[2px] flex items-center justify-center text-white text-[8px] font-bold">
+              IND
             </div>
           </div>
           <span className="block text-[11px] text-[#6b7280] mt-1 mb-3">
-            *Messaging and data rates may apply.
+            *SMS download link provided at zero charge.
           </span>
 
           <button
             onClick={onSubmitPhone}
             disabled={phoneSubmitted}
-            className={`h-[34px] px-4 rounded-[4px] font-semibold text-[12.5px] border transition ${
+            className={`h-[34px] px-4 rounded-[4px] font-semibold text-[12.5px] border transition cursor-pointer ${
               phoneSubmitted 
                 ? 'bg-[#e6f4ea] text-[#007755] border-[#007755]' 
                 : 'bg-white border-[#007755] text-[#007755] hover:bg-[#f0f7f4]'
             }`}
           >
-            {phoneSubmitted ? '✓ Download link sent!' : 'Text me a download link'}
+            {phoneSubmitted ? '✓ Download link sent to mobile!' : 'Text me a download link'}
           </button>
         </div>
 
@@ -1169,20 +1396,23 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
         </div>
 
         <p className="text-[10.5px] text-[#9ca3af] mt-4">
-          *Tap to Pay on iPhone available on eligible iPhones
+          *Tap to Pay &amp; Bharat QR available on Android and iOS devices.
         </p>
       </div>
 
-      {/* Right Graphic: Tap to Pay on iPhone + QR Code */}
+      {/* Right Graphic: Tap to Pay with ₹1,725.00 + QR Code */}
       <div className="relative mt-8 md:mt-0 flex flex-col items-center">
         <div className="relative w-[240px] h-[240px] rounded-full bg-[#f3f4f6] flex items-center justify-center overflow-hidden border border-[#e5e7eb] shadow-sm">
           <img
             src="https://images.unsplash.com/photo-1556742049-0a67c5574f73?w=320&auto=format&fit=crop&q=80"
-            alt="Tap to Pay on iPhone"
+            alt="Tap to Pay on Mobile"
             className="w-full h-full object-cover"
           />
           <div className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#007755] text-white font-black text-[14px] flex items-center justify-center shadow-md">
-            qb
+            M
+          </div>
+          <div className="absolute bottom-4 bg-white/95 px-3 py-1 rounded-full shadow-md text-[11px] font-bold text-[#1f2937]">
+            ₹1,725.00 Settled
           </div>
         </div>
 
@@ -1191,7 +1421,7 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
             <QrCode size={70} className="text-[#1f2937]" />
           </div>
           <span className="text-[10px] text-[#6b7280] font-medium mt-1">
-            Scan to download app
+            Scan for Meso mobile app
           </span>
         </div>
       </div>
@@ -1200,7 +1430,7 @@ function Screen9MobileTapToPay({ phoneNumber, phoneSubmitted, onChangePhone, onS
 }
 
 // =========================================================================
-// SCREEN 10: CONNECT YOUR ACCOUNTS (ALL-IN-ONE EXPERIENCE)
+// SCREEN 10: CONNECT BANK ACCOUNTS (₹ RUPEES ONLY)
 // =========================================================================
 function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
   return (
@@ -1211,7 +1441,7 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
           Connect your accounts for a true all-in-one experience
         </h2>
         <p className="text-[14.5px] text-[#595959] leading-relaxed mb-8">
-          Bring your business bank and credit card transactions into QuickBooks to get things organized and understand your business better.
+          Bring your HDFC, ICICI, SBI or corporate credit card transactions directly into Meso using RBI-regulated Account Aggregators to eliminate manual entry.
         </p>
 
         <div className="border-t border-[#e5e7eb] pt-6 flex items-center justify-between">
@@ -1240,15 +1470,15 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
         </div>
       </div>
 
-      {/* Right Graphic: Profit & Loss Preview Card */}
+      {/* Right Graphic: Profit & Loss Preview Card (₹ RUPEES) */}
       <div className="relative mt-8 md:mt-0 flex items-center justify-center">
         <div className="w-[280px] h-[280px] rounded-full bg-[#dcf3f8] flex items-center justify-center p-6 shadow-xs">
           <div className="w-[230px] bg-white rounded-[10px] p-5 shadow-lg border border-[#00b894] flex flex-col">
             <span className="text-[10px] font-bold text-[#6b7280] tracking-wider uppercase mb-1">
-              PROFIT & LOSS
+              PROFIT &amp; LOSS
             </span>
             <div className="text-[24px] font-bold text-[#1f2937]">
-              $2,500
+              ₹2,50,000
             </div>
             <span className="text-[10.5px] text-gray-500 mb-4">
               Net profit for last 30 days
@@ -1257,7 +1487,8 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
             {/* Income Bar */}
             <div className="mb-3">
               <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
-                <span>$ Income</span>
+                <span>₹ Income</span>
+                <span className="font-semibold text-green-700">₹4,20,000</span>
               </div>
               <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden flex">
                 <div className="w-[65%] h-full bg-[#108000]" />
@@ -1267,7 +1498,8 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
             {/* Expenses Bar */}
             <div>
               <div className="flex items-center justify-between text-[11px] text-gray-600 mb-1">
-                <span>$ Expenses</span>
+                <span>₹ Expenses</span>
+                <span className="font-semibold text-blue-700">₹1,70,000</span>
               </div>
               <div className="w-full h-3 bg-gray-100 rounded-sm overflow-hidden flex">
                 <div className="w-[45%] h-full bg-[#0077c5]" />
@@ -1281,33 +1513,33 @@ function Screen10BankConnect({ onBack, onLinkAccounts, onSkip }) {
 }
 
 // =========================================================================
-// SCREEN 11: WHAT DO YOU WANT TO DO IN QUICKBOOKS (11 CARDS)
+// SCREEN 11: WHAT DO YOU WANT TO DO IN MESO (UNCHECKED BY DEFAULT)
 // =========================================================================
 function Screen11FeaturesChecklist({ selectedFeatures, onToggleFeature, onBack, onNext, onSkip }) {
   const features = [
     { id: 'customers', label: 'Get and manage customers', icon: Users },
-    { id: 'invoices', label: 'Send & track invoices', icon: FileText },
-    { id: 'banking', label: 'Get business banking (3.00% APY eligible)', icon: Landmark },
-    { id: 'bills', label: 'Manage & pay bills', icon: Calendar },
-    { id: 'estimates', label: 'Create estimates or quotes', icon: Calculator },
-    { id: 'time', label: "Track team's time", icon: Clock },
-    { id: 'inventory', label: 'Manage inventory', icon: Package },
-    { id: 'sales', label: 'Track sales', icon: Tag },
-    { id: 'tax', label: 'Manage sales tax', icon: Percent },
-    { id: 'mileage', label: 'Track mileage deductions', icon: Car },
-    { id: 'marketing', label: 'Send marketing emails', icon: Mail },
+    { id: 'invoices', label: 'Send & track GST tax invoices', icon: FileText },
+    { id: 'banking', label: 'Connect Indian bank feeds (HDFC, ICICI, SBI)', icon: Landmark },
+    { id: 'bills', label: 'Manage & pay vendor bills (AP)', icon: Calendar },
+    { id: 'estimates', label: 'Create estimates, quotations or proformas', icon: Calculator },
+    { id: 'time', label: "Track employee & contractor time", icon: Clock },
+    { id: 'inventory', label: 'Manage item stock & inventory', icon: Package },
+    { id: 'sales', label: 'Track sales & revenue channels', icon: Tag },
+    { id: 'tax', label: 'Manage GST returns (GSTR-1, 3B) & TDS', icon: Percent },
+    { id: 'mileage', label: 'Track business mileage & travel vouchers', icon: Car },
+    { id: 'marketing', label: 'Send client campaigns & payment reminders', icon: Mail },
   ];
 
   return (
     <div className="w-full max-w-[760px] flex flex-col pt-4">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
-        What do you want to do in QuickBooks?
+        What do you want to do in Meso?
       </h2>
       <p className="text-[14.5px] text-[#595959] mb-8">
-        We'll help you set it up when you're ready.
+        We'll enable these workspaces so you are ready immediately. Pick any you need:
       </p>
 
-      {/* 2-Column Grid for the 11 feature cards */}
+      {/* 2-Column Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-8">
         {features.map((item) => {
           const isChecked = selectedFeatures.includes(item.id);
@@ -1318,16 +1550,21 @@ function Screen11FeaturesChecklist({ selectedFeatures, onToggleFeature, onBack, 
               onClick={() => onToggleFeature(item.id)}
               className={`h-[64px] px-4 rounded-[6px] border flex items-center space-x-3.5 cursor-pointer transition select-none ${
                 isChecked
-                  ? 'border-[#007755] bg-[#f0fdf4] shadow-xs'
+                  ? 'border-[#007755] bg-[#f0fdf4] shadow-xs ring-1 ring-[#007755]'
                   : 'border-[#e5e7eb] hover:border-[#9ca3af] bg-white'
               }`}
             >
               <div className={`${isChecked ? 'text-[#007755]' : 'text-[#007788]'}`}>
                 <Icon size={20} strokeWidth={1.8} />
               </div>
-              <span className="text-[13px] font-medium text-[#1f2937]">
+              <span className="text-[13px] font-medium text-[#1f2937] flex-1">
                 {item.label}
               </span>
+              <div className={`w-5 h-5 rounded border flex items-center justify-center transition ${
+                isChecked ? 'bg-[#007755] border-[#007755] text-white' : 'border-gray-300 bg-white'
+              }`}>
+                {isChecked && <Check size={13} strokeWidth={3} />}
+              </div>
             </div>
           );
         })}
@@ -1370,9 +1607,9 @@ function Screen12Frame094Loading({ onComplete }) {
     // Smooth drawing animation for the cyan underline
     const timer = setTimeout(() => {
       setLineWidth(100);
-    }, 250);
+    }, 300);
 
-    // Auto complete after 3 seconds
+    // Auto complete after 3.2 seconds
     const finishTimer = setTimeout(() => {
       if (onComplete) onComplete();
     }, 3200);
@@ -1404,7 +1641,7 @@ function Screen12Frame094Loading({ onComplete }) {
           <span> platform</span>
         </h1>
         <p className="text-[13px] text-gray-400 mt-6 tracking-wide animate-pulse">
-          Setting up your chart of accounts, tax compliance & bank feeds...
+          Provisioning Indian Chart of Accounts, GST engine &amp; double-entry ledger...
         </p>
       </div>
     </div>
