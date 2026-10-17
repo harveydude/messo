@@ -70,3 +70,19 @@ export function requirePermission(requiredAction) {
     next();
   };
 }
+
+export const extractUserCompany = multiTenantContext;
+
+export function requireRole(allowedRoles = []) {
+  return (req, res, next) => {
+    const role = req.user?.role || ROLES.OWNER;
+    if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
+      return res.status(403).json({
+        success: false,
+        error: `Forbidden: Role ${role} is not authorized for this operation.`
+      });
+    }
+    next();
+  };
+}
+
