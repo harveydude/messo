@@ -574,10 +574,8 @@ export function AccountSettingsModal({ isOpen, onClose, currentName, onSaveName 
             <div className="flex flex-col items-center justify-center">
               <div className="w-[96px] h-[96px] rounded-[16px] bg-[#F1F1F2] border border-[#E3E5E8] flex items-center justify-center relative shadow-xs">
                 {hasUploadedLogo ? (
-                  /* Uploaded Schnauzer Dog illustration */
-                  <div className="w-[84px] h-[84px] flex items-center justify-center text-[44px]">
-                    🐶
-                  </div>
+                  /* Official Company Logo */
+                  <img src="/logo.png" alt="Company Logo" className="w-[84px] h-[84px] object-cover rounded-xl bg-black" />
                 ) : (
                   /* Default Storefront Icon */
                   <Store size={52} className="text-[#393A3D]" />

@@ -85,12 +85,12 @@ export default function TopBar({
       <div className="h-[56px] w-full bg-white border-b border-[#E3E5E8] flex items-center justify-between px-4 select-none relative shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       {/* Left cluster: Logo (x:16, y:12) and Company Name */}
       <div className="flex items-center space-x-6 min-w-[260px] pl-0">
-        <div className="flex items-center space-x-1.5 cursor-pointer shrink-0" onClick={() => onSearch('')}>
-          <div className="w-7 h-7 rounded-full bg-[#2CA01C] flex items-center justify-center text-white font-bold text-xs tracking-tighter shadow-xs">
-            m
+        <div className="flex items-center space-x-2 cursor-pointer shrink-0 group" onClick={() => onSearch('')}>
+          <div className="w-8 h-8 rounded-lg overflow-hidden bg-black flex items-center justify-center shadow-xs border border-cyan-500/30 group-hover:border-cyan-400 transition">
+            <img src="/logo.png" alt="Meso Logo" className="w-full h-full object-cover" />
           </div>
           <div className="leading-tight">
-            <div className="text-[15px] font-bold text-[#393A3D] leading-none tracking-tight">meso</div>
+            <div className="text-[16px] font-bold text-[#1f2937] leading-none tracking-tight">meso</div>
           </div>
         </div>
 
