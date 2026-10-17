@@ -11,11 +11,14 @@ import {
   FileText,
   Briefcase,
   TrendingUp,
-  RotateCcw
+  RotateCcw,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import SearchDropdown from '../components/SearchDropdown';
 import MyIntegrationsPopover from '../components/MyIntegrationsPopover';
 import NotificationsPanel from '../components/NotificationsPanel';
+import { isAppFullscreen, toggleAppFullscreen, onFullscreenChange } from '../utils/fullscreen';
 
 export default function TopBar({ 
   companyName = "MESSO Technologies", 
@@ -33,6 +36,11 @@ export default function TopBar({
   const [myIntegrationsOpen, setMyIntegrationsOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => isAppFullscreen());
+
+  useEffect(() => {
+    return onFullscreenChange((fs) => setIsFullscreen(fs));
+  }, []);
   
   const searchContainerRef = useRef(null);
   const appsMenuRef = useRef(null);
@@ -253,6 +261,25 @@ export default function TopBar({
               title="Account and Settings"
             >
               <Settings size={18} />
+            </button>
+
+            {/* Fullscreen Mode Toggle Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setMyIntegrationsOpen(false);
+                setNotificationsOpen(false);
+                toggleAppFullscreen();
+              }}
+              className={`p-1.5 rounded-full transition cursor-pointer ${
+                isFullscreen 
+                  ? 'bg-emerald-50 text-[#007755] hover:bg-emerald-100 ring-1 ring-emerald-400/40' 
+                  : 'hover:bg-gray-100 text-[#5e6c84] hover:text-[#172b4d]'
+              }`}
+              title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen (Fit to window)"}
+              aria-label={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+            >
+              {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
             </button>
           </div>
 

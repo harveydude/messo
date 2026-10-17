@@ -32,6 +32,13 @@ import {
   ShieldCheck,
   Send
 } from 'lucide-react';
+import { 
+  isAppFullscreen, 
+  requestAppFullscreen, 
+  toggleAppFullscreen, 
+  onFullscreenChange, 
+  registerAutoFullscreenGate 
+} from '../../utils/fullscreen';
 
 // Comprehensive Indian Industries Catalog (NIC Classifications)
 const INDIAN_INDUSTRIES = [
@@ -115,32 +122,20 @@ export default function OnboardingWizard({ onComplete, onExit }) {
   const [showBankModal, setShowBankModal] = useState(false);
   const [isDiscoveringData, setIsDiscoveringData] = useState(false);
   const [phoneSubmitted, setPhoneSubmitted] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(() => isAppFullscreen());
 
-  // Auto Fullscreen on first user click anywhere
+  // Auto Fullscreen gate on user interaction + event listener
   useEffect(() => {
-    const handleFirstClick = () => {
-      try {
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
-        }
-      } catch (err) {}
+    const unregisterGate = registerAutoFullscreenGate();
+    const unsubFs = onFullscreenChange((fs) => setIsFullscreen(fs));
+    return () => {
+      unregisterGate();
+      unsubFs();
     };
-
-    window.addEventListener('click', handleFirstClick, { once: true });
-    return () => window.removeEventListener('click', handleFirstClick);
   }, []);
 
   const toggleFullscreen = () => {
-    try {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
-        }
-      }
-    } catch (e) {}
+    toggleAppFullscreen();
   };
 
   const updateField = (field, value) => {
@@ -232,9 +227,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
       try {
         localStorage.setItem('meso_business_profile', JSON.stringify(formData));
         localStorage.setItem('meso_onboarding_completed', 'true');
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        }
+        requestAppFullscreen();
       } catch (e) {}
       if (onComplete) onComplete(formData);
     }
@@ -305,7 +298,17 @@ export default function OnboardingWizard({ onComplete, onExit }) {
               Get started
             </div>
 
-            <div className="w-[60px]" />
+            <div className="w-[60px] flex justify-end">
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="p-1.5 rounded-full hover:bg-gray-100 transition text-[#6b7280] hover:text-[#1f2937] cursor-pointer"
+                title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+                aria-label={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"}
+              >
+                {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
+            </div>
           </div>
 
           {/* Full-width Thin Progress Track */}
@@ -323,11 +326,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
         {currentStep === 0 && (
           <Screen0Welcome 
             onStart={() => {
-              try {
-                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                  document.documentElement.requestFullscreen().catch(() => {});
-                }
-              } catch (e) {}
+              requestAppFullscreen();
               setCurrentStep(1);
             }} 
           />
@@ -550,16 +549,12 @@ function Screen0Welcome({ onStart }) {
 
         <button
           onClick={() => {
-            try {
-              if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen().catch(() => {});
-              }
-            } catch (e) {}
+            requestAppFullscreen();
             onStart();
           }}
-          className="h-[44px] px-8 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14.5px] rounded-[6px] shadow-sm cursor-pointer transition transform active:scale-[0.98]"
+          className="h-[44px] px-8 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14.5px] rounded-[6px] shadow-sm cursor-pointer transition transform active:scale-[0.98] flex items-center space-x-2"
         >
-          Let's get started
+          <span>Let's get started</span>
         </button>
       </div>
 

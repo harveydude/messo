@@ -29,6 +29,7 @@ import UniversalCreateWorkflowModal from './components/UniversalCreateWorkflowMo
 import OnboardingWizard from './components/onboarding/OnboardingWizard';
 import UnderConstructionView from './components/UnderConstructionView';
 import { StoreProvider } from './store';
+import { requestAppFullscreen, registerAutoFullscreenGate, toggleAppFullscreen } from './utils/fullscreen';
 
 /*
  * Screens are imported lazily.
@@ -320,26 +321,14 @@ export default function App() {
 
   // Auto fullscreen on landing & first interaction so page fits full screen automatically
   useEffect(() => {
-    const tryFullscreen = () => {
-      try {
-        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen().catch(() => {});
-        }
-      } catch (e) {}
-    };
+    // Attempt on mount if permitted by browser context
+    requestAppFullscreen();
 
-    // Attempt immediately on mount
-    tryFullscreen();
-    const timer = setTimeout(tryFullscreen, 300);
-
-    // Also trigger on first user gesture (click or keydown) to satisfy browser security policies
-    window.addEventListener('click', tryFullscreen, { once: true });
-    window.addEventListener('keydown', tryFullscreen, { once: true });
+    // Register robust capture-phase auto-fullscreen gate for any user interaction (click, tap, keypress)
+    const unregisterGate = registerAutoFullscreenGate();
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('click', tryFullscreen);
-      window.removeEventListener('keydown', tryFullscreen);
+      unregisterGate();
     };
   }, []);
 
@@ -348,6 +337,13 @@ export default function App() {
   // Main-page shortcuts activate only when no input/textarea/select is focused.
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // F11 or Alt+Enter toggles Fullscreen mode everywhere
+      if (e.key === 'F11' || (e.altKey && e.key === 'Enter')) {
+        e.preventDefault();
+        toggleAppFullscreen();
+        return;
+      }
+
       const tag = document.activeElement?.tagName?.toLowerCase();
       const inField = tag === 'input' || tag === 'textarea' || tag === 'select';
       if (inField) return;
@@ -783,6 +779,7 @@ export default function App() {
                 localStorage.setItem('meso_business_profile', JSON.stringify(data));
               }
               localStorage.setItem('meso_onboarding_completed', 'true');
+              requestAppFullscreen();
               navigate('dashboard');
             }}
             onExit={() => navigate('dashboard')}
