@@ -12,7 +12,6 @@ import {
   ChevronUp,
   FileText,
   Image as ImageIcon,
-  Sparkles,
   Plus,
   Trash2,
   Calendar,
@@ -358,7 +357,7 @@ export default function ExpenseModal({ isOpen, onClose, onSaveSuccess }) {
           {/* Left panel header */}
           <div className="p-4 border-b border-[#e3e5e8] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles size={17} className="text-[#0077c5]" />
+              <FileText size={17} className="text-[#0077c5]" />
               <span className="font-semibold text-sm text-[#212121]">
                 {isAutofilled ? 'Autofill' : 'Autofill this expense with'}
               </span>
@@ -444,7 +443,7 @@ export default function ExpenseModal({ isOpen, onClose, onSaveSuccess }) {
                     disabled={isScanning}
                     className="bg-[#2ca01c] hover:bg-[#25900f] text-white font-semibold text-[13px] px-5 py-2.5 rounded-[4px] shadow-sm flex items-center gap-2 cursor-pointer transition active:scale-[0.98]"
                   >
-                    <Sparkles size={15} />
+                    <FileText size={15} />
                     <span>{isScanning ? 'Scanning receipt...' : '+ Autofill from file'}</span>
                   </button>
                   <p className="text-[13px] text-[#6b6c72] mt-3">or drag and drop here</p>

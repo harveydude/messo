@@ -8,7 +8,6 @@ import {
   ChevronDown, 
   Search, 
   Printer, 
-  Sparkles, 
   X, 
   FileSpreadsheet, 
   AlertCircle 

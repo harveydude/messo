@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Printer, Share2, Settings, Download, Search, ChevronDown, ChevronUp, ChevronRight, 
-  X, Check, Sparkles, Sliders, Menu, Bookmark, FileText, Calendar, Copy, 
-  Layers, ArrowDown, ArrowUp, AlertCircle, Plus, Eye, EyeOff, CheckCircle2,
+  X, Check, Sliders, Menu, Bookmark, FileText, Calendar, Copy, 
+  ArrowDown, ArrowUp, AlertCircle, Plus, Eye, EyeOff, CheckCircle2,
   Mail, ExternalLink
 } from 'lucide-react';
 import { useStore } from '../store';
@@ -64,32 +64,12 @@ export default function ExpensesView({
   onNavigate,
   initialTab = 'overview' // 'overview' | 'bills' | 'vendors'
 }) {
-  // Navigation / active section state
+  // Navigation / active section state (Interactive Tab View only)
   const [activeTab, setActiveTab] = useState(initialTab);
-  const [viewMode, setViewMode] = useState('continuous'); // 'continuous' | 'interactive'
 
   useEffect(() => {
     setActiveTab(initialTab);
-    if (initialTab !== 'overview') {
-      setViewMode('interactive');
-    }
   }, [initialTab]);
-
-  // Frame scrolling refs
-  const expensesFrameRef = useRef(null);
-  const billsFrameRef = useRef(null);
-  const vendorsFrameRef = useRef(null);
-
-  const scrollToFrame = (ref) => {
-    if (viewMode !== 'continuous') {
-      setViewMode('continuous');
-      setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      ref.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   // ────────────────── Expenses Tab State (Screenshot 1) ──────────────────
   const [expenseRows, setExpenseRows] = useState(DEFAULT_EXPENSE_ROWS);
@@ -162,57 +142,41 @@ export default function ExpensesView({
 
 
       {/* ========================================================================= */}
-      {/* 2. MAIN SCROLLABLE CONTENT (Connected Long Page: Expenses + Bills + Vendors) */}
+      {/* 2. MAIN SCROLLABLE CONTENT (Interactive Tab View)                          */}
       {/* ========================================================================= */}
       <main className="flex-1 overflow-y-auto">
-        {/* Sticky Experience Mode Switcher */}
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-6 py-2 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center space-x-3">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              View Experience:
-            </span>
-
-            <div className="inline-flex rounded-full border border-gray-300 p-0.5 bg-gray-50 text-xs">
-              <button
-                onClick={() => setViewMode('continuous')}
-                className={`px-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
-                  viewMode === 'continuous' ? 'bg-[#393A3D] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Layers size={13} />
-                <span>Connected Long Page (All 3 Frames Scrollable)</span>
-              </button>
-              <button
-                onClick={() => setViewMode('interactive')}
-                className={`px-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
-                  viewMode === 'interactive' ? 'bg-[#393A3D] text-white shadow-xs' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <span>Interactive Tab View</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Frame Jump Links */}
-          <div className="flex items-center space-x-2 text-xs">
-            <span className="text-gray-400">Jump to:</span>
-            <button 
-              onClick={() => scrollToFrame(expensesFrameRef)}
-              className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium transition cursor-pointer"
+        {/* Interactive Tab Navigation Bar */}
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-6 sm:px-8 py-2.5 flex items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer flex items-center space-x-1.5 ${
+                activeTab === 'overview'
+                  ? 'bg-[#E8F5E9] text-[#008927] border border-[#A5D6A7]'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
             >
-              1. Expenses Overview
+              <span>Expenses Overview</span>
             </button>
-            <button 
-              onClick={() => scrollToFrame(billsFrameRef)}
-              className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium transition cursor-pointer"
+            <button
+              onClick={() => setActiveTab('bills')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer flex items-center space-x-1.5 ${
+                activeTab === 'bills'
+                  ? 'bg-[#E8F5E9] text-[#008927] border border-[#A5D6A7]'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
             >
-              2. Bills
+              <span>Bills</span>
             </button>
-            <button 
-              onClick={() => scrollToFrame(vendorsFrameRef)}
-              className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium transition cursor-pointer"
+            <button
+              onClick={() => setActiveTab('vendors')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer flex items-center space-x-1.5 ${
+                activeTab === 'vendors'
+                  ? 'bg-[#E8F5E9] text-[#008927] border border-[#A5D6A7]'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
             >
-              3. Vendors
+              <span>Vendors</span>
             </button>
           </div>
         </header>
@@ -228,10 +192,10 @@ export default function ExpensesView({
         <div className="p-6 md:p-8 space-y-10 max-w-7xl mx-auto">
           
           {/* ========================================================================= */}
-          {/* 3. FRAME 1: EXPENSES PAGE (Screenshot 1)                                  */}
+          {/* 3. FRAME 1: EXPENSES PAGE                                                 */}
           {/* ========================================================================= */}
-          {(viewMode === 'continuous' || activeTab === 'overview') && (
-            <section ref={expensesFrameRef} className="space-y-4">
+          {activeTab === 'overview' && (
+            <section className="space-y-4">
               {/* Header Band */}
               <div className="bg-[#fafbfb] border border-[#e3e5e8] rounded-xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
                 <div className="flex items-center gap-3">
@@ -441,26 +405,11 @@ export default function ExpensesView({
             </section>
           )}
 
-          {/* Continuous Transition to Frame 2 */}
-          {viewMode === 'continuous' && (
-            <div className="py-4 flex items-center justify-center space-x-4 text-xs text-gray-400">
-              <div className="h-px bg-gray-200 flex-1" />
-              <button 
-                onClick={() => scrollToFrame(billsFrameRef)}
-                className="px-4 py-1.5 rounded-full bg-white border border-gray-300 hover:border-gray-500 text-gray-700 font-medium shadow-xs flex items-center space-x-1.5 cursor-pointer"
-              >
-                <span>Frame 2: Bills Tab</span>
-                <ArrowDown size={13} />
-              </button>
-              <div className="h-px bg-gray-200 flex-1" />
-            </div>
-          )}
-
           {/* ========================================================================= */}
-          {/* 4. FRAME 2: BILLS PAGE (Screenshot 3)                                     */}
+          {/* 4. FRAME 2: BILLS PAGE                                                     */}
           {/* ========================================================================= */}
-          {(viewMode === 'continuous' || activeTab === 'bills') && (
-            <section ref={billsFrameRef} className="space-y-4">
+          {activeTab === 'bills' && (
+            <section className="space-y-4">
               {/* Header Band */}
               <div className="bg-[#fafbfb] border border-[#e3e5e8] rounded-xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
                 <h1 className="text-[26px] font-bold text-[#393A3D] tracking-tight">Bills</h1>
@@ -514,7 +463,7 @@ export default function ExpensesView({
               {/* Autofill Banner with Meso Indian domain email */}
               <div className="bg-white border border-gray-300 rounded-xl p-4 flex items-center justify-between gap-4 shadow-xs flex-wrap">
                 <div className="flex items-center space-x-3">
-                  <Sparkles size={20} className="text-[#0077c5] shrink-0" />
+                  <Mail size={20} className="text-[#0077c5] shrink-0" />
                   <p className="text-sm text-gray-800">
                     <strong className="font-bold text-black">Anyone can autofill multiple receipts</strong> or create bills and expenses by sending files to:{' '}
                     <span className="font-bold text-gray-900 underline">lawns__paws_5932+expenses@assist.meso.in</span>
@@ -703,26 +652,11 @@ export default function ExpensesView({
             </section>
           )}
 
-          {/* Continuous Transition to Frame 3 */}
-          {viewMode === 'continuous' && (
-            <div className="py-4 flex items-center justify-center space-x-4 text-xs text-gray-400">
-              <div className="h-px bg-gray-200 flex-1" />
-              <button 
-                onClick={() => scrollToFrame(vendorsFrameRef)}
-                className="px-4 py-1.5 rounded-full bg-white border border-gray-300 hover:border-gray-500 text-gray-700 font-medium shadow-xs flex items-center space-x-1.5 cursor-pointer"
-              >
-                <span>Frame 3: Vendors Tab</span>
-                <ArrowDown size={13} />
-              </button>
-              <div className="h-px bg-gray-200 flex-1" />
-            </div>
-          )}
-
           {/* ========================================================================= */}
-          {/* 5. FRAME 3: VENDORS PAGE (Screenshot 2)                                   */}
+          {/* 5. FRAME 3: VENDORS PAGE                                                   */}
           {/* ========================================================================= */}
-          {(viewMode === 'continuous' || activeTab === 'vendors') && (
-            <section ref={vendorsFrameRef} className="space-y-4">
+          {activeTab === 'vendors' && (
+            <section className="space-y-4">
               {/* Header Band */}
               <div className="bg-[#fafbfb] border border-[#e3e5e8] rounded-xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-xs">
                 <h1 className="text-[26px] font-bold text-[#393A3D] tracking-tight">Vendors</h1>

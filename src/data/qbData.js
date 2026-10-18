@@ -1,4 +1,4 @@
-﻿export const INITIAL_BANK_TRANSACTIONS = [
+export const INITIAL_BANK_TRANSACTIONS = [
   { id: 1, date: "11/24/2025", description: "Books By Bessie", payee: "", category: "Uncategorized Income", spent: null, received: 55.00, matchStatus: null, action: "Add" },
   { id: 2, date: "10/25/2025", description: "A Rental", payee: "Cool Cars", category: "Uncategorized Income", spent: null, received: 200.00, matchStatus: null, action: "Add", memo: "A1 RENTAL BACKHOE DEPOSIT REFUND" },
   { id: 3, date: "10/25/2025", description: "A Rental", payee: "", category: "Uncategorized Expense", spent: 1200.00, received: null, matchStatus: null, action: "Add" },
@@ -63,5 +63,5 @@ export const APP_MENU_ITEMS = [
   { id: "salestax", name: "Sales Tax", icon: "percent", pinned: false },
   { id: "businesstax", name: "Business Tax", icon: "file-text", pinned: false },
   { id: "lending", name: "Lending", icon: "dollar-sign", pinned: false },
-  { id: "marketing", name: "Marketing", icon: "sparkles", pinned: false, special: true },
+  { id: "marketing", name: "Marketing", icon: "tag", pinned: false, special: true },
 ];

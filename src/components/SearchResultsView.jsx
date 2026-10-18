@@ -9,7 +9,6 @@ import {
   ChevronDown, 
   HelpCircle, 
   ArrowDown, 
-  Sparkles,
   Search,
   User,
   FileText,
@@ -362,12 +361,11 @@ export default function SearchResultsView({
         <div className="w-full bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200 rounded-[8px] p-4 flex items-start justify-between mb-6 shadow-xs animate-in fade-in duration-200">
           <div className="flex items-start space-x-3">
             <div className="w-7 h-7 rounded-full bg-[#008927] text-white flex items-center justify-center shrink-0 mt-0.5">
-              <Sparkles size={15} />
+              <FileText size={15} />
             </div>
             <div>
               <div className="text-[15px] font-bold text-[#393A3D] flex items-center space-x-2">
-                <span>MESSO Ledger Intelligence</span>
-                <span className="text-[10px] uppercase tracking-wider bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded font-bold">Live AI</span>
+                <span>Ledger Intelligence Summary</span>
               </div>
               <div className="text-[14px] text-[#4A4B4E] mt-1 leading-relaxed">
                 {liveResults.ai_summary}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Check } from 'lucide-react';
+import { ShieldCheck, Check } from 'lucide-react';
 
 export default function PricingPlansView() {
   const plans = [
@@ -106,7 +106,7 @@ export default function PricingPlansView() {
               {/* Feature Box */}
               <div className="border border-emerald-200 bg-emerald-50/20 rounded-xl p-3 space-y-2.5">
                 <div className="flex items-center space-x-1.5 text-xs font-bold text-gray-900">
-                  <Sparkles size={13} className="text-[#0077c5]" />
+                  <ShieldCheck size={13} className="text-[#0077c5]" />
                   <span>Meso Assist</span>
                 </div>
 

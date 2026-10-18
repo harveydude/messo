@@ -8,7 +8,6 @@ import {
   Plus,
   Trash2,
   GripVertical,
-  Sparkles,
   Tv,
 } from 'lucide-react';
 import InvoiceReview from './InvoiceReview';
@@ -519,10 +518,7 @@ export default function InvoiceEditorModal({ isOpen = true, onClose }) {
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col antialiased select-none">
       
-      {/* Decorative sparkle badge at viewport left edge */}
-      <div className="fixed left-[10px] top-[554px] z-40 pointer-events-none">
-        <Sparkles size={18} className="text-[#0077c5]" />
-      </div>
+
 
       {/* ──── 1. TOP BAR (Height 74px) ──── */}
       <header className="h-[74px] flex-none bg-white border-b border-[#e3e5e8] flex items-center pl-[44px] pr-[16px] sticky top-0 z-40">
@@ -604,11 +600,7 @@ export default function InvoiceEditorModal({ isOpen = true, onClose }) {
           >
             <CustomerPicker value={customer || ''} onSelect={selectCustomer} />
             
-            {customer && (
-              <div className="absolute left-[274px] top-[37px] text-[#0077c5]">
-                <Sparkles size={22} />
-              </div>
-            )}
+
 
             {!customer && (
               <React.Fragment>

@@ -530,9 +530,13 @@ export default function App() {
       case 'attachments':
       case 'privacy':
       case 'feedback': {
-        const screen = <GearScreens screenId={viewId} onOpenSettings={() => { closeAllOverlays('settings'); setSettingsMenuOpen(true); }} />;
-        if (screen) return screen;
-        return <NotBuiltYet feature={routeLabel} />;
+        return (
+          <UnderConstructionView
+            feature={routeLabel}
+            onNavigate={(v) => navigate(v)}
+            onBack={() => navigate('dashboard')}
+          />
+        );
       }
 
       /**
@@ -565,7 +569,13 @@ export default function App() {
         );
 
       case 'not_built':
-        return <NotBuiltYet feature={query.feature || query.label || 'That screen'} />;
+        return (
+          <UnderConstructionView
+            feature={query.feature || query.label || 'That screen'}
+            onNavigate={(v) => navigate(v)}
+            onBack={() => navigate('dashboard')}
+          />
+        );
       case 'bookmarks':
         return (
           <>

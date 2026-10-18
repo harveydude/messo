@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Upload, Download, FileSpreadsheet, AlertTriangle, Check, ArrowLeft,
-  Users, Building2, ClipboardList, Share2, Gavel, Sparkles, Monitor,
+  Users, Building2, ClipboardList, Share2, Gavel, Activity, Monitor,
   Paperclip, Lock, MessageSquare, FileDown, Info, HardDrive,
 } from 'lucide-react';
 import { useStore, useLedger } from '../store';
@@ -679,7 +679,7 @@ function ResolutionCenterView() {
 function WhatsNewView() {
   const entries = state.audit.slice(0, 20);
   return (
-    <Page title="What's new" subtitle="Recent activity in your books" icon={Sparkles}>
+    <Page title="What's new" subtitle="Recent activity in your books" icon={Activity}>
       <Panel>
         {entries.length === 0 ? (
           <p className="text-sm text-gray-500">Nothing has happened yet.</p>

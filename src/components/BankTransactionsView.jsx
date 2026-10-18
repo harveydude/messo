@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   RefreshCw, ChevronDown, ChevronRight, Printer, Share2, Settings, 
   Paperclip, Check, X, Building, CreditCard, Edit2, Search, Calendar, 
-  Sliders, PlayCircle, Compass, Maximize2, Sparkles, Diamond, ArrowLeft
+  Sliders, PlayCircle, Compass, Maximize2, Diamond, ArrowLeft
 } from 'lucide-react';
 import ConnectAccountModal from './ConnectAccountModal';
 import api from '../api/client';
@@ -477,7 +477,7 @@ export default function BankTransactionsView({ onNavigate, isEmbedded = false, t
               onClick={() => alert("Explore integrations")}
               className="px-3.5 py-1.5 font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-50 flex items-center space-x-1 cursor-pointer"
             >
-              <Sparkles size={13} className="text-[#0077c5]" />
+              <Compass size={13} className="text-[#0077c5]" />
               <span>Explore</span>
             </button>
           </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   X, Download, Printer, ZoomIn, ZoomOut, RotateCw, 
-  FileText, Sparkles, Check, ChevronDown, CheckCircle2, ShieldCheck, ArrowRight
+  FileText, Check, ChevronDown, CheckCircle2, ShieldCheck, ArrowRight
 } from 'lucide-react';
 import { useStore } from '../store';
 import { formatMoney } from '../money';
@@ -189,11 +189,11 @@ export default function VendorBillScannerModal({ isOpen, onClose, onSaveSuccess 
             </div>
           </div>
 
-          {/* AI Extraction Confidence Banner */}
+          {/* OCR Extraction Confidence Banner */}
           <div className="p-3 bg-[#0f172a] border-t border-[#334155] text-[11px] text-[#94a3b8] flex items-center gap-2">
-            <Sparkles size={14} className="text-[#38bdf8] shrink-0" />
+            <FileText size={14} className="text-[#38bdf8] shrink-0" />
             <span>
-              <strong className="text-white">AI OCR Auto-Extraction:</strong> 100% matched vendor, invoice #, terms, and TDS Section 194J.
+              <strong className="text-white">OCR Auto-Extraction:</strong> 100% matched vendor, invoice #, terms, and TDS Section 194J.
             </span>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Search, RotateCcw, Check, GripVertical } from 'lucide-react';
+import { X, Search, RotateCcw, Check, GripVertical, Trash2, Plus } from 'lucide-react';
 
 const DEFAULT_BOOKMARK_PAGES = [
   { id: 'bank_transactions', name: 'Accounting', enabled: true },
@@ -21,6 +21,7 @@ const DEFAULT_BOOKMARK_PAGES = [
 
 export default function CustomizeBookmarksModal({ isOpen, onClose, onSave }) {
   const [search, setSearch] = useState('');
+  const [newBookmarkText, setNewBookmarkText] = useState('');
   const [items, setItems] = useState(() => {
     try {
       const saved = localStorage.getItem('meso_custom_bookmarks');
@@ -48,6 +49,27 @@ export default function CustomizeBookmarksModal({ isOpen, onClose, onSave }) {
 
   const handleToggle = (id) => {
     setItems(prev => prev.map(it => it.id === id ? { ...it, enabled: !it.enabled } : it));
+  };
+
+  const handleAddCustomBookmark = (e) => {
+    e?.preventDefault();
+    const text = newBookmarkText.trim();
+    if (!text) return;
+    const newEntry = { id: 'custom_' + Date.now(), name: text, enabled: true, custom: true };
+    const updated = [newEntry, ...items];
+    setItems(updated);
+    setNewBookmarkText('');
+    try {
+      localStorage.setItem('meso_custom_bookmarks', JSON.stringify(updated));
+    } catch (err) {}
+  };
+
+  const handleDeleteBookmark = (id) => {
+    const updated = items.filter(it => it.id !== id);
+    setItems(updated);
+    try {
+      localStorage.setItem('meso_custom_bookmarks', JSON.stringify(updated));
+    } catch (err) {}
   };
 
   const handleDragStart = (idx) => {
@@ -105,33 +127,59 @@ export default function CustomizeBookmarksModal({ isOpen, onClose, onSave }) {
             Customize your bookmarks
           </h2>
 
-          <p className="mt-3 text-sm text-gray-700 leading-relaxed max-w-[480px]">
-            Select pages to bookmark, and drag and reorder them to fit the way you work:
+          <p className="mt-2 text-sm text-gray-700 leading-relaxed max-w-[500px]">
+            Select pages to bookmark, or type anything to create your own custom bookmark:
           </p>
 
+          {/* Type Anything to Add a Bookmark */}
+          <form onSubmit={handleAddCustomBookmark} className="mt-4 p-3 bg-emerald-50/80 border border-emerald-200 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-bold text-emerald-900 uppercase tracking-wide">
+                Create a Bookmark
+              </label>
+              <span className="text-[11px] text-emerald-700">Type anything to add</span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newBookmarkText}
+                onChange={(e) => setNewBookmarkText(e.target.value)}
+                placeholder="Type anything (e.g. GST Filing, Monthly Payroll, Vendor Ledger)..."
+                className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-1.5 text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#2ca01c]"
+              />
+              <button
+                type="submit"
+                disabled={!newBookmarkText.trim()}
+                className="px-4 py-1.5 bg-[#2ca01c] hover:bg-[#258717] disabled:opacity-50 text-white text-xs font-bold rounded-md transition cursor-pointer shrink-0 shadow-xs"
+              >
+                + Add Bookmark
+              </button>
+            </div>
+          </form>
+
           {/* Search Box */}
-          <div className="mt-5 w-full h-10 border border-gray-400 rounded-md flex items-center px-3 gap-2.5 focus-within:border-[#2ca01c] focus-within:ring-1 focus-within:ring-[#2ca01c] transition">
-            <Search size={17} className="text-gray-500 shrink-0" />
+          <div className="mt-3.5 w-full h-9 border border-gray-300 rounded-md flex items-center px-3 gap-2.5 focus-within:border-[#2ca01c] focus-within:ring-1 focus-within:ring-[#2ca01c] transition">
+            <Search size={15} className="text-gray-500 shrink-0" />
             <input 
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search pages to bookmark"
-              className="flex-1 min-w-0 text-sm text-gray-900 placeholder:italic placeholder:text-gray-400 outline-none bg-transparent"
+              placeholder="Search existing pages to bookmark"
+              className="flex-1 min-w-0 text-xs text-gray-900 placeholder:italic placeholder:text-gray-400 outline-none bg-transparent"
             />
           </div>
 
           {/* Reset button */}
           <button 
             onClick={handleReset}
-            className="mt-4 flex items-center gap-2 text-xs font-semibold text-gray-700 hover:text-black cursor-pointer self-start"
+            className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-black cursor-pointer self-start"
           >
-            <RotateCcw size={14} className="text-gray-500" />
+            <RotateCcw size={13} className="text-gray-500" />
             <span>Reset to last arrangement</span>
           </button>
 
           {/* Scrollable Checkbox List */}
-          <div className="mt-4 flex-1 min-h-0 overflow-y-auto divide-y divide-gray-100 pr-2 border-t border-b border-gray-100 py-1">
+          <div className="mt-3 flex-1 min-h-0 overflow-y-auto divide-y divide-gray-100 pr-2 border-t border-b border-gray-100 py-1">
             {filteredItems.map((item, idx) => {
               const realIndex = items.findIndex(it => it.id === item.id);
               return (
@@ -142,23 +190,42 @@ export default function CustomizeBookmarksModal({ isOpen, onClose, onSave }) {
                   onDragEnter={() => handleDragEnter(realIndex)}
                   onDragEnd={handleDragEnd}
                   onDragOver={(e) => e.preventDefault()}
-                  className="flex items-center h-12 px-2 hover:bg-gray-50 rounded-lg transition cursor-grab active:cursor-grabbing select-none group"
+                  className="flex items-center h-11 px-2 hover:bg-gray-50 rounded-lg transition cursor-grab active:cursor-grabbing select-none group"
                 >
                   {/* Drag dots */}
-                  <div className="w-6 flex items-center justify-center text-gray-400 group-hover:text-gray-600">
-                    <GripVertical size={16} />
+                  <div className="w-5 flex items-center justify-center text-gray-400 group-hover:text-gray-600">
+                    <GripVertical size={15} />
                   </div>
 
                   {/* Checkbox */}
-                  <label className="flex items-center gap-3.5 ml-2 cursor-pointer flex-1">
+                  <label className="flex items-center gap-3 ml-1.5 cursor-pointer flex-1 min-w-0">
                     <input 
                       type="checkbox"
                       checked={item.enabled}
                       onChange={() => handleToggle(item.id)}
                       className="w-4 h-4 rounded text-[#2ca01c] border-gray-300 focus:ring-[#2ca01c]"
                     />
-                    <span className="text-sm font-medium text-gray-900">{item.name}</span>
+                    <span className="text-xs font-medium text-gray-900 truncate">{item.name}</span>
+                    {item.custom && (
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded ml-1 shrink-0">
+                        Custom
+                      </span>
+                    )}
                   </label>
+
+                  {item.custom && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteBookmark(item.id);
+                      }}
+                      className="p-1 text-gray-400 hover:text-red-600 rounded transition cursor-pointer"
+                      title="Delete bookmark"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               );
             })}

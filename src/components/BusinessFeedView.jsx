@@ -1,6 +1,5 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
-  Sparkles,
   Filter,
   Clock,
   MoreVertical,
@@ -103,7 +102,7 @@ export default function BusinessFeedView({
           </h1>
 
           <div className="flex items-center gap-2 text-sm text-[#393a3d] mb-5">
-            <Sparkles size={17} className="text-[#0077c5] flex-none" />
+            <Activity size={17} className="text-[#0077c5] flex-none" />
             <span>
               Hi, I'm Meso Assist. I'll share work done for you and suggestions to help run your business. Check back often.
             </span>
@@ -184,9 +183,9 @@ export default function BusinessFeedView({
                 Over ₹1,525.50 worth of invoice reminders are ready for you to review and send
               </h3>
 
-              {/* Blue Sparkle Banner */}
+              {/* Info Banner */}
               <div className="bg-[#eef6fc] rounded-[6px] p-3 flex items-center gap-2.5 text-xs text-[#393a3d] mb-5">
-                <Sparkles size={15} className="text-[#0077c5] flex-none" />
+                <Info size={15} className="text-[#0077c5] flex-none" />
                 <span>
                   You have 10 overdue invoices from 9 customers. Give them more ways to pay.{' '}
                   <a
@@ -413,9 +412,9 @@ export default function BusinessFeedView({
                 37% of your invoices in the last year were paid late, or not at all. I suggest a late fee of 1.5%. Feel free to adjust. Late fees will be applied to all new invoices, beginning tomorrow.
               </p>
 
-              {/* Sparkle banner */}
+              {/* Info banner */}
               <div className="bg-[#eef6fc] rounded-[6px] p-3 flex items-center gap-2.5 text-xs text-[#393a3d] mb-6">
-                <Sparkles size={15} className="text-[#0077c5] flex-none" />
+                <Info size={15} className="text-[#0077c5] flex-none" />
                 <span>
                   Add a 1.5% late fee on the remaining balance, once, with a 30-day grace period, to all new invoices.
                 </span>
@@ -537,7 +536,7 @@ export default function BusinessFeedView({
                 className="border-2 border-dashed border-[#9dbde0] bg-[#f5f8fc] hover:bg-[#eef4fb] transition rounded-lg p-7 flex flex-col items-center justify-center cursor-pointer mt-4"
               >
                 <button className="flex items-center gap-2 px-4 py-2 border border-[#2ca01c] bg-white text-[#2ca01c] font-semibold text-xs rounded-[4px] shadow-xs hover:bg-green-50 transition cursor-pointer">
-                  <Sparkles size={14} />
+                  <FileText size={14} />
                   <span>Upload receipt</span>
                 </button>
                 <p className="text-xs text-[#6b6c72] mt-2">or drag and drop here</p>

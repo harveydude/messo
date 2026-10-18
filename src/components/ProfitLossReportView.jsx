@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, RefreshCw, Share2, Printer, MoreVertical, 
-  ChevronDown, ChevronRight, Sparkles, Sliders, Eye, 
+  ChevronDown, ChevronRight, TrendingUp, Sliders, Eye, 
   Video, PlayCircle, BookOpen, MessageSquare, Table, GitCompare, Filter
 } from 'lucide-react';
 import api from '../api/client';
@@ -302,7 +302,7 @@ export default function ProfitLossReportView({ onBack, onNavigateReport, isEmbed
             onClick={() => setInsightsOpen(true)}
             className="flex items-center space-x-1 hover:text-gray-900 cursor-pointer font-medium"
           >
-            <Sparkles size={14} className="text-teal-600" />
+            <TrendingUp size={14} className="text-teal-600" />
             <span>2 Insights</span>
             <span className="bg-[#0077c5] text-white text-[9px] font-bold px-1 py-0.5 rounded ml-1">BETA</span>
           </button>
@@ -538,8 +538,8 @@ export default function ProfitLossReportView({ onBack, onNavigateReport, isEmbed
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 space-y-4">
             <div className="flex items-center space-x-2 text-teal-700">
-              <Sparkles size={18} />
-              <h3 className="text-base font-bold text-gray-900">AI Financial Insights (Meso Ledger)</h3>
+              <TrendingUp size={18} />
+              <h3 className="text-base font-bold text-gray-900">Financial Insights (Meso Ledger)</h3>
             </div>
             <div className="space-y-3 text-xs text-gray-700">
               {insightsList.map((insight, idx) => (

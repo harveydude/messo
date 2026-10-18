@@ -391,14 +391,8 @@ export default function SideRail({
 
         {/* PINNED Section */}
         <div className="w-full pt-3 mt-1 border-t border-[#E3E5E8] flex flex-col items-center">
-          <div className="w-full flex items-center justify-between px-2 mb-2">
+          <div className="w-full flex items-center justify-center px-2 mb-2">
             <span className="text-[9px] font-bold text-[#6B778C] uppercase tracking-wider">PINNED</span>
-            <button
-              onClick={onToggleCustomize}
-              className="text-[9px] font-semibold text-[#008927] hover:underline cursor-pointer"
-            >
-              Edit
-            </button>
           </div>
 
           {pins.map((pin) => {
@@ -440,17 +434,17 @@ export default function SideRail({
               </RailItem>
             );
           })}
-        </div>
 
-        {/* Customize button at bottom */}
-        <div className="mt-auto pt-2 w-full flex justify-center">
-          <RailItem
-            label="Customize"
-            onClick={onToggleCustomize}
-            active={isCustomizing}
-          >
-            <Sliders size={18} />
-          </RailItem>
+          {/* The ONE AND ONLY Customize Button: right below Sales */}
+          <div className="pt-2 w-full flex justify-center">
+            <RailItem
+              label="Customize"
+              onClick={onToggleCustomize}
+              active={isCustomizing}
+            >
+              <Sliders size={18} />
+            </RailItem>
+          </div>
         </div>
       </aside>
 
@@ -461,29 +455,19 @@ export default function SideRail({
           style={{ scrollbarWidth: 'thin' }}
         >
           <div className="px-2 flex-1">
-            {/* Header row: "MY APPS" + Sliders + Collapse Button */}
+            {/* Header row: "MY APPS" + Collapse Button */}
             <div className="h-[30px] flex items-center justify-between px-3 mb-1">
               <span className="text-[12px] font-semibold tracking-[1.2px] text-[#6B6C72] uppercase">
                 MY APPS
               </span>
-              <div className="flex items-center space-x-1">
-                <button
-                  type="button"
-                  onClick={onToggleCustomize}
-                  className="text-[#6B6C72] hover:text-[#393A3D] p-1 rounded transition cursor-pointer"
-                  title="Organize apps"
-                >
-                  <Sliders size={15} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setManualSidebarState(false)}
-                  className="text-[#6B6C72] hover:text-[#393A3D] p-1 rounded transition cursor-pointer"
-                  title="Collapse sidebar"
-                >
-                  <PanelLeftClose size={15} />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setManualSidebarState(false)}
+                className="text-[#6B6C72] hover:text-[#393A3D] p-1 rounded transition cursor-pointer"
+                title="Collapse sidebar"
+              >
+                <PanelLeftClose size={15} />
+              </button>
             </div>
 
             {/* App Groups list */}
@@ -562,11 +546,7 @@ export default function SideRail({
                               key={sub.id}
                               type="button"
                               onClick={() => {
-                                if (sub.view === 'accountant') {
-                                  alert("Accountant View: Switched to trial balance and chart verification tools.");
-                                } else {
-                                  setCurrentView(sub.view);
-                                }
+                                setCurrentView(sub.view);
                               }}
                               className="w-full h-[40px] flex items-center pl-[46px] pr-3 text-[15px] text-[#393A3D] rounded-full hover:bg-[#E9ECEF] transition text-left cursor-pointer"
                             >

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   History, 
   Search, 
-  Sparkles, 
   FileText, 
   User, 
   TrendingUp, 
@@ -450,17 +449,17 @@ export default function SearchDropdown({
         {/* Loading Indicator */}
         {isLoading && (
           <div className="flex items-center gap-2 text-xs text-[#0077C5] py-1 px-1 animate-pulse">
-            <Sparkles size={14} className="text-[#0077C5]" />
+            <Search size={14} className="text-[#0077C5]" />
             <span>Searching continuous accounting ledger...</span>
           </div>
         )}
 
-        {/* AI Answer Card if question */}
+        {/* Answer Card if question */}
         {smartData?.type === 'QNA' && smartData?.answer && (
           <div className="p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200 text-emerald-950 shadow-2xs mb-2">
             <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wide mb-1">
-              <Sparkles size={14} className="text-emerald-600" />
-              <span>MESSO Intelligence Insights</span>
+              <FileText size={14} className="text-emerald-600" />
+              <span>Accounting Insights</span>
             </div>
             <p className="text-sm font-medium leading-relaxed text-gray-800">
               {smartData.answer}

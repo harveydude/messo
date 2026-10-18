@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, Sparkles, Printer, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, TrendingUp, Printer, ChevronLeft, AlertTriangle } from 'lucide-react';
 import { useLedger } from '../store';
 import { formatMoney } from '../money';
 import { CHART_OF_ACCOUNTS } from '../data/chartOfAccounts';
@@ -94,7 +94,7 @@ export function BalanceSheet() {
       {/* The check this screen exists to perform, naming the difference when
           it fails rather than just saying "failed". */}
       <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${data.balanced ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-        {data.balanced ? <Sparkles size={16} /> : <AlertTriangle size={16} />}
+        {data.balanced ? <Check size={16} /> : <AlertTriangle size={16} />}
         <span className="text-sm font-medium">
           {data.balanced
             ? `Assets = Liabilities + Equity. The books balance to the paisa.`
@@ -111,7 +111,7 @@ export function BalanceSheet() {
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles size={16} className="text-blue-600" />
+          <TrendingUp size={16} className="text-blue-600" />
           <span className="text-sm font-semibold text-blue-900">Meso Assist</span>
         </div>
         <p className="text-sm text-blue-800">
@@ -201,7 +201,7 @@ export function ProfitLoss() {
 
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles size={16} className="text-blue-600" />
+          <TrendingUp size={16} className="text-blue-600" />
           <span className="text-sm font-semibold text-blue-900">Meso Assist</span>
         </div>
         <p className="text-sm text-blue-800">

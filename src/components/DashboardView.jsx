@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, Sliders, Eye, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Activity, Sliders, Eye, ChevronRight, ThumbsUp, ThumbsDown } from 'lucide-react';
 import PillNav from './PillNav';
 import FeedCard from './FeedCard';
 import CreateActions from './CreateActions';
@@ -231,7 +231,7 @@ export default function DashboardView({
           <section className="mb-7">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2 text-[#393A3D]">
-                <Sparkles size={20} className="text-[#393A3D]" />
+                <Activity size={20} className="text-[#393A3D]" />
                 <h2 className="text-[19px] font-semibold text-[#393A3D]">
                   Business Feed
                 </h2>

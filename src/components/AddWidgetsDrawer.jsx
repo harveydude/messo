@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Sparkles, Check, Info } from 'lucide-react';
+import { X, LayoutGrid, Check, Info } from 'lucide-react';
 
 export default function AddWidgetsDrawer({ 
   isOpen, 
@@ -58,8 +58,8 @@ export default function AddWidgetsDrawer({
         {/* Smart Suggestions Section */}
         <div className="mb-5">
           <div className="flex items-center space-x-1.5 text-[14px] font-semibold text-[#393A3D] mb-3">
-            <Sparkles size={16} className="text-[#393A3D]" />
-            <span>Smart suggestions</span>
+            <LayoutGrid size={16} className="text-[#393A3D]" />
+            <span>Recommended widgets</span>
           </div>
 
           <div className="space-y-1">

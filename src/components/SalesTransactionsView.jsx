@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { 
-  ChevronDown, ChevronRight, ChevronUp, Printer, Share2, Settings, Sparkles, X, 
+  ChevronDown, ChevronRight, ChevronUp, Printer, Share2, Settings, X, 
   Search, Sliders, Eye, EyeOff, Bookmark, MoreVertical, Plus, ArrowRight,
-  ExternalLink, Layers, CheckCircle2, AlertCircle, FileText, Download,
-  Maximize2, ArrowDown, Check, Menu, Clock
+  ExternalLink, CheckCircle2, AlertCircle, FileText, Download,
+  Maximize2, ArrowDown, Check, Menu, Clock, Mail, Activity
 } from 'lucide-react';
 import { useStore } from '../store';
 import { formatMoney } from '../money';
@@ -124,24 +124,19 @@ export default function SalesTransactionsView({
   // Active sub-item in Sales & Get Paid sidebar
   const [activeSubItem, setActiveSubItem] = useState(initialTab === 'transactions' ? 'transactions' : 'overview');
 
-  // View mode: 'continuous' (connected long scrollable page of all frames) or 'interactive' (standard tabbed view)
-  const [viewMode, setViewMode] = useState('continuous');
-
-
-
-  // Review Invoice Reminder Modal state (Frame 760 & 761)
+  // Interactive tab state
   const [reminderModalOpen, setReminderModalOpen] = useState(false);
   const [selectedInvoiceForReminder, setSelectedInvoiceForReminder] = useState(DEFAULT_SALES_INVOICES[0]);
   const [reminderToast, setReminderToast] = useState(null);
 
-  // Overview Page States (Frame 749)
+  // Overview Page States
   const [overviewPrivacy, setOverviewPrivacy] = useState(false);
   const [feedMenuOpen, setFeedMenuOpen] = useState(false);
   const [funnelPeriod, setFunnelPeriod] = useState('Last 30 days');
   const [incomeDuration, setIncomeDuration] = useState('This month');
   const [comparePreviousYear, setComparePreviousYear] = useState(false);
 
-  // Sales Transactions Table States (Frame 756)
+  // Sales Transactions Table States
   const [showAiBanner, setShowAiBanner] = useState(true);
   const [selectedRows, setSelectedRows] = useState([]);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -151,22 +146,6 @@ export default function SalesTransactionsView({
   const [activeDropdownRow, setActiveDropdownRow] = useState(null);
   const [newTxnDropdownOpen, setNewTxnDropdownOpen] = useState(false);
   const [batchActionsOpen, setBatchActionsOpen] = useState(false);
-
-  // Refs for smooth scrolling across connected frames
-  const overviewFrameRef = useRef(null);
-  const transactionsFrameRef = useRef(null);
-  const reminderFrameRef = useRef(null);
-
-  const scrollToFrame = (ref) => {
-    if (viewMode !== 'continuous') {
-      setViewMode('continuous');
-      setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    } else {
-      ref.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   // Open reminder modal for a specific invoice
   const handleOpenReminder = (inv = DEFAULT_SALES_INVOICES[0]) => {
@@ -212,62 +191,31 @@ export default function SalesTransactionsView({
       {/* 2. MAIN CONTENT AREA (Scrollable, Connected Long Page)                    */}
       {/* ========================================================================= */}
       <main className="flex-1 overflow-y-auto">
-        {/* Experience Switcher Sticky Header */}
-        <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-6 py-2 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center space-x-3">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-              View Experience:
-            </span>
-
-            <div className="inline-flex rounded-full border border-gray-300 p-0.5 bg-gray-50 text-xs">
-              <button
-                onClick={() => setViewMode('continuous')}
-                className={`px-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
-                  viewMode === 'continuous' 
-                    ? 'bg-[#393A3D] text-white shadow-xs' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Layers size={13} />
-                <span>Connected Long Page (Overview &amp; Transactions Scrollable)</span>
-              </button>
-              <button
-                onClick={() => setViewMode('interactive')}
-                className={`px-3 py-1 rounded-full font-semibold transition cursor-pointer flex items-center space-x-1.5 ${
-                  viewMode === 'interactive' 
-                    ? 'bg-[#393A3D] text-white shadow-xs' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <span>Interactive Tab View</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Jump Links */}
-          <div className="flex items-center space-x-2 text-xs">
-            <span className="text-gray-400">Jump to:</span>
-            <button 
-              onClick={() => scrollToFrame(overviewFrameRef)}
-              className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium transition cursor-pointer"
+        {/* Interactive Tab Navigation Bar */}
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-6 sm:px-8 py-2.5 flex items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setActiveSubItem('overview')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer flex items-center space-x-1.5 ${
+                activeSubItem === 'overview'
+                  ? 'bg-[#E8F5E9] text-[#008927] border border-[#A5D6A7]'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
             >
-              1. Overview
+              <span>Overview</span>
             </button>
-            <button 
-              onClick={() => scrollToFrame(transactionsFrameRef)}
-              className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium transition cursor-pointer"
+            <button
+              onClick={() => setActiveSubItem('transactions')}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-md transition cursor-pointer flex items-center space-x-1.5 ${
+                activeSubItem === 'transactions'
+                  ? 'bg-[#E8F5E9] text-[#008927] border border-[#A5D6A7]'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
             >
-              2. Sales Transactions
-            </button>
-            <button 
-              onClick={() => handleOpenReminder(DEFAULT_SALES_INVOICES[0])}
-              className="px-2.5 py-1 rounded bg-green-50 hover:bg-green-100 text-[#2ca01c] font-semibold border border-green-200 transition cursor-pointer flex items-center space-x-1"
-            >
-              <Sparkles size={12} />
-              <span>3. Review Reminder Modal</span>
+              <span>Sales Transactions</span>
             </button>
           </div>
-        </div>
+        </header>
 
         {/* Toast Notification if reminder was sent */}
         {reminderToast && (
@@ -284,10 +232,10 @@ export default function SalesTransactionsView({
 
         <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
           {/* ========================================================================= */}
-          {/* 3. FRAME 749: SALES & GET PAID OVERVIEW (Screenshot 1)                    */}
+          {/* 3. FRAME 749: SALES & GET PAID OVERVIEW                                   */}
           {/* ========================================================================= */}
-          {(viewMode === 'continuous' || activeSubItem === 'overview') && (
-            <section ref={overviewFrameRef} className="space-y-6">
+          {activeSubItem === 'overview' && (
+            <section className="space-y-6">
               {/* Top Title & Controls */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -307,7 +255,7 @@ export default function SalesTransactionsView({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 text-sm font-semibold text-[#393A3D]">
-                    <Sparkles size={16} className="text-[#0077c5]" />
+                    <Activity size={16} className="text-[#0077c5]" />
                     <span>Business Feed</span>
                   </div>
                   <button 
@@ -590,26 +538,11 @@ export default function SalesTransactionsView({
             </section>
           )}
 
-          {/* Continuous Mode Transition Divider */}
-          {viewMode === 'continuous' && (
-            <div className="py-6 flex items-center justify-center space-x-4 text-xs text-gray-400">
-              <div className="h-px bg-gray-200 flex-1" />
-              <button 
-                onClick={() => transactionsFrameRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-4 py-1.5 rounded-full bg-white border border-gray-300 hover:border-gray-500 text-gray-700 font-medium shadow-xs flex items-center space-x-1.5 cursor-pointer"
-              >
-                <span>Frame 756: Sales Transactions Tab</span>
-                <ArrowDown size={13} />
-              </button>
-              <div className="h-px bg-gray-200 flex-1" />
-            </div>
-          )}
-
           {/* ========================================================================= */}
-          {/* 4. FRAME 756: SALES TRANSACTIONS TAB (Screenshot 2)                      */}
+          {/* 4. FRAME 756: SALES TRANSACTIONS TAB                                      */}
           {/* ========================================================================= */}
-          {(viewMode === 'continuous' || activeSubItem === 'transactions') && (
-            <section ref={transactionsFrameRef} className="space-y-6">
+          {activeSubItem === 'transactions' && (
+            <section className="space-y-6">
               {/* Money Funnel Top Bar */}
               <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-xs">
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-3 text-left">
@@ -645,12 +578,12 @@ export default function SalesTransactionsView({
                 </div>
               </div>
 
-              {/* AI Assistant Notification Banner (Matches Screenshot 2) */}
+              {/* Notification Banner */}
               {showAiBanner && (
                 <div className="bg-white border-2 border-emerald-400 rounded-xl p-4 shadow-xs flex items-center justify-between relative overflow-hidden">
                   <div className="flex items-center space-x-3.5">
                     <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center text-[#2ca01c] shrink-0">
-                      <Sparkles size={18} />
+                      <Mail size={18} />
                     </div>
                     <div>
                       <div className="text-sm font-bold text-gray-900">
@@ -705,8 +638,8 @@ export default function SalesTransactionsView({
                             onClick={() => { setBatchActionsOpen(false); handleOpenReminder(DEFAULT_SALES_INVOICES[0]); }}
                             className="w-full text-left px-3 py-1.5 hover:bg-gray-100 flex items-center space-x-2"
                           >
-                            <Sparkles size={13} className="text-cyan-600" />
-                            <span>Send AI Reminders ({selectedRows.length})</span>
+                            <Mail size={13} className="text-[#0077c5]" />
+                            <span>Send Reminders ({selectedRows.length})</span>
                           </button>
                           <button 
                             onClick={() => { setBatchActionsOpen(false); alert("Printing selected invoices..."); }}
@@ -934,7 +867,7 @@ export default function SalesTransactionsView({
                                       onClick={() => { setActiveDropdownRow(null); handleOpenReminder(inv); }}
                                       className="w-full px-3 py-1.5 hover:bg-gray-100 text-[#2ca01c] font-semibold flex items-center space-x-1"
                                     >
-                                      <Sparkles size={12} />
+                                      <Mail size={12} />
                                       <span>Send reminder</span>
                                     </button>
                                     <button

@@ -129,7 +129,10 @@ export function slugFor(viewId) {
 }
 
 export function labelFor(viewId) {
-  return byId.get(viewId)?.label ?? 'Screen not found';
+  if (byId.has(viewId)) return byId.get(viewId).label;
+  if (!viewId) return 'This Module';
+  if (viewId === 'accountant') return 'My Accountant';
+  return viewId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 export function viewIdForSlug(path) {

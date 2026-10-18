@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Search, Send, Sparkles } from 'lucide-react';
+import { X, Search, Send, HelpCircle, Check } from 'lucide-react';
 import dashboardData from '../data/dashboard.json';
 
 export default function AssistantDrawer({ isOpen, onClose, onLaunchRecode }) {
@@ -63,7 +63,7 @@ export default function AssistantDrawer({ isOpen, onClose, onLaunchRecode }) {
       {/* 1. Solid Blue Header Band (85px) */}
       <div className="h-[85px] w-full bg-[#0077C5] px-6 flex items-center justify-between shrink-0">
         <div className="text-white font-semibold text-[18px] flex items-center space-x-2.5">
-          <Sparkles size={20} className="text-[#80D0FF]" />
+          <HelpCircle size={20} className="text-[#80D0FF]" />
           <span>Meso Assistant</span>
         </div>
 
@@ -167,7 +167,7 @@ export default function AssistantDrawer({ isOpen, onClose, onLaunchRecode }) {
                           }}
                           className="px-3.5 py-1.5 rounded-md bg-[#6c5ce7] hover:bg-[#5b4bc4] text-white text-[12px] font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                         >
-                          <Sparkles size={13} />
+                          <Check size={13} />
                           <span>Resolve Anomaly &amp; Reclassify (Module 29)</span>
                         </button>
                       </div>

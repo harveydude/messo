@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Sparkles, HelpCircle } from 'lucide-react';
+import { Plus, LayoutGrid, HelpCircle } from 'lucide-react';
 
 export default function AddWidgetsPlaceholderCard({ 
   onOpenDrawer, 
@@ -30,10 +30,10 @@ export default function AddWidgetsPlaceholderCard({
         {/* Divider */}
         <div className="w-full h-px bg-[#E3E5E8] mb-5" />
 
-        {/* Smart Suggestions */}
+        {/* Suggested Widgets */}
         <div className="flex items-center justify-center space-x-2 text-[#393A3D] font-semibold text-[16px] mb-4">
-          <Sparkles size={18} className="text-[#393A3D]" />
-          <span>Smart suggestions</span>
+          <LayoutGrid size={18} className="text-[#393A3D]" />
+          <span>Suggested widgets</span>
         </div>
 
         {/* Pill Buttons */}

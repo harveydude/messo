@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  X, Sparkles, ExternalLink, ChevronDown, Check, ThumbsUp, ThumbsDown, 
+  X, Mail, ExternalLink, ChevronDown, Check, ThumbsUp, ThumbsDown, 
   ArrowRight, ListFilter, CreditCard, RotateCw, FileText
 } from 'lucide-react';
 
@@ -198,7 +198,7 @@ export default function ReviewInvoiceReminderModal({
                 <h2 className="text-2xl font-bold text-gray-900 tracking-tight">All done!</h2>
                 <div className="flex items-center space-x-2 text-sm text-gray-700 mt-1.5">
                   <span className="w-5 h-5 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600">
-                    <Sparkles size={14} />
+                    <Check size={14} />
                   </span>
                   <span>
                     You just sent <strong className="font-semibold text-gray-900">1 invoice reminder worth {amountStr}!</strong>
@@ -276,7 +276,7 @@ export default function ReviewInvoiceReminderModal({
                 <h2 className="text-xl font-bold text-gray-900 tracking-tight">Review invoice reminder</h2>
                 <div className="flex items-center space-x-2 text-xs text-gray-600 mt-1">
                   <span className="text-cyan-600">
-                    <Sparkles size={14} />
+                    <Mail size={14} />
                   </span>
                   <span>
                     Based on days overdue, I drafted a <strong className="font-semibold text-gray-900">formal invoice reminder</strong>. Review and make edits before sending.
@@ -409,7 +409,7 @@ export default function ReviewInvoiceReminderModal({
                   <div className="flex items-center justify-between flex-wrap gap-2 pb-1">
                     <div className="flex items-center space-x-2.5">
                       <span className="text-[#0077c5] flex items-center space-x-1">
-                        <Sparkles size={14} />
+                        <FileText size={14} />
                         <span className="font-bold text-xs text-gray-900">Generated</span>
                       </span>
 
