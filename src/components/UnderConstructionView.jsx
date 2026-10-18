@@ -21,8 +21,8 @@ export default function UnderConstructionView({ feature = 'This Module', onNavig
     { id: 'bank_transactions', label: 'Bank Transactions', iconUrl: '/app-icons/accounting.png', category: 'Accounting' },
     { id: 'expense_transactions', label: 'Expense Transactions', iconUrl: '/app-icons/expenses.png', category: 'Expenses' },
     { id: 'sales_transactions', label: 'Invoices & Sales', iconUrl: '/app-icons/sales.png', category: 'Sales' },
-    { id: 'standard_reports', label: 'Financial Reports', iconUrl: '/app-icons/reports.jpg', category: 'Reports' },
-    { id: 'sales_tax', label: 'GST Returns', iconUrl: '/app-icons/gst.jpg', category: 'Tax' },
+    { id: 'standard_reports', label: 'Financial Reports', iconUrl: '/app-icons/reports.png', category: 'Reports' },
+    { id: 'sales_tax', label: 'GST Returns', iconUrl: '/app-icons/gst.png', category: 'Tax' },
     { id: 'chart_of_accounts', label: 'Chart of Accounts', iconUrl: '/app-icons/accounting.png', category: 'Accounting' },
   ];
 
@@ -86,7 +86,7 @@ export default function UnderConstructionView({ feature = 'This Module', onNavig
                 <img 
                   src={mod.iconUrl} 
                   alt={mod.label} 
-                  className="w-6 h-6 rounded-full object-cover shrink-0 shadow-xs border border-black/10 group-hover:scale-105 transition" 
+                  className="w-7 h-7 rounded-full object-contain shrink-0 group-hover:scale-105 transition" 
                 />
                 <div className="min-w-0 flex-1">
                   <div className="text-[12.5px] font-semibold text-gray-800 truncate group-hover:text-emerald-700">

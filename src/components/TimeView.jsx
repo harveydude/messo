@@ -177,7 +177,15 @@ export default function TimeView({ onNavigate }) {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-xl font-bold text-gray-900">Time</h1>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+            <img src="/app-icons/time.png" alt="Time" className="w-full h-full object-contain block" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Time</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Time entries, hourly tracking and billing status</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"

@@ -81,11 +81,19 @@ export default function CustomersView({ onOpenNewCustomer, onNavigate }) {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-xl font-bold text-gray-900">Customers</h1>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+            <img src="/app-icons/customers.png" alt="Customers" className="w-full h-full object-contain block" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Customers</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Customer directory, contacts, open balances and transactions</p>
+          </div>
+        </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setShowNew(true)}
-            className="px-4 py-1.5 text-xs font-bold text-white bg-[#2ca01c] hover:bg-green-700 rounded-full"
+            className="px-4 py-1.5 text-xs font-bold text-white bg-[#2ca01c] hover:bg-green-700 rounded-full cursor-pointer"
           >
             New customer
           </button>

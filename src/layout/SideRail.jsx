@@ -80,7 +80,7 @@ const APP_GROUPS = [
     key: 'sales_tax',
     label: 'GST Returns',
     letter: 'G',
-    iconUrl: '/app-icons/gst.jpg',
+    iconUrl: '/app-icons/gst.png',
     badgeBg: '#E5346B',
     badgeText: '#FFFFFF',
     defaultView: 'sales_tax',
@@ -92,7 +92,7 @@ const APP_GROUPS = [
     key: 'business_tax',
     label: 'TDS & Direct Tax',
     letter: 'T',
-    iconUrl: '/app-icons/gst.jpg',
+    iconUrl: '/app-icons/tds.png',
     badgeBg: '#83243F',
     badgeText: '#FFFFFF',
     defaultView: 'business_tax',
@@ -131,7 +131,7 @@ const APP_GROUPS = [
     key: 'reports_app',
     label: 'Reports',
     letter: 'R',
-    iconUrl: '/app-icons/reports.jpg',
+    iconUrl: '/app-icons/reports.png',
     badgeBg: '#0077C5',
     badgeText: '#FFFFFF',
     defaultView: 'standard_reports',
@@ -147,7 +147,7 @@ const APP_GROUPS = [
     key: 'customer_hub',
     label: 'Customer Hub',
     letter: 'H',
-    iconUrl: '/app-icons/customer_hub.jpg',
+    iconUrl: '/app-icons/customer_hub.png',
     badgeBg: '#2E9E5B',
     badgeText: '#FFFFFF',
     defaultView: 'customer_hub',
@@ -162,7 +162,7 @@ const APP_GROUPS = [
     key: 'team',
     label: 'Team',
     letter: 'T',
-    iconUrl: '/app-icons/team.jpg',
+    iconUrl: '/app-icons/team.png',
     badgeBg: '#12A489',
     badgeText: '#FFFFFF',
     defaultView: 'team',
@@ -176,7 +176,7 @@ const APP_GROUPS = [
     key: 'time',
     label: 'Time Tracking',
     letter: '⏱',
-    iconUrl: '/app-icons/time.jpg',
+    iconUrl: '/app-icons/time.png',
     badgeBg: '#00352C',
     badgeText: '#FFFFFF',
     defaultView: 'time_entries',
@@ -189,7 +189,7 @@ const APP_GROUPS = [
     key: 'lending',
     label: 'Lending',
     letter: '₹',
-    iconUrl: '/app-icons/tag_marketing.jpg',
+    iconUrl: '/app-icons/tag_marketing.png',
     badgeBg: '#0AA574',
     badgeText: '#FFFFFF',
     defaultView: 'lending',
@@ -223,16 +223,16 @@ const PIN_IMAGE_MAP = {
   bills: '/app-icons/bills.png',
   bills_view: '/app-icons/bills.png',
   customers_list: '/app-icons/customers.png',
-  standard_reports: '/app-icons/reports.jpg',
-  reports: '/app-icons/reports.jpg',
-  sales_tax: '/app-icons/gst.jpg',
-  business_tax: '/app-icons/gst.jpg',
-  team: '/app-icons/team.jpg',
-  time_entries: '/app-icons/time.jpg',
-  customer_hub: '/app-icons/customer_hub.jpg',
-  payroll: '/app-icons/payroll.jpg',
-  marketing: '/app-icons/tag_marketing.jpg',
-  lending: '/app-icons/tag_marketing.jpg',
+  standard_reports: '/app-icons/reports.png',
+  reports: '/app-icons/reports.png',
+  sales_tax: '/app-icons/gst.png',
+  business_tax: '/app-icons/tds.png',
+  team: '/app-icons/team.png',
+  time_entries: '/app-icons/time.png',
+  customer_hub: '/app-icons/customer_hub.png',
+  payroll: '/app-icons/payroll.png',
+  marketing: '/app-icons/tag_marketing.png',
+  lending: '/app-icons/tag_marketing.png',
 };
 
 const FONT = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -426,8 +426,8 @@ export default function SideRail({
                 active={currentView === pin.id}
               >
                 {imgUrl ? (
-                  <span className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center shadow-xs border border-black/10 bg-gray-950">
-                    <img src={imgUrl} alt={pin.label} className="w-full h-full object-cover" />
+                  <span className="w-[30px] h-[30px] rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                    <img src={imgUrl} alt={pin.label} className="w-full h-full object-contain block" />
                   </span>
                 ) : (
                   <span
@@ -509,8 +509,8 @@ export default function SideRail({
                         className="flex-1 h-full flex items-center text-left cursor-pointer min-w-0"
                       >
                         {grp.iconUrl ? (
-                          <span className="w-[26px] h-[26px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-950">
-                            <img src={grp.iconUrl} alt={grp.label} className="w-full h-full object-cover" />
+                          <span className="w-[30px] h-[30px] rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                            <img src={grp.iconUrl} alt={grp.label} className="w-full h-full object-contain block" />
                           </span>
                         ) : (
                           <span 
@@ -593,8 +593,8 @@ export default function SideRail({
               })}
               className="w-full h-[52px] flex items-center px-4 hover:bg-[#E9ECEF] transition cursor-pointer text-left"
             >
-              <span className="w-[22px] h-[22px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-900">
-                <img src="/app-icons/payroll.jpg" alt="Payroll" className="w-full h-full object-cover" />
+              <span className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                <img src="/app-icons/payroll.png" alt="Payroll" className="w-full h-full object-contain block" />
               </span>
               <span className="ml-[14px] text-[15px] font-medium text-[#393A3D]">Payroll</span>
               <Gem size={16} className="ml-auto text-[#6B6C72]" />
@@ -608,8 +608,8 @@ export default function SideRail({
               })}
               className="w-full h-[52px] flex items-center px-4 hover:bg-[#E9ECEF] transition cursor-pointer text-left"
             >
-              <span className="w-[22px] h-[22px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-900">
-                <img src="/app-icons/tag_marketing.jpg" alt="Marketing" className="w-full h-full object-cover" />
+              <span className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                <img src="/app-icons/tag_marketing.png" alt="Marketing" className="w-full h-full object-contain block" />
               </span>
               <span className="ml-[14px] text-[15px] font-medium text-[#393A3D]">Marketing</span>
               <Gem size={16} className="ml-auto text-[#6B6C72]" />

@@ -291,8 +291,8 @@ export default function SalesTransactionsView({
               {/* Top Title & Controls */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
-                    <img src="/app-icons/sales.png" alt="Sales & Get Paid" className="w-full h-full object-cover" />
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                    <img src="/app-icons/sales.png" alt="Sales & Get Paid" className="w-full h-full object-contain block" />
                   </div>
                   <div>
                     <h1 className="text-2xl font-bold text-[#393A3D] tracking-tight">

@@ -443,8 +443,8 @@ export default function BankTransactionsView({ onNavigate, isEmbedded = false, t
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
-              <img src="/app-icons/accounting.png" alt="Accounting" className="w-full h-full object-cover" />
+            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+              <img src="/app-icons/accounting.png" alt="Accounting" className="w-full h-full object-contain block" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Bank transactions</h1>

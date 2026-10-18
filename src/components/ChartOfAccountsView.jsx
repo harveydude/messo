@@ -223,8 +223,8 @@ export default function ChartOfAccountsView({ onNavigate }) {
           {/* Header Row: Title & Action Buttons */}
           <div className="flex items-start justify-between pt-[34px]">
             <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
-                <img src="/app-icons/accounting.png" alt="Accounting" className="w-full h-full object-cover" />
+              <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                <img src="/app-icons/accounting.png" alt="Accounting" className="w-full h-full object-contain block" />
               </div>
               <div>
                 <h1 className="text-[28px] leading-[34px] font-bold text-[#393A3D]">

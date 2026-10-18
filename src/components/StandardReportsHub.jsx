@@ -188,6 +188,16 @@ export default function StandardReportsHub({
 
       {/* Main Reports Hub Content */}
       <div className="flex-1 p-6 max-w-6xl overflow-y-auto space-y-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+            <img src="/app-icons/reports.png" alt="Reports" className="w-full h-full object-contain block" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Reports & Analytics</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Financial statements, sales summaries, expense audits and custom dashboards</p>
+          </div>
+        </div>
+
         {/* Search Input Bar matching Screenshot 2 */}
         <div className="w-full max-w-sm mb-4">
           <div className="relative">

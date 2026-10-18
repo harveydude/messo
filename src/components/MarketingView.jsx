@@ -155,18 +155,23 @@ export default function MarketingView({ onNavigate }) {
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <button
-            onClick={() => onNavigate?.('standard_reports')}
-            className="flex items-center gap-1 text-xs font-semibold text-[#0077c5] hover:underline mb-1.5"
-          >
-            <ArrowLeft size={13} />
-            Reports
-          </button>
-          <h1 className="text-xl font-bold text-gray-900">Marketing</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Campaign budgets, what has been spent, and what is left.
-          </p>
+        <div className="flex items-start gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 mt-3">
+            <img src="/app-icons/tag_marketing.png" alt="Marketing" className="w-full h-full object-contain block" />
+          </div>
+          <div>
+            <button
+              onClick={() => onNavigate?.('standard_reports')}
+              className="flex items-center gap-1 text-xs font-semibold text-[#0077c5] hover:underline mb-1.5"
+            >
+              <ArrowLeft size={13} />
+              Reports
+            </button>
+            <h1 className="text-xl font-bold text-gray-900">Marketing</h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Campaign budgets, what has been spent, and what is left.
+            </p>
+          </div>
         </div>
         <button
           onClick={() => setShowNew(true)}

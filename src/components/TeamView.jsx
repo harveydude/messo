@@ -131,14 +131,19 @@ export default function TeamView({ onNavigate }) {
       <div className="px-8 py-5 max-w-[1720px] w-full mx-auto">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-[28px] font-bold text-[#393A3D] leading-tight">Team</h1>
-            <button
-              onClick={() => onNavigate?.('all_lists')}
-              className="text-[14px] text-[#0077C5] hover:underline flex items-center font-medium mt-1 cursor-pointer"
-            >
-              &lt; All Lists
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+              <img src="/app-icons/team.png" alt="Team" className="w-full h-full object-contain block" />
+            </div>
+            <div>
+              <h1 className="text-[28px] font-bold text-[#393A3D] leading-tight">Team</h1>
+              <button
+                onClick={() => onNavigate?.('all_lists')}
+                className="text-[14px] text-[#0077C5] hover:underline flex items-center font-medium mt-1 cursor-pointer"
+              >
+                &lt; All Lists
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center space-x-3">

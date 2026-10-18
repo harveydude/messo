@@ -1627,15 +1627,15 @@ const CUSTOMIZE_MASTER_APPS = [
   { id: 'bank_transactions', name: 'Accounting', iconUrl: '/app-icons/accounting.png', color: '#107C41' },
   { id: 'expense_transactions', name: 'Expenses & Pay Bills', iconUrl: '/app-icons/expenses.png', color: '#008927' },
   { id: 'sales_transactions', name: 'Sales & Get Paid', iconUrl: '/app-icons/sales.png', color: '#0077C5' },
-  { id: 'sales_tax', name: 'GST Returns', iconUrl: '/app-icons/gst.jpg', color: '#E5346B' },
-  { id: 'business_tax', name: 'TDS & Direct Tax', iconUrl: '/app-icons/gst.jpg', color: '#83243F' },
+  { id: 'sales_tax', name: 'GST Returns', iconUrl: '/app-icons/gst.png', color: '#E5346B' },
+  { id: 'business_tax', name: 'TDS & Direct Tax', iconUrl: '/app-icons/tds.png', color: '#83243F' },
   { id: 'bills', name: 'Bills & MSME Pays', iconUrl: '/app-icons/bills.png', color: '#107C41' },
   { id: 'customers_list', name: 'Customers', iconUrl: '/app-icons/customers.png', color: '#00828A' },
-  { id: 'standard_reports', name: 'Reports', iconUrl: '/app-icons/reports.jpg', color: '#0077C5' },
-  { id: 'customer_hub', name: 'Customer Hub', iconUrl: '/app-icons/customer_hub.jpg', color: '#2E9E5B' },
-  { id: 'team', name: 'Team', iconUrl: '/app-icons/team.jpg', color: '#12A489' },
-  { id: 'time_entries', name: 'Time Tracking', iconUrl: '/app-icons/time.jpg', color: '#00352C' },
-  { id: 'lending', name: 'Lending', iconUrl: '/app-icons/tag_marketing.jpg', color: '#0AA574' }
+  { id: 'standard_reports', name: 'Reports', iconUrl: '/app-icons/reports.png', color: '#0077C5' },
+  { id: 'customer_hub', name: 'Customer Hub', iconUrl: '/app-icons/customer_hub.png', color: '#2E9E5B' },
+  { id: 'team', name: 'Team', iconUrl: '/app-icons/team.png', color: '#12A489' },
+  { id: 'time_entries', name: 'Time Tracking', iconUrl: '/app-icons/time.png', color: '#00352C' },
+  { id: 'lending', name: 'Lending', iconUrl: '/app-icons/tag_marketing.png', color: '#0AA574' }
 ];
 
 export function CustomizeAppMenusModal({ isOpen, onClose, pinnedItems = [], onSave }) {
@@ -1741,8 +1741,8 @@ export function CustomizeAppMenusModal({ isOpen, onClose, pinnedItems = [], onSa
                   <Pin size={14} className={app.pinned ? "fill-white rotate-45" : ""} />
                 </button>
 
-                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center shrink-0 shadow-xs border border-black/10 bg-gray-950">
-                  <img src={app.iconUrl} alt={app.name} className="w-full h-full object-cover" />
+                <div className="w-[34px] h-[34px] rounded-full overflow-hidden flex items-center justify-center shrink-0">
+                  <img src={app.iconUrl} alt={app.name} className="w-full h-full object-contain block" />
                 </div>
 
                 <div className="min-w-0">

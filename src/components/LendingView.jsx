@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Search, Printer, Settings, ChevronDown, X, Check, Plus, ArrowRight,
   Landmark, Wallet, CircleAlert, Info,
@@ -225,11 +225,16 @@ export default function LendingView({ onNavigate }) {
     <div className="p-6 max-w-7xl mx-auto space-y-5">
       {/* ---------------------------------------------------------- header -- */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Lending</h1>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Loans taken, what they cost, and what is still outstanding
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+            <img src="/app-icons/tag_marketing.png" alt="Lending" className="w-full h-full object-contain block" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Lending</h1>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Loans taken, what they cost, and what is still outstanding
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

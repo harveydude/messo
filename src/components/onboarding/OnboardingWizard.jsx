@@ -514,15 +514,15 @@ function Screen0Welcome({ onStart }) {
     { label: 'Accounting', iconUrl: '/app-icons/accounting.png' },
     { label: 'Expenses & Pay Bills', iconUrl: '/app-icons/expenses.png' },
     { label: 'Sales & Get Paid', iconUrl: '/app-icons/sales.png' },
-    { label: 'GST Returns', iconUrl: '/app-icons/gst.jpg' },
-    { label: 'TDS & Direct Tax', iconUrl: '/app-icons/gst.jpg' },
+    { label: 'GST Returns', iconUrl: '/app-icons/gst.png' },
+    { label: 'TDS & Direct Tax', iconUrl: '/app-icons/tds.png' },
     { label: 'Bills & MSME Pays', iconUrl: '/app-icons/bills.png' },
     { label: 'Customers', iconUrl: '/app-icons/customers.png' },
-    { label: 'Reports', iconUrl: '/app-icons/reports.jpg' },
-    { label: 'Customer Hub', iconUrl: '/app-icons/customer_hub.jpg' },
-    { label: 'Team', iconUrl: '/app-icons/team.jpg' },
-    { label: 'Time Tracking', iconUrl: '/app-icons/time.jpg' },
-    { label: 'Payroll', iconUrl: '/app-icons/payroll.jpg' },
+    { label: 'Reports', iconUrl: '/app-icons/reports.png' },
+    { label: 'Customer Hub', iconUrl: '/app-icons/customer_hub.png' },
+    { label: 'Team', iconUrl: '/app-icons/team.png' },
+    { label: 'Time Tracking', iconUrl: '/app-icons/time.png' },
+    { label: 'Payroll', iconUrl: '/app-icons/payroll.png' },
   ];
 
   return (
@@ -569,11 +569,11 @@ function Screen0Welcome({ onStart }) {
               key={idx}
               className="flex items-center space-x-2.5 p-2 rounded-xl bg-white border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-gray-300 hover:scale-[1.02] transition-all duration-200 cursor-default select-none group"
             >
-              <div className="w-[30px] h-[30px] rounded-full overflow-hidden shrink-0 shadow-xs border border-black/10 bg-gray-900 flex items-center justify-center">
+              <div className="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 flex items-center justify-center">
                 <img 
                   src={mod.iconUrl} 
                   alt={mod.label} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                  className="w-full h-full object-contain block group-hover:scale-105 transition-transform" 
                 />
               </div>
               <span className="text-[12px] font-semibold text-gray-800 truncate leading-tight">

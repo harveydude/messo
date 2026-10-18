@@ -5,14 +5,14 @@ const PILLS = [
   { id: 'bank_transactions', label: 'Accounting', iconUrl: '/app-icons/accounting.png' },
   { id: 'expense_transactions', label: 'Expenses & Pay Bills', iconUrl: '/app-icons/expenses.png' },
   { id: 'sales_transactions', label: 'Sales & Get Paid', iconUrl: '/app-icons/sales.png' },
-  { id: 'sales_tax', label: 'GST Returns (GSTR-1/3B)', iconUrl: '/app-icons/gst.jpg' },
-  { id: 'business_tax', label: 'TDS & Direct Tax', iconUrl: '/app-icons/gst.jpg' },
+  { id: 'sales_tax', label: 'GST Returns (GSTR-1/3B)', iconUrl: '/app-icons/gst.png' },
+  { id: 'business_tax', label: 'TDS & Direct Tax', iconUrl: '/app-icons/tds.png' },
   { id: 'bills', label: 'Bills & MSME Pay', iconUrl: '/app-icons/bills.png' },
   { id: 'customers_list', label: 'Customers', iconUrl: '/app-icons/customers.png' },
-  { id: 'standard_reports', label: 'Reports', iconUrl: '/app-icons/reports.jpg' },
-  { id: 'customer_hub', label: 'Customer Hub', iconUrl: '/app-icons/customer_hub.jpg' },
-  { id: 'team', label: 'Team', iconUrl: '/app-icons/team.jpg' },
-  { id: 'time_entries', label: 'Time Tracking', iconUrl: '/app-icons/time.jpg' },
+  { id: 'standard_reports', label: 'Reports', iconUrl: '/app-icons/reports.png' },
+  { id: 'customer_hub', label: 'Customer Hub', iconUrl: '/app-icons/customer_hub.png' },
+  { id: 'team', label: 'Team', iconUrl: '/app-icons/team.png' },
+  { id: 'time_entries', label: 'Time Tracking', iconUrl: '/app-icons/time.png' },
 ];
 
 const SCROLL_STEP = 300;
@@ -36,16 +36,16 @@ export default function PillNav({ onNavigate }) {
             key={pill.id}
             type="button"
             onClick={() => onNavigate?.(pill.id)}
-            className="h-[52px] px-[18px] rounded-full bg-white border border-[#C7CBCE] hover:border-[#8D9096] hover:shadow-xs flex items-center shrink-0 cursor-pointer transition select-none focus-visible:outline-2 focus-visible:outline-[#2CA01C] focus-visible:outline-offset-2 group"
+            className="h-[52px] px-[16px] rounded-full bg-white border border-[#C7CBCE] hover:border-[#8D9096] hover:shadow-xs flex items-center shrink-0 cursor-pointer transition select-none focus-visible:outline-2 focus-visible:outline-[#2CA01C] focus-visible:outline-offset-2 group"
           >
             <span
-              className="w-[32px] h-[32px] rounded-full overflow-hidden flex items-center justify-center mr-[10px] shrink-0 shadow-xs border border-black/10 bg-gray-950 group-hover:scale-105 transition"
+              className="w-[38px] h-[38px] rounded-full overflow-hidden flex items-center justify-center mr-[10px] shrink-0 group-hover:scale-105 transition"
               aria-hidden="true"
             >
               <img
                 src={pill.iconUrl}
                 alt={pill.label}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain block"
               />
             </span>
             <span className="text-[15px] font-medium text-[#393A3D] whitespace-nowrap group-hover:text-black">

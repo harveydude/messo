@@ -241,8 +241,8 @@ export default function CustomerHubView({ onNavigate }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-10 h-10 rounded-full overflow-hidden shadow-xs border border-black/10 bg-gray-950 flex items-center justify-center shrink-0">
-            <img src="/app-icons/customer_hub.jpg" alt="Customer Hub" className="w-full h-full object-cover" />
+          <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+            <img src="/app-icons/customer_hub.png" alt="Customer Hub" className="w-full h-full object-contain block" />
           </div>
           <div>
             <button

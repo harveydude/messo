@@ -307,11 +307,16 @@ export default function InvoicesView({ onOpenInvoiceModal, onNavigate }) {
         
         {/* ──── 1. TOP HEADER ROW ──── */}
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-[30px] font-bold text-[#393A3D] leading-tight">Invoices</h1>
-            <p className="text-[14px] text-[#6B6C72] mt-1">
-              Create, track, and manage customer billing, or upload existing invoice files.
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0">
+              <img src="/app-icons/sales.png" alt="Invoices" className="w-full h-full object-contain block" />
+            </div>
+            <div>
+              <h1 className="text-[30px] font-bold text-[#393A3D] leading-tight">Invoices</h1>
+              <p className="text-[14px] text-[#6B6C72] mt-1">
+                Create, track, and manage customer billing, or upload existing invoice files.
+              </p>
+            </div>
           </div>
 
           {/* Action Split Button with prominent Plus Sign */}
