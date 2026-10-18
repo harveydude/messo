@@ -19,26 +19,29 @@ import {
   TrendingUp,
   Activity,
   Users,
-  Info
+  Info,
+  ArrowRight,
+  Upload,
+  CheckCircle2,
+  Calendar,
+  Layers,
+  ShieldCheck,
+  ChevronRight
 } from 'lucide-react';
 import { useStore } from '../store';
 
 /**
  * BusinessFeedView — Meso Business Feed.
- * Exact replication of the 5-screenshot continuous scroll page:
- * - Header: Title "Business Feed", Meso Assist greeting, Filter and Snoozed action buttons
- * - Two-column responsive layout:
- *   LEFT COLUMN (Main Feed Cards in order):
- *     Card 1: "Overdue invoices" (₹1,27,379.25 reminders, blue sparkle banner, 3-row table with John Melton, Barnett Design, Amy's Bird Sanctuary, Review links, Hide details, Review all button)
- *     Card 2: "Profit and loss" (Net profit September ₹1,16,342.22, +672%, Income ₹6,96,974.50 with striped bar "8 to review", Expense ₹5,80,575.50 with striped bar "15 to review", View report, Categorize transactions)
- *     Card 3: "Payments Agent" (37% paid late, 1.5% late fee recommendation, SVG Donut chart for Invoice payments, 37.5% overdue, Hide details, Set up late fees)
- *     Card 4: "Autofilling expenses keeps your records organized" (Snap receipts, dashed dropzone with "+ Upload receipt", drag and drop)
- *     Card 5: "Invoices paid" (₹1,86,668.42 in payments this week, 9 payments made, Show details, Go to payments)
- *     Card 6: "Forwarding emails to autofill transactions" (Gradient banner with "₹5,25,382.00 in new invoices ready to review" floating toast, two copyable email forward boxes for sales and expenses, Learn how)
- *     Card 7: "You're all caught up!" (End of feed card with pastel illustration, quick action pills for Generate a bill, Receipt upload, Generate an invoice)
- *   RIGHT COLUMN (Sticky sidebar widgets):
- *     Widget 1: "Autofill" (Doc type select, Files/Images toggle, dropzone, email forward chip, Manage settings)
- *     Widget 2: "Meso's AI agents" (3 active agents: Accounting Agent, Payments Agent, Customer Agent BETA, Explore all agents)
+ * Redesigned with Apple iOS UI / iPadOS design language:
+ * - Clean iOS system background (#F2F2F7) with elevated white squircle cards (rounded-[20px])
+ * - Apple SF-style visual hierarchy with high-contrast typography and tabular figures
+ * - iOS Segmented Control for filtering and toggle states
+ * - Squircle app-style icon badges with vibrant Apple System gradients
+ * - Apple Inset Grouped list views with subtle hair-thin dividers
+ * - Apple Health/Fitness-inspired progress capsules and donut charts
+ * - Capsule pill buttons with tactile feedback
+ * - Apple iPadOS companion widgets on the right rail
+ * - Strictly zero AI sparkles/emojis
  */
 
 export default function BusinessFeedView({
@@ -51,8 +54,6 @@ export default function BusinessFeedView({
 
   // Filters state
   const [filterActive, setFilterActive] = useState('All');
-  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
-  const [snoozedOpen, setSnoozedOpen] = useState(false);
   const [snoozedCount, setSnoozedCount] = useState(0);
 
   // Card collapse toggles
@@ -89,141 +90,183 @@ export default function BusinessFeedView({
     alert(`Card snoozed for 7 days.`);
   };
 
+  // Filter logic
+  const showCard = (type) => {
+    if (filterActive === 'All') return true;
+    if (filterActive === 'Invoices' && (type === 'invoices' || type === 'payments' || type === 'email' || type === 'caughtup')) return true;
+    if (filterActive === 'Profit & Loss' && (type === 'pnl' || type === 'caughtup')) return true;
+    if (filterActive === 'Payments' && (type === 'payments' || type === 'latefees' || type === 'caughtup')) return true;
+    if (filterActive === 'Expenses' && (type === 'expenses' || type === 'email' || type === 'caughtup')) return true;
+    return false;
+  };
+
   return (
-    <div className="flex-1 flex overflow-hidden bg-white font-sans text-[#393a3d]">
+    <div className="flex-1 flex overflow-hidden bg-[#F2F2F7] text-[#1C1C1E] select-none">
       
       {/* ────────────────── MAIN FEED SCROLLABLE CONTAINER ────────────────── */}
-      <div className="flex-1 overflow-y-auto px-8 py-7">
-        
-        {/* ──── PAGE HEADER ──── */}
-        <div className="max-w-[1240px] mx-auto mb-7">
-          <h1 className="text-[32px] font-bold text-[#111] tracking-tight mb-2">
-            Business Feed
-          </h1>
-
-          <div className="flex items-center gap-2 text-sm text-[#393a3d] mb-5">
-            <Activity size={17} className="text-[#0077c5] flex-none" />
-            <span>
-              Hi, I'm Meso Assist. I'll share work done for you and suggestions to help run your business. Check back often.
-            </span>
-          </div>
-
-          {/* Filter & Snoozed Buttons */}
-          <div className="flex items-center gap-2 relative">
-            <button
-              onClick={() => setFilterMenuOpen(!filterMenuOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#c9cdd2] rounded-[4px] bg-white text-xs font-semibold text-[#393a3d] hover:bg-gray-50 transition cursor-pointer"
-            >
-              <span>Filter</span>
-              <Filter size={13} className="text-[#6b6c72]" />
-            </button>
-
-            {filterMenuOpen && (
-              <div className="absolute left-0 top-[38px] z-30 w-44 bg-white border border-[#c9cdd2] rounded-md shadow-lg py-1 text-xs">
-                {['All', 'Invoices', 'Profit & Loss', 'AI Agents', 'Expenses'].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => { setFilterActive(f); setFilterMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-1.5 hover:bg-gray-50 ${filterActive === f ? 'font-bold text-[#2ca01c]' : 'text-[#393a3d]'}`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <button
-              onClick={() => alert(snoozedCount > 0 ? `${snoozedCount} cards currently snoozed.` : 'No snoozed cards.')}
-              className="flex items-center gap-1.5 px-3 py-1.5 border border-[#c9cdd2] rounded-[4px] bg-white text-xs font-semibold text-[#393a3d] hover:bg-gray-50 transition cursor-pointer"
-            >
-              <Clock size={13} className="text-[#6b6c72]" />
-              <span>Snoozed {snoozedCount > 0 ? `(${snoozedCount})` : ''}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ──── TWO-COLUMN CONTENT GRID ──── */}
-        <div className="max-w-[1240px] mx-auto flex flex-col lg:flex-row items-start gap-8">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-[1180px] mx-auto">
           
-          {/* ════════════ LEFT COLUMN: MAIN FEED CARDS (Order 1 to 7) ════════════ */}
-          <div className="flex-1 w-full space-y-6">
-
-            {/* ──── CARD 1: OVERDUE INVOICES ──── */}
-            <section className="bg-white border border-[#d4d7dc] rounded-xl p-6 shadow-xs relative">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#f4f5f8] flex items-center justify-center text-[#6b6c72]">
-                    <FileText size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-[15px] font-bold text-[#111] leading-tight">Overdue invoices</h2>
-                    <p className="text-xs text-[#6b6c72]">Review reminders</p>
-                  </div>
-                </div>
-
-                <div className="relative">
-                  <button
-                    onClick={() => setActiveMenuCard(activeMenuCard === 1 ? null : 1)}
-                    className="p-1 text-[#6b6c72] hover:text-[#111] rounded hover:bg-gray-100 transition cursor-pointer"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-                  {activeMenuCard === 1 && (
-                    <div className="absolute right-0 top-6 z-20 w-40 bg-white border border-[#c9cdd2] rounded-md shadow-lg py-1 text-xs">
-                      <button onClick={() => snoozeCard(1)} className="w-full text-left px-3 py-1.5 hover:bg-gray-50">Snooze for 7 days</button>
-                      <button onClick={() => { alert('Feedback recorded'); setActiveMenuCard(null); }} className="w-full text-left px-3 py-1.5 hover:bg-gray-50">Give feedback</button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Main Message */}
-              <h3 className="text-[17px] font-bold text-[#111] mb-3">
-                Over ₹1,525.50 worth of invoice reminders are ready for you to review and send
-              </h3>
-
-              {/* Info Banner */}
-              <div className="bg-[#eef6fc] rounded-[6px] p-3 flex items-center gap-2.5 text-xs text-[#393a3d] mb-5">
-                <Info size={15} className="text-[#0077c5] flex-none" />
-                <span>
-                  You have 10 overdue invoices from 9 customers. Give them more ways to pay.{' '}
-                  <a
-                    href="#payments"
-                    onClick={(e) => { e.preventDefault(); alert('Payments onboarding opened'); }}
-                    className="text-[#0077c5] font-semibold hover:underline"
-                  >
-                    Set up payments
-                  </a>
+          {/* ──── APPLE iOS HEADER ──── */}
+          <div className="mb-6">
+            
+            {/* Top row: Title + Snoozed button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+              <div>
+                <span className="text-[11px] font-semibold tracking-wider text-[#8E8E93] uppercase">
+                  Activity & Intelligence
                 </span>
+                <h1 className="text-[32px] sm:text-[36px] font-bold tracking-tight text-[#1C1C1E] leading-tight">
+                  Business Feed
+                </h1>
               </div>
 
-              {/* Collapsible Table */}
-              {card1Open && (
-                <div className="overflow-x-auto mb-4">
-                  <table className="w-full text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-[#e3e5e8] text-[#6b6c72] font-semibold pb-2">
-                        <th className="py-2 text-left font-bold">Customer</th>
-                        <th className="py-2 text-left font-bold">Invoice #</th>
-                        <th className="py-2 text-left font-bold">Amount</th>
-                        <th className="py-2 text-left font-bold">Status</th>
-                        <th className="py-2 text-right font-bold">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#f0f2f4]">
+              {/* iOS Pill Snoozed Control */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => alert(snoozedCount > 0 ? `${snoozedCount} cards currently snoozed.` : 'No cards currently snoozed.')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white/90 hover:bg-white active:scale-95 transition-all rounded-full text-[12px] font-medium text-[#1C1C1E] shadow-xs border border-black/5 cursor-pointer"
+                >
+                  <Clock size={13} className="text-[#8E8E93]" />
+                  <span>Snoozed {snoozedCount > 0 ? `(${snoozedCount})` : ''}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Apple Assistant Status Callout (Frosted Glass Banner) */}
+            <div className="bg-white/90 backdrop-blur-md rounded-[18px] p-3.5 sm:p-4 border border-black/5 shadow-xs mb-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-[12px] bg-gradient-to-br from-[#007AFF] to-[#5856D6] flex items-center justify-center text-white shadow-xs flex-none">
+                <Activity size={18} />
+              </div>
+              <div className="flex-1 text-[13px] text-[#3A3A3C] leading-snug">
+                <span className="font-semibold text-[#1C1C1E]">Meso Assist:</span> Reviewing your incoming revenue, recurring bills, and ledger transactions. Here is your latest brief.
+              </div>
+            </div>
+
+            {/* iOS Segmented Control (Pill switcher) */}
+            <div className="bg-[#E5E5EA] p-1 rounded-[14px] inline-flex items-center gap-1 max-w-full overflow-x-auto no-scrollbar shadow-inner">
+              {[
+                { id: 'All', label: 'All Updates' },
+                { id: 'Invoices', label: 'Invoices' },
+                { id: 'Profit & Loss', label: 'Profit & Loss' },
+                { id: 'Payments', label: 'Payments' },
+                { id: 'Expenses', label: 'Expenses' }
+              ].map((f) => {
+                const isActive = filterActive === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFilterActive(f.id)}
+                    className={`px-3.5 py-1.5 rounded-[10px] text-[12px] font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                      isActive
+                        ? 'bg-white text-[#1C1C1E] shadow-sm'
+                        : 'text-[#636366] hover:text-[#1C1C1E]'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+
+          </div>
+
+          {/* ──── TWO-COLUMN CONTENT GRID ──── */}
+          <div className="flex flex-col lg:flex-row items-start gap-6">
+            
+            {/* ════════════ LEFT COLUMN: MAIN FEED CARDS (Order 1 to 7) ════════════ */}
+            <div className="flex-1 w-full space-y-5">
+
+              {/* ──── CARD 1: OVERDUE INVOICES ──── */}
+              {showCard('invoices') && (
+                <section className="bg-white border border-black/5 rounded-[20px] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all relative">
+                  
+                  {/* iOS Card Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#FF453A] to-[#FF3B30] flex items-center justify-center text-white shadow-xs">
+                        <FileText size={20} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[#FF3B30]">Overdue</div>
+                        <h2 className="text-[17px] font-bold text-[#1C1C1E] leading-tight">Overdue Invoices</h2>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setActiveMenuCard(activeMenuCard === 1 ? null : 1)}
+                        className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                      >
+                        <MoreVertical size={15} />
+                      </button>
+                      {activeMenuCard === 1 && (
+                        <div className="absolute right-0 top-9 z-30 w-44 bg-white/95 backdrop-blur-md border border-black/10 rounded-[14px] shadow-lg py-1 text-xs">
+                          <button onClick={() => snoozeCard(1)} className="w-full text-left px-3.5 py-2 hover:bg-[#F2F2F7] font-medium text-[#1C1C1E]">Snooze for 7 days</button>
+                          <button onClick={() => { alert('Feedback recorded'); setActiveMenuCard(null); }} className="w-full text-left px-3.5 py-2 hover:bg-[#F2F2F7] font-medium text-[#1C1C1E]">Give feedback</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Headline & Amount */}
+                  <div className="mb-4">
+                    <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1C1C1E] tabular-nums mb-1">
+                      ₹1,27,379.25
+                    </div>
+                    <p className="text-[13px] text-[#8E8E93]">
+                      Invoice reminders are ready for you to review and send to customers.
+                    </p>
+                  </div>
+
+                  {/* iOS Inset Callout */}
+                  <div className="bg-[#007AFF]/8 rounded-[14px] p-3 flex items-start sm:items-center gap-2.5 text-[12px] text-[#1C1C1E] mb-4 border border-[#007AFF]/15">
+                    <Info size={16} className="text-[#007AFF] flex-none mt-0.5 sm:mt-0" />
+                    <span>
+                      You have 10 overdue invoices from 9 customers. Make it easier for them to settle with digital links.{' '}
+                      <button
+                        type="button"
+                        onClick={() => alert('Online payment collection enabled.')}
+                        className="text-[#007AFF] font-semibold hover:underline cursor-pointer"
+                      >
+                        Set up payments
+                      </button>
+                    </span>
+                  </div>
+
+                  {/* iOS Grouped Table View */}
+                  {card1Open && (
+                    <div className="bg-[#F9F9FB] rounded-[16px] border border-black/5 divide-y divide-black/5 overflow-hidden mb-4">
                       {[
-                        { customer: 'John Melton', no: '1007', amount: '₹450.00', status: '22 days overdue' },
-                        { customer: 'Barnett Design', no: '1012', amount: '₹274.50', status: '11 days overdue' },
-                        { customer: "Amy's Bird Sanctuary", no: '1021', amount: '₹239.00', status: '19 days overdue' }
+                        { customer: 'John Melton', no: 'INV-1007', amount: '₹37,350.00', status: '22 days overdue', initial: 'JM', tint: 'from-blue-500 to-indigo-600' },
+                        { customer: 'Barnett Design', no: 'INV-1012', amount: '₹22,780.00', status: '11 days overdue', initial: 'BD', tint: 'from-amber-500 to-orange-600' },
+                        { customer: "Amy's Bird Sanctuary", no: 'INV-1021', amount: '₹19,835.00', status: '19 days overdue', initial: 'AB', tint: 'from-emerald-500 to-teal-600' }
                       ].map((inv) => (
-                        <tr key={inv.no} className="hover:bg-[#fbfcfd] transition">
-                          <td className="py-3 text-[#111] font-medium">{inv.customer}</td>
-                          <td className="py-3 text-[#6b6c72]">{inv.no}</td>
-                          <td className="py-3 text-[#111] font-semibold">{inv.amount}</td>
-                          <td className="py-3 text-[#d32f2f] font-medium">{inv.status}</td>
-                          <td className="py-3 text-right">
+                        <div key={inv.no} className="p-3 sm:px-4 flex items-center justify-between gap-3 hover:bg-[#F2F2F7]/50 transition">
+                          
+                          {/* Customer Avatar & Details */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${inv.tint} text-white text-[11px] font-bold flex items-center justify-center flex-none shadow-xs`}>
+                              {inv.initial}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-semibold text-[13px] text-[#1C1C1E] truncate">{inv.customer}</div>
+                              <div className="text-[11px] text-[#8E8E93] flex items-center gap-2">
+                                <span>{inv.no}</span>
+                                <span>•</span>
+                                <span className="text-[#FF3B30] font-medium">{inv.status}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Amount and Review Pill Button */}
+                          <div className="flex items-center gap-3 flex-none">
+                            <span className="font-bold text-[13px] text-[#1C1C1E] tabular-nums">{inv.amount}</span>
                             <button
+                              type="button"
                               onClick={() => {
                                 if (onOpenReviewInvoice) {
                                   onOpenReviewInvoice({
@@ -237,739 +280,778 @@ export default function BusinessFeedView({
                                   onOpenInvoiceModal();
                                 }
                               }}
-                              className="text-[#0077c5] font-semibold hover:underline cursor-pointer"
+                              className="px-3 py-1 bg-[#007AFF] hover:bg-[#0062CC] active:scale-95 text-white font-semibold text-[11px] rounded-full transition cursor-pointer shadow-xs"
                             >
                               Review
                             </button>
-                          </td>
-                        </tr>
+                          </div>
+
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Card Footer */}
-              <div className="flex items-center justify-between pt-2 border-t border-[#f0f2f4]">
-                <button
-                  onClick={() => setCard1Open(!card1Open)}
-                  className="flex items-center gap-1 text-xs font-semibold text-[#0077c5] hover:underline cursor-pointer"
-                >
-                  <span>{card1Open ? 'Hide details' : 'Show details'}</span>
-                  {card1Open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
-
-                <button
-                  onClick={() => onOpenInvoiceModal ? onOpenInvoiceModal() : alert('Reviewing all overdue invoices')}
-                  className="px-4 py-1.5 border border-[#2ca01c] bg-white text-[#2ca01c] hover:bg-green-50 rounded-[4px] text-xs font-semibold transition cursor-pointer"
-                >
-                  Review all
-                </button>
-              </div>
-            </section>
-
-            {/* ──── CARD 2: PROFIT AND LOSS ──── */}
-            <section className="bg-white border border-[#d4d7dc] rounded-xl p-6 shadow-xs relative">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#f4f5f8] flex items-center justify-center text-[#6b6c72]">
-                    <FileText size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-[15px] font-bold text-[#111] leading-tight">Profit and loss</h2>
-                    <p className="text-xs text-[#6b6c72]">Review transactions</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setActiveMenuCard(activeMenuCard === 2 ? null : 2)}
-                  className="p-1 text-[#6b6c72] hover:text-[#111] rounded hover:bg-gray-100 transition cursor-pointer"
-                >
-                  <MoreVertical size={16} />
-                </button>
-              </div>
-
-              {/* Message */}
-              <p className="text-xs text-[#393a3d] mb-4">
-                Based on your connected transactions, I calculated your net profit for the last month. Improve accuracy by reviewing transactions.
-              </p>
-
-              {/* Net profit metric */}
-              <div className="mb-5">
-                <p className="text-[11px] text-[#6b6c72] mb-0.5">Net profit from September</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-[#111]">₹1,393.32</span>
-                  <span className="inline-flex items-center gap-1 bg-[#eef6fc] text-[#0077c5] text-[11px] font-semibold px-1.5 py-0.5 rounded-full">
-                    <Info size={11} /> 78%
-                  </span>
-                </div>
-                <p className="text-xs font-semibold text-[#2ca01c] mt-0.5 flex items-center gap-1">
-                  <span>↑ Up 672% from prior month</span>
-                </p>
-              </div>
-
-              {/* Progress bars: Income & Expense */}
-              <div className="space-y-4 mb-6">
-                
-                {/* Income Bar */}
-                <div>
-                  <div className="flex justify-between items-baseline mb-1 text-xs">
-                    <div>
-                      <span className="font-bold text-sm text-[#111]">₹8,347</span>
-                      <span className="text-[#6b6c72] ml-1">Income</span>
-                    </div>
-                    <button
-                      onClick={() => onNavigate ? onNavigate('sales_transactions') : alert('Reviewing 8 income transactions')}
-                      className="text-[#0077c5] hover:underline font-semibold cursor-pointer"
-                    >
-                      8 to review
-                    </button>
-                  </div>
-
-                  <div className="h-4 w-full bg-[#f0f2f4] rounded-sm flex overflow-hidden">
-                    <div className="bg-[#2ca01c] h-full" style={{ width: '68%' }} />
-                    <div
-                      className="h-full"
-                      style={{
-                        width: '32%',
-                        background: 'repeating-linear-gradient(45deg, #2ca01c, #2ca01c 4px, #e6f4ea 4px, #e6f4ea 8px)'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Expense Bar */}
-                <div>
-                  <div className="flex justify-between items-baseline mb-1 text-xs">
-                    <div>
-                      <span className="font-bold text-sm text-[#111]">₹6,953</span>
-                      <span className="text-[#6b6c72] ml-1">Expense</span>
-                    </div>
-                    <button
-                      onClick={() => onNavigate ? onNavigate('expense_transactions') : alert('Reviewing 15 expense transactions')}
-                      className="text-[#0077c5] hover:underline font-semibold cursor-pointer"
-                    >
-                      15 to review
-                    </button>
-                  </div>
-
-                  <div className="h-4 w-full bg-[#f0f2f4] rounded-sm flex overflow-hidden">
-                    <div className="bg-[#00828a] h-full" style={{ width: '60%' }} />
-                    <div
-                      className="h-full"
-                      style={{
-                        width: '40%',
-                        background: 'repeating-linear-gradient(45deg, #00828a, #00828a 4px, #e6f6f7 4px, #e6f6f7 8px)'
-                      }}
-                    />
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Card Footer */}
-              <div className="flex items-center justify-end gap-4 pt-2 border-t border-[#f0f2f4]">
-                <button
-                  onClick={() => onNavigate ? onNavigate('standard_reports') : alert('Viewing report')}
-                  className="text-xs font-semibold text-[#0077c5] hover:underline cursor-pointer"
-                >
-                  View report
-                </button>
-                <button
-                  onClick={() => onNavigate ? onNavigate('bank_transactions') : alert('Categorizing transactions')}
-                  className="px-4 py-1.5 border border-[#2ca01c] bg-white text-[#2ca01c] hover:bg-green-50 rounded-[4px] text-xs font-semibold transition cursor-pointer"
-                >
-                  Categorize transactions
-                </button>
-              </div>
-            </section>
-
-            {/* ──── CARD 3: PAYMENTS AGENT (LATE FEES RECOMMENDATION) ──── */}
-            <section className="bg-white border border-[#d4d7dc] rounded-xl p-6 shadow-xs relative">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#0a3e42] flex items-center justify-center text-[#2ca01c]">
-                    <TrendingUp size={18} />
-                  </div>
-                  <div>
-                    <h2 className="text-[15px] font-bold text-[#111] leading-tight">Payments Agent</h2>
-                    <p className="text-xs text-[#6b6c72]">Consider adding late fees</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setActiveMenuCard(activeMenuCard === 3 ? null : 3)}
-                  className="p-1 text-[#6b6c72] hover:text-[#111] rounded hover:bg-gray-100 transition cursor-pointer"
-                >
-                  <MoreVertical size={16} />
-                </button>
-              </div>
-
-              {/* Message */}
-              <p className="text-xs text-[#393a3d] leading-relaxed mb-3">
-                37% of your invoices in the last year were paid late, or not at all. I suggest a late fee of 1.5%. Feel free to adjust. Late fees will be applied to all new invoices, beginning tomorrow.
-              </p>
-
-              {/* Info banner */}
-              <div className="bg-[#eef6fc] rounded-[6px] p-3 flex items-center gap-2.5 text-xs text-[#393a3d] mb-6">
-                <Info size={15} className="text-[#0077c5] flex-none" />
-                <span>
-                  Add a 1.5% late fee on the remaining balance, once, with a 30-day grace period, to all new invoices.
-                </span>
-              </div>
-
-              {/* Donut Chart Section */}
-              {card3Open && (
-                <div className="mb-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b6c72]">INVOICE PAYMENTS</span>
-                    <span className="text-xs text-[#6b6c72]">Last 12 months</span>
-                  </div>
-
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-[#fbfcfd] p-4 rounded-lg border border-[#f0f2f4]">
-                    <div>
-                      <p className="text-xs text-[#6b6c72] mb-1">Overdue payments</p>
-                      <p className="text-3xl font-bold text-[#111]">37.5%</p>
-                    </div>
-
-                    {/* Donut SVG */}
-                    <div className="relative w-28 h-28 flex items-center justify-center">
-                      <svg viewBox="0 0 36 36" className="w-28 h-28 transform -rotate-90">
-                        {/* Segment 1: Paid on time (Green 45%) */}
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="14"
-                          fill="transparent"
-                          stroke="#2ca01c"
-                          strokeWidth="7"
-                          strokeDasharray="45 100"
-                          strokeDashoffset="0"
-                        />
-                        {/* Segment 2: Open invoices (Purple 17.5%) */}
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="14"
-                          fill="transparent"
-                          stroke="#6b46c1"
-                          strokeWidth="7"
-                          strokeDasharray="17.5 100"
-                          strokeDashoffset="-45"
-                        />
-                        {/* Segment 3: Paid late or overdue (Orange 37.5%) */}
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="14"
-                          fill="transparent"
-                          stroke="#ea580c"
-                          strokeWidth="7"
-                          strokeDasharray="37.5 100"
-                          strokeDashoffset="-62.5"
-                        />
-                      </svg>
-                    </div>
-
-                    {/* Legend */}
-                    <div className="space-y-2 text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#2ca01c]" />
-                        <span>Paid on time</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#6b46c1]" />
-                        <span>Open invoices</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full bg-[#ea580c]" />
-                        <span>Paid late or overdue</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Card Footer */}
-              <div className="flex items-center justify-between pt-2 border-t border-[#f0f2f4]">
-                <button
-                  onClick={() => setCard3Open(!card3Open)}
-                  className="flex items-center gap-1 text-xs font-semibold text-[#0077c5] hover:underline cursor-pointer"
-                >
-                  <span>{card3Open ? 'Hide details' : 'Show details'}</span>
-                  {card3Open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
-
-                <button
-                  onClick={() => alert('Late fee automation settings enabled: 1.5% late fee on invoices.')}
-                  className="px-4 py-1.5 border border-[#2ca01c] bg-white text-[#2ca01c] hover:bg-green-50 rounded-[4px] text-xs font-semibold transition cursor-pointer"
-                >
-                  Set up late fees
-                </button>
-              </div>
-            </section>
-
-            {/* ──── CARD 4: AUTOFILLING EXPENSES ──── */}
-            <section className="bg-white border border-[#d4d7dc] rounded-xl p-6 shadow-xs relative">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h2 className="text-[17px] font-bold text-[#111] leading-tight">
-                    Autofilling expenses keeps your records organized
-                  </h2>
-                  <p className="text-xs text-[#6b6c72] mt-1">
-                    Snap and store receipts for expenses like fuel and supplies. Maximize deductions and minimize work at tax time.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setActiveMenuCard(activeMenuCard === 4 ? null : 4)}
-                  className="p-1 text-[#6b6c72] hover:text-[#111] rounded hover:bg-gray-100 transition cursor-pointer"
-                >
-                  <MoreVertical size={16} />
-                </button>
-              </div>
-
-              {/* Dashed dropzone */}
-              <div
-                onClick={() => onOpenExpenseModal ? onOpenExpenseModal() : alert('Opening Expense upload')}
-                className="border-2 border-dashed border-[#9dbde0] bg-[#f5f8fc] hover:bg-[#eef4fb] transition rounded-lg p-7 flex flex-col items-center justify-center cursor-pointer mt-4"
-              >
-                <button className="flex items-center gap-2 px-4 py-2 border border-[#2ca01c] bg-white text-[#2ca01c] font-semibold text-xs rounded-[4px] shadow-xs hover:bg-green-50 transition cursor-pointer">
-                  <FileText size={14} />
-                  <span>Upload receipt</span>
-                </button>
-                <p className="text-xs text-[#6b6c72] mt-2">or drag and drop here</p>
-              </div>
-            </section>
-
-            {/* ──── CARD 5: INVOICES PAID (PAYMENTS THIS WEEK) ──── */}
-            <section className="bg-white border border-[#d4d7dc] rounded-xl p-6 shadow-xs relative">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#f4f5f8] flex items-center justify-center text-[#6b6c72]">
-                    <CreditCard size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-[15px] font-bold text-[#111] leading-tight">Invoices paid</h2>
-                    <p className="text-xs text-[#6b6c72]">Payments this week</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setActiveMenuCard(activeMenuCard === 5 ? null : 5)}
-                  className="p-1 text-[#6b6c72] hover:text-[#111] rounded hover:bg-gray-100 transition cursor-pointer"
-                >
-                  <MoreVertical size={16} />
-                </button>
-              </div>
-
-              <div className="my-3">
-                <h3 className="text-[17px] font-bold text-[#111]">
-                  ₹2,235.55 in payments were made this week
-                </h3>
-                <p className="text-xs text-[#6b6c72] mt-0.5">9 payments were made</p>
-              </div>
-
-              {card5Open && (
-                <div className="my-3 p-3 bg-[#fbfcfd] rounded border border-[#f0f2f4] text-xs space-y-2">
-                  <div className="flex justify-between font-medium"><span>Cool Cars (Inv #1004)</span><span>₹1,200.00</span></div>
-                  <div className="flex justify-between font-medium"><span>Dylan Sollfrank (Inv #1005)</span><span>₹650.00</span></div>
-                  <div className="flex justify-between font-medium"><span>Garden Depot (Inv #1006)</span><span>₹385.55</span></div>
-                </div>
-              )}
-
-              {/* Card Footer */}
-              <div className="flex items-center justify-between pt-2 border-t border-[#f0f2f4]">
-                <button
-                  onClick={() => setCard5Open(!card5Open)}
-                  className="flex items-center gap-1 text-xs font-semibold text-[#0077c5] hover:underline cursor-pointer"
-                >
-                  <span>{card5Open ? 'Hide details' : 'Show details'}</span>
-                  {card5Open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
-
-                <button
-                  onClick={() => onNavigate ? onNavigate('sales_transactions') : alert('Navigating to payments')}
-                  className="flex items-center gap-1.5 text-xs font-semibold text-[#0077c5] hover:underline cursor-pointer"
-                >
-                  <CreditCard size={14} />
-                  <span>Go to payments</span>
-                </button>
-              </div>
-            </section>
-
-            {/* ──── CARD 6: FORWARDING EMAILS TO AUTOFILL TRANSACTIONS ──── */}
-            <section className="bg-white border border-[#d4d7dc] rounded-xl overflow-hidden shadow-xs relative">
-              {/* Top Banner with Floating Pill */}
-              <div className="bg-gradient-to-r from-[#e3edf7] via-[#ebf2fa] to-[#f4f7fb] p-6 pb-8 border-b border-[#e3e5e8] relative">
-                <div className="flex justify-end mb-2">
-                  <button
-                    onClick={() => setActiveMenuCard(activeMenuCard === 6 ? null : 6)}
-                    className="p-1 text-[#6b6c72] hover:text-[#111] rounded hover:bg-white/50 transition cursor-pointer"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-                </div>
-
-                {/* Floating white pill matching Screenshot 2 */}
-                <div className="bg-white rounded-lg border border-[#c9cdd2] shadow-sm p-4 max-w-md mx-auto">
-                  <div className="flex items-center gap-2 font-bold text-xs text-[#111] mb-2">
-                    <CheckCircle size={15} className="text-[#2ca01c]" />
-                    <span>₹6,292.00 in new invoices are ready for you to review</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-[#6b6c72] pt-2 border-t border-[#f0f2f4]">
-                    <span>Just now</span>
-                    <span className="flex items-center gap-1 font-medium text-[#111]">
-                      <Mail size={13} className="text-[#6b6c72]" />
-                      FWD: Quote for maintenace
-                    </span>
-                    <button
-                      onClick={() => onOpenInvoiceModal ? onOpenInvoiceModal() : alert('Reviewing quote invoice')}
-                      className="text-[#0077c5] font-semibold hover:underline cursor-pointer"
-                    >
-                      Review
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Main Content */}
-              <div className="p-6">
-                <h3 className="text-[17px] font-bold text-[#111] mb-4">
-                  Forwarding emails to autofill transactions can help you cut down on manual work
-                </h3>
-
-                {/* Two email forwarding boxes */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  
-                  {/* Left: Invoices and estimates */}
-                  <div>
-                    <label className="block text-[11px] text-[#6b6c72] mb-1">
-                      For invoices and estimates, send to:
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value="lawns__paws+sales@assist.meso.in"
-                        className="w-full h-[36px] px-3 bg-[#fbfcfd] border border-[#c9cdd2] rounded-[4px] text-xs text-[#111] outline-none"
-                      />
-                      <button
-                        onClick={() => handleCopy('lawns__paws+sales@assist.meso.in', 'sales')}
-                        title="Copy email address"
-                        className="p-2 border border-[#c9cdd2] rounded-[4px] hover:bg-gray-50 text-[#6b6c72] hover:text-[#111] transition cursor-pointer"
-                      >
-                        {copiedId === 'sales' ? <Check size={14} className="text-[#2ca01c]" /> : <Copy size={14} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Right: Bills and expenses */}
-                  <div>
-                    <label className="block text-[11px] text-[#6b6c72] mb-1">
-                      For bills and expenses, send to:
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        readOnly
-                        value="lawns__paws+expenses@assist.meso.in"
-                        className="w-full h-[36px] px-3 bg-[#fbfcfd] border border-[#c9cdd2] rounded-[4px] text-xs text-[#111] outline-none"
-                      />
-                      <button
-                        onClick={() => handleCopy('lawns__paws+expenses@assist.meso.in', 'expenses')}
-                        title="Copy email address"
-                        className="p-2 border border-[#c9cdd2] rounded-[4px] hover:bg-gray-50 text-[#6b6c72] hover:text-[#111] transition cursor-pointer"
-                      >
-                        {copiedId === 'expenses' ? <Check size={14} className="text-[#2ca01c]" /> : <Copy size={14} />}
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Learn how */}
-                <div>
-                  <button
-                    onClick={() => setCard6LearnOpen(!card6LearnOpen)}
-                    className="flex items-center gap-1 text-xs font-semibold text-[#0077c5] hover:underline cursor-pointer"
-                  >
-                    <span>Learn how</span>
-                    {card6LearnOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  </button>
-
-                  {card6LearnOpen && (
-                    <div className="mt-3 p-3 bg-[#f8fafc] rounded text-xs text-[#393a3d] space-y-1 border border-[#e2e8f0]">
-                      <p>1. Forward any invoice or receipt email directly to your custom address.</p>
-                      <p>2. Meso Assist extracts line items, totals, and payee details automatically.</p>
-                      <p>3. Review and approve directly from your Business Feed in one click.</p>
                     </div>
                   )}
-                </div>
-              </div>
-            </section>
 
-            {/* ──── CARD 7: YOU'RE ALL CAUGHT UP! ──── */}
-            <section className="bg-gradient-to-br from-[#f0fbf7] to-[#f4fcf9] border border-[#d1fae5] rounded-xl p-8 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex-1 space-y-3">
-                <h3 className="text-[22px] font-bold text-[#111]">
-                  You're all caught up!
-                </h3>
-                <p className="text-xs text-[#6b6c72]">
-                  Looks like you've reached the end of your feed. Come back soon!
-                </p>
-
-                {/* Three quick action pills */}
-                <div className="space-y-2 pt-2 max-w-sm">
-                  <button
-                    onClick={() => onOpenExpenseModal ? onOpenExpenseModal() : alert('Generate a bill')}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-white border border-[#e3e5e8] rounded-lg text-xs font-semibold text-[#111] hover:shadow-xs transition cursor-pointer"
-                  >
-                    <Printer size={15} className="text-[#6b6c72]" />
-                    <span>Generate a bill</span>
-                  </button>
-
-                  <button
-                    onClick={() => onOpenExpenseModal ? onOpenExpenseModal() : alert('Receipt upload')}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-white border border-[#e3e5e8] rounded-lg text-xs font-semibold text-[#111] hover:shadow-xs transition cursor-pointer"
-                  >
-                    <Camera size={15} className="text-[#6b6c72]" />
-                    <span>Receipt upload</span>
-                  </button>
-
-                  <button
-                    onClick={() => onOpenInvoiceModal ? onOpenInvoiceModal() : alert('Generate an invoice')}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 bg-white border border-[#e3e5e8] rounded-lg text-xs font-semibold text-[#111] hover:shadow-xs transition cursor-pointer"
-                  >
-                    <FileText size={15} className="text-[#6b6c72]" />
-                    <span>Generate an invoice</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Pastel illustration of person reaching for checkmark */}
-              <div className="w-48 h-48 flex-none flex items-center justify-center relative">
-                {/* Background circular glow */}
-                <div className="absolute w-40 h-40 rounded-full bg-[#dcfce7] opacity-80" />
-                
-                {/* SVG Illustration */}
-                <svg viewBox="0 0 160 160" className="w-44 h-44 relative z-10">
-                  {/* Floating check document */}
-                  <rect x="30" y="22" width="70" height="24" rx="4" fill="#ffffff" stroke="#c9cdd2" strokeWidth="1.5" />
-                  <circle cx="90" cy="34" r="5" fill="#2ca01c" />
-                  <path d="M88 34l1.5 1.5 3-3" stroke="#fff" strokeWidth="1.2" fill="none" />
-                  <line x1="38" y1="30" x2="60" y2="30" stroke="#d4d7dc" strokeWidth="2" strokeLinecap="round" />
-                  <line x1="38" y1="38" x2="52" y2="38" stroke="#d4d7dc" strokeWidth="2" strokeLinecap="round" />
-
-                  {/* Character */}
-                  {/* Body / Shirt (Teal) */}
-                  <path d="M78 85 L95 85 L98 120 L76 120 Z" fill="#0d9488" />
-                  {/* Trousers (Purple/Navy) */}
-                  <path d="M76 120 L86 120 L84 150 L77 150 Z" fill="#312e81" />
-                  <path d="M87 120 L98 120 L96 150 L89 150 Z" fill="#312e81" />
-                  {/* Shoes (Pink) */}
-                  <rect x="75" y="148" width="10" height="4" rx="2" fill="#ec4899" />
-                  <rect x="88" y="148" width="10" height="4" rx="2" fill="#ec4899" />
-                  {/* Head & Hair */}
-                  <circle cx="88" cy="62" r="9" fill="#fed7aa" />
-                  <path d="M80 58 C80 50 96 50 96 58 C96 66 92 68 88 68 C82 68 80 64 80 58 Z" fill="#854d0e" />
-                  {/* Reaching Arm */}
-                  <path d="M82 85 L92 42" stroke="#fed7aa" strokeWidth="4" strokeLinecap="round" />
-                  <circle cx="92" cy="40" r="3" fill="#fed7aa" />
-                  {/* Red Bag */}
-                  <path d="M96 100 L104 102 L102 118 L94 116 Z" fill="#ef4444" rx="2" />
-                  <path d="M85 85 L98 106" stroke="#991b1b" strokeWidth="1.5" />
-                </svg>
-              </div>
-            </section>
-
-          </div>
-
-          {/* ════════════ RIGHT COLUMN: SIDEBAR WIDGETS ════════════ */}
-          <div className="w-full lg:w-[360px] flex-none space-y-6 lg:sticky lg:top-4">
-            
-            {/* ──── WIDGET 1: AUTOFILL ──── */}
-            <div className="bg-white border border-[#d4d7dc] rounded-xl p-5 shadow-xs">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-sm text-[#111]">Autofill</h3>
-                <button
-                  onClick={() => setAutofillWidgetOpen(!autofillWidgetOpen)}
-                  className="text-[#6b6c72] hover:text-[#111] cursor-pointer"
-                >
-                  {autofillWidgetOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-              </div>
-
-              {autofillWidgetOpen && (
-                <div className="space-y-4">
-                  {/* Document Type Select */}
-                  <div className="relative">
-                    <select
-                      value={autofillDocType}
-                      onChange={(e) => setAutofillDocType(e.target.value)}
-                      className="w-full h-[36px] px-3 pr-8 bg-white border border-[#c9cdd2] rounded-[4px] text-xs text-[#111] appearance-none outline-none focus:border-[#2ca01c] cursor-pointer"
-                    >
-                      <option value="Bill">Bill</option>
-                      <option value="Expense">Expense</option>
-                      <option value="Receipt">Receipt</option>
-                      <option value="Invoice">Invoice</option>
-                    </select>
-                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#6b6c72]" />
-                  </div>
-
-                  {/* Files / Images Toggle */}
-                  <div className="flex gap-2">
+                  {/* iOS Card Footer */}
+                  <div className="flex items-center justify-between pt-3 border-t border-black/5">
                     <button
-                      onClick={() => setAutofillTab('files')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-[4px] border transition cursor-pointer ${
-                        autofillTab === 'files'
-                          ? 'border-[#393a3d] bg-[#f0f2f4] text-[#111]'
-                          : 'border-[#d4d7dc] bg-white text-[#6b6c72] hover:bg-gray-50'
-                      }`}
+                      type="button"
+                      onClick={() => setCard1Open(!card1Open)}
+                      className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#0077AFF] text-[#007AFF] hover:underline cursor-pointer"
                     >
-                      <FileText size={14} />
-                      <span>Files</span>
+                      <span>{card1Open ? 'Hide list' : 'Show all (3)'}</span>
+                      {card1Open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
+
                     <button
-                      onClick={() => setAutofillTab('images')}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-[4px] border transition cursor-pointer ${
-                        autofillTab === 'images'
-                          ? 'border-[#393a3d] bg-[#f0f2f4] text-[#111]'
-                          : 'border-[#d4d7dc] bg-white text-[#6b6c72] hover:bg-gray-50'
-                      }`}
+                      type="button"
+                      onClick={() => onOpenInvoiceModal ? onOpenInvoiceModal() : alert('Reviewing all overdue invoices')}
+                      className="px-4 py-1.5 bg-[#007AFF]/10 hover:bg-[#007AFF]/15 active:scale-95 text-[#007AFF] font-semibold text-[12px] rounded-full transition cursor-pointer"
                     >
-                      <ImageIcon size={14} />
-                      <span>Images</span>
+                      Review all
                     </button>
                   </div>
 
-                  {/* Dashed Dropzone */}
+                </section>
+              )}
+
+              {/* ──── CARD 2: PROFIT AND LOSS ──── */}
+              {showCard('pnl') && (
+                <section className="bg-white border border-black/5 rounded-[20px] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all relative">
+                  
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#34C759] to-[#28CD41] flex items-center justify-center text-white shadow-xs">
+                        <TrendingUp size={20} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[#34C759]">Financial Summary</div>
+                        <h2 className="text-[17px] font-bold text-[#1C1C1E] leading-tight">Profit and Loss</h2>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveMenuCard(activeMenuCard === 2 ? null : 2)}
+                      className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </div>
+
+                  <p className="text-[13px] text-[#8E8E93] mb-4">
+                    Based on verified ledger activity, here is your calculated net profit for the previous month.
+                  </p>
+
+                  {/* iOS Metric Showcase */}
+                  <div className="bg-[#F9F9FB] rounded-[16px] p-4 border border-black/5 mb-4">
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#8E8E93] block mb-1">
+                      Net Profit (September)
+                    </span>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-3xl font-bold tracking-tight text-[#1C1C1E] tabular-nums">
+                        ₹1,16,342.22
+                      </span>
+                      <span className="inline-flex items-center gap-1 bg-[#34C759]/15 text-[#34C759] text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                        ↑ +672%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Apple iOS Smooth Progress Capsules */}
+                  <div className="space-y-4 mb-5">
+                    
+                    {/* Income */}
+                    <div>
+                      <div className="flex justify-between items-baseline mb-1.5 text-[12px]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#34C759]" />
+                          <span className="font-semibold text-[#1C1C1E]">Income:</span>
+                          <span className="font-bold text-[#1C1C1E] tabular-nums">₹6,96,974.50</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onNavigate ? onNavigate('sales_transactions') : alert('Reviewing 8 income transactions')}
+                          className="text-[#007AFF] hover:underline font-semibold text-[11px] cursor-pointer"
+                        >
+                          8 to review
+                        </button>
+                      </div>
+                      <div className="h-3 w-full bg-[#E5E5EA] rounded-full overflow-hidden flex">
+                        <div className="bg-[#34C759] h-full rounded-full" style={{ width: '74%' }} />
+                      </div>
+                    </div>
+
+                    {/* Expenses */}
+                    <div>
+                      <div className="flex justify-between items-baseline mb-1.5 text-[12px]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#5856D6]" />
+                          <span className="font-semibold text-[#1C1C1E]">Expenses:</span>
+                          <span className="font-bold text-[#1C1C1E] tabular-nums">₹5,80,575.50</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onNavigate ? onNavigate('expense_transactions') : alert('Reviewing 15 expense transactions')}
+                          className="text-[#007AFF] hover:underline font-semibold text-[11px] cursor-pointer"
+                        >
+                          15 to review
+                        </button>
+                      </div>
+                      <div className="h-3 w-full bg-[#E5E5EA] rounded-full overflow-hidden flex">
+                        <div className="bg-[#5856D6] h-full rounded-full" style={{ width: '62%' }} />
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* iOS Card Footer */}
+                  <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-black/5">
+                    <button
+                      type="button"
+                      onClick={() => onNavigate ? onNavigate('report_profit_loss') : alert('Opening Profit & Loss')}
+                      className="px-4 py-1.5 bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 text-[#1C1C1E] font-semibold text-[12px] rounded-full transition cursor-pointer"
+                    >
+                      View Report
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate ? onNavigate('bank_transactions') : alert('Categorizing transactions')}
+                      className="px-4 py-1.5 bg-[#34C759] hover:bg-[#28CD41] active:scale-95 text-white font-semibold text-[12px] rounded-full transition cursor-pointer shadow-xs"
+                    >
+                      Categorize Transactions
+                    </button>
+                  </div>
+
+                </section>
+              )}
+
+              {/* ──── CARD 3: PAYMENTS AGENT (LATE FEES RECOMMENDATION) ──── */}
+              {showCard('latefees') && (
+                <section className="bg-white border border-black/5 rounded-[20px] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all relative">
+                  
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#007AFF] to-[#5856D6] flex items-center justify-center text-white shadow-xs">
+                        <Activity size={20} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[#007AFF]">Meso Agent</div>
+                        <h2 className="text-[17px] font-bold text-[#1C1C1E] leading-tight">Payments Optimization</h2>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveMenuCard(activeMenuCard === 3 ? null : 3)}
+                      className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </div>
+
+                  <p className="text-[13px] text-[#3A3A3C] leading-relaxed mb-3">
+                    37% of your invoices in the last year were settled late or remained overdue. We recommend adding a standard 1.5% late fee to encourage timely payments.
+                  </p>
+
+                  <div className="bg-[#007AFF]/8 rounded-[14px] p-3 flex items-start gap-2.5 text-[12px] text-[#1C1C1E] mb-4 border border-[#007AFF]/15">
+                    <Info size={16} className="text-[#007AFF] flex-none mt-0.5" />
+                    <span>
+                      Apply a 1.5% late fee on unpaid balances after a 30-day grace period automatically.
+                    </span>
+                  </div>
+
+                  {/* Donut Visualization (Apple Fitness Ring style) */}
+                  {card3Open && (
+                    <div className="bg-[#F9F9FB] p-4 rounded-[16px] border border-black/5 mb-4 flex flex-col sm:flex-row items-center justify-between gap-6">
+                      <div>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E8E93]">INVOICE STATUS (12 MO)</span>
+                        <div className="text-3xl font-bold text-[#1C1C1E] mt-1 tabular-nums">37.5%</div>
+                        <div className="text-[12px] text-[#FF9500] font-medium">Overdue or paid late</div>
+                      </div>
+
+                      {/* Donut SVG Ring */}
+                      <div className="relative w-28 h-28 flex items-center justify-center flex-none">
+                        <svg viewBox="0 0 36 36" className="w-28 h-28 transform -rotate-90">
+                          {/* Segment 1: Paid on time (Apple Green 45%) */}
+                          <circle cx="18" cy="18" r="14" fill="transparent" stroke="#34C759" strokeWidth="6" strokeDasharray="45 100" strokeDashoffset="0" />
+                          {/* Segment 2: Open invoices (Apple Indigo 17.5%) */}
+                          <circle cx="18" cy="18" r="14" fill="transparent" stroke="#5856D6" strokeWidth="6" strokeDasharray="17.5 100" strokeDashoffset="-45" />
+                          {/* Segment 3: Paid late or overdue (Apple Orange 37.5%) */}
+                          <circle cx="18" cy="18" r="14" fill="transparent" stroke="#FF9500" strokeWidth="6" strokeDasharray="37.5 100" strokeDashoffset="-62.5" />
+                        </svg>
+                        <div className="absolute flex flex-col items-center">
+                          <span className="text-[10px] text-[#8E8E93] font-semibold">TOTAL</span>
+                          <span className="text-[13px] font-bold text-[#1C1C1E]">100%</span>
+                        </div>
+                      </div>
+
+                      {/* iOS Legend */}
+                      <div className="space-y-1.5 text-[12px] text-[#3A3A3C] w-full sm:w-auto">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#34C759]" />
+                          <span>Paid on time (45%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#5856D6]" />
+                          <span>Open invoices (17.5%)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full bg-[#FF9500]" />
+                          <span>Paid late (37.5%)</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Card Footer */}
+                  <div className="flex items-center justify-between pt-3 border-t border-black/5">
+                    <button
+                      type="button"
+                      onClick={() => setCard3Open(!card3Open)}
+                      className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#007AFF] hover:underline cursor-pointer"
+                    >
+                      <span>{card3Open ? 'Hide analysis' : 'Show analysis'}</span>
+                      {card3Open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => alert('Late fee automation settings enabled: 1.5% late fee on invoices.')}
+                      className="px-4 py-1.5 bg-[#007AFF] hover:bg-[#0062CC] active:scale-95 text-white font-semibold text-[12px] rounded-full transition cursor-pointer shadow-xs"
+                    >
+                      Set up late fees
+                    </button>
+                  </div>
+
+                </section>
+              )}
+
+              {/* ──── CARD 4: AUTOFILLING EXPENSES ──── */}
+              {showCard('expenses') && (
+                <section className="bg-white border border-black/5 rounded-[20px] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all relative">
+                  
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#FF9500] to-[#FF9F0A] flex items-center justify-center text-white shadow-xs">
+                        <Camera size={20} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[#FF9500]">Receipt Capture</div>
+                        <h2 className="text-[17px] font-bold text-[#1C1C1E] leading-tight">Autofill Expenses</h2>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveMenuCard(activeMenuCard === 4 ? null : 4)}
+                      className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </div>
+
+                  <p className="text-[13px] text-[#8E8E93] mb-4">
+                    Snap and store receipts for expenses like fuel, supplies, and office materials. Maximize deductions without manual paper entry.
+                  </p>
+
+                  {/* iOS Photo Dropzone */}
                   <div
-                    onClick={() => onOpenExpenseModal ? onOpenExpenseModal() : alert('Dropzone clicked')}
-                    className="border border-dashed border-[#9dbde0] bg-[#f5f8fc] rounded-lg p-5 text-center cursor-pointer hover:bg-[#eef4fb] transition"
+                    onClick={() => onOpenExpenseModal ? onOpenExpenseModal() : alert('Opening Expense upload')}
+                    className="border-2 border-dashed border-[#C7C7CC] hover:border-[#007AFF] bg-[#F9F9FB] hover:bg-[#F2F2F7] transition rounded-[16px] p-6 flex flex-col items-center justify-center cursor-pointer group"
                   >
-                    <p className="text-xs font-semibold text-[#0077c5] hover:underline">
-                      Select a file or drag and drop here
-                    </p>
-                    <p className="text-[11px] text-[#8d9096] mt-1">
-                      Supported formats: .pdf, .jpg, .png
+                    <div className="w-11 h-11 rounded-full bg-white shadow-xs flex items-center justify-center text-[#007AFF] group-hover:scale-105 transition mb-2">
+                      <Upload size={18} />
+                    </div>
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-[#007AFF] text-white font-semibold text-[12px] rounded-full shadow-xs hover:bg-[#0062CC] transition cursor-pointer mt-1"
+                    >
+                      Upload Receipt
+                    </button>
+                    <p className="text-[12px] text-[#8E8E93] mt-2">or drag and drop PDF, PNG, JPG here</p>
+                  </div>
+
+                </section>
+              )}
+
+              {/* ──── CARD 5: INVOICES PAID (PAYMENTS THIS WEEK) ──── */}
+              {showCard('payments') && (
+                <section className="bg-white border border-black/5 rounded-[20px] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all relative">
+                  
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-[14px] bg-gradient-to-br from-[#30B0C7] to-[#007AFF] flex items-center justify-center text-white shadow-xs">
+                        <CreditCard size={20} />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-[#30B0C7]">Settled</div>
+                        <h2 className="text-[17px] font-bold text-[#1C1C1E] leading-tight">Invoices Paid</h2>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveMenuCard(activeMenuCard === 5 ? null : 5)}
+                      className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#1C1C1E] tabular-nums mb-1">
+                      ₹1,86,668.42
+                    </div>
+                    <p className="text-[13px] text-[#8E8E93]">
+                      9 customer payments have arrived in your account this week.
                     </p>
                   </div>
 
-                  {/* Email Forward Section */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#393a3d] mb-1.5">
-                      Or forward bill-related emails here
-                    </label>
-                    <div className="flex items-center justify-between p-2.5 bg-[#fbfcfd] border border-[#c9cdd2] rounded-[4px] text-xs">
-                      <span className="text-[#393a3d] truncate">lawns__paws@assist.meso.in</span>
+                  {card5Open && (
+                    <div className="bg-[#F9F9FB] rounded-[16px] border border-black/5 divide-y divide-black/5 overflow-hidden mb-4">
+                      {[
+                        { customer: 'Cool Cars (Inv #1004)', amount: '₹98,400.00', date: 'Yesterday' },
+                        { customer: 'Dylan Sollfrank (Inv #1005)', amount: '₹53,300.00', date: '2 days ago' },
+                        { customer: 'Garden Depot (Inv #1006)', amount: '₹34,968.42', date: '3 days ago' }
+                      ].map((item, idx) => (
+                        <div key={idx} className="p-3 sm:px-4 flex items-center justify-between text-[13px]">
+                          <div className="flex items-center gap-2.5">
+                            <CheckCircle2 size={16} className="text-[#34C759]" />
+                            <span className="font-semibold text-[#1C1C1E]">{item.customer}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[11px] text-[#8E8E93]">{item.date}</span>
+                            <span className="font-bold text-[#1C1C1E] tabular-nums">{item.amount}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-3 border-t border-black/5">
+                    <button
+                      type="button"
+                      onClick={() => setCard5Open(!card5Open)}
+                      className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#007AFF] hover:underline cursor-pointer"
+                    >
+                      <span>{card5Open ? 'Hide list' : 'Show details (3)'}</span>
+                      {card5Open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onNavigate ? onNavigate('sales_transactions') : alert('Navigating to payments')}
+                      className="px-4 py-1.5 bg-[#007AFF]/10 hover:bg-[#007AFF]/15 active:scale-95 text-[#007AFF] font-semibold text-[12px] rounded-full transition cursor-pointer"
+                    >
+                      Go to payments
+                    </button>
+                  </div>
+
+                </section>
+              )}
+
+              {/* ──── CARD 6: FORWARDING EMAILS TO AUTOFILL TRANSACTIONS ──── */}
+              {showCard('email') && (
+                <section className="bg-white border border-black/5 rounded-[20px] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.05)] transition-all relative">
+                  
+                  {/* Apple Wallet / Pass style top banner */}
+                  <div className="bg-gradient-to-r from-[#E3EDF7] via-[#EBF2FA] to-[#F4F7FB] p-5 sm:p-6 border-b border-black/5">
+                    
+                    {/* Header line */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#AF52DE] to-[#5856D6] flex items-center justify-center text-white shadow-xs">
+                          <Mail size={16} />
+                        </div>
+                        <span className="text-[12px] font-bold text-[#1C1C1E]">Smart Mail Drop</span>
+                      </div>
+
                       <button
-                        onClick={() => handleCopy('lawns__paws@assist.meso.in', 'widget_bill')}
-                        title="Copy email"
-                        className="text-[#6b6c72] hover:text-[#111] ml-2 cursor-pointer"
+                        type="button"
+                        onClick={() => setActiveMenuCard(activeMenuCard === 6 ? null : 6)}
+                        className="w-8 h-8 rounded-full bg-white/70 hover:bg-white flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
                       >
-                        {copiedId === 'widget_bill' ? <Check size={14} className="text-[#2ca01c]" /> : <Copy size={14} />}
+                        <MoreVertical size={15} />
+                      </button>
+                    </div>
+
+                    {/* iOS Floating Notification Pill */}
+                    <div className="bg-white/95 backdrop-blur-md rounded-[16px] border border-black/5 shadow-xs p-3.5 max-w-md mx-auto">
+                      <div className="flex items-center gap-2 font-bold text-[13px] text-[#1C1C1E] mb-2">
+                        <CheckCircle2 size={16} className="text-[#34C759]" />
+                        <span>₹5,25,382.00 in forwarded invoices ready</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-[#8E8E93] pt-2 border-t border-black/5">
+                        <span>Just now</span>
+                        <span className="font-medium text-[#1C1C1E] flex items-center gap-1">
+                          <Mail size={12} className="text-[#8E8E93]" />
+                          FWD: Annual maintenance quote
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onOpenInvoiceModal ? onOpenInvoiceModal() : alert('Reviewing quote invoice')}
+                          className="text-[#007AFF] font-bold hover:underline cursor-pointer"
+                        >
+                          Review
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Main Content */}
+                  <div className="p-5 sm:p-6">
+                    <h3 className="text-[16px] font-bold text-[#1C1C1E] mb-2">
+                      Forward emails directly to automatically draft ledger transactions
+                    </h3>
+                    <p className="text-[13px] text-[#8E8E93] mb-4">
+                      Skip manual typing. Any invoice or bill forwarded to these dedicated addresses is parsed and placed in your feed.
+                    </p>
+
+                    {/* Two email forwarding boxes (iOS Inset style) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4">
+                      
+                      {/* Left: Invoices & estimates */}
+                      <div className="bg-[#F9F9FB] rounded-[16px] p-3 border border-black/5">
+                        <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-1.5">
+                          Sales & Invoices
+                        </label>
+                        <div className="flex items-center justify-between gap-2 bg-white rounded-[12px] p-2 border border-black/5">
+                          <span className="text-[12px] text-[#1C1C1E] font-medium truncate">
+                            sales@assist.meso.in
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy('sales@assist.meso.in', 'sales')}
+                            className="p-1.5 rounded-full hover:bg-[#F2F2F7] text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                          >
+                            {copiedId === 'sales' ? <Check size={14} className="text-[#34C759]" /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Right: Bills & expenses */}
+                      <div className="bg-[#F9F9FB] rounded-[16px] p-3 border border-black/5">
+                        <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-1.5">
+                          Bills & Expenses
+                        </label>
+                        <div className="flex items-center justify-between gap-2 bg-white rounded-[12px] p-2 border border-black/5">
+                          <span className="text-[12px] text-[#1C1C1E] font-medium truncate">
+                            expenses@assist.meso.in
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy('expenses@assist.meso.in', 'expenses')}
+                            className="p-1.5 rounded-full hover:bg-[#F2F2F7] text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                          >
+                            {copiedId === 'expenses' ? <Check size={14} className="text-[#34C759]" /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Learn how */}
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setCard6LearnOpen(!card6LearnOpen)}
+                        className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#007AFF] hover:underline cursor-pointer"
+                      >
+                        <span>Learn how it works</span>
+                        {card6LearnOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+
+                      {card6LearnOpen && (
+                        <div className="mt-3 p-3.5 bg-[#F9F9FB] rounded-[14px] text-[12px] text-[#3A3A3C] space-y-2 border border-black/5">
+                          <div className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#007AFF]/10 text-[#007AFF] font-bold text-[11px] flex items-center justify-center flex-none">1</span>
+                            <span>Forward any vendor bill or customer receipt email directly to your custom address.</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#007AFF]/10 text-[#007AFF] font-bold text-[11px] flex items-center justify-center flex-none">2</span>
+                            <span>Meso Assist extracts items, tax values, and customer dates automatically.</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#007AFF]/10 text-[#007AFF] font-bold text-[11px] flex items-center justify-center flex-none">3</span>
+                            <span>Review and approve directly from your Business Feed in one click.</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+
+                </section>
+              )}
+
+              {/* ──── CARD 7: YOU'RE ALL CAUGHT UP! ──── */}
+              {showCard('caughtup') && (
+                <section className="bg-gradient-to-br from-[#EBF9F1] via-[#F2FBF6] to-white border border-[#34C759]/20 rounded-[22px] p-6 sm:p-8 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col md:flex-row items-center justify-between gap-6">
+                  
+                  <div className="flex-1 space-y-3">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#34C759]/15 text-[#34C759] text-[11px] font-bold rounded-full">
+                      <CheckCircle2 size={13} />
+                      <span>Up to date</span>
+                    </div>
+
+                    <h3 className="text-[24px] sm:text-[28px] font-bold text-[#1C1C1E] tracking-tight leading-tight">
+                      You're all caught up!
+                    </h3>
+                    <p className="text-[13px] text-[#8E8E93]">
+                      All incoming feeds, reminders, and pending reviews have been addressed. Come back anytime or trigger a new action below.
+                    </p>
+
+                    {/* Apple Quick Action Pills */}
+                    <div className="flex flex-wrap gap-2.5 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => onOpenExpenseModal ? onOpenExpenseModal() : alert('Generate a bill')}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 active:scale-95 border border-black/10 rounded-full text-[12px] font-semibold text-[#1C1C1E] shadow-xs transition cursor-pointer"
+                      >
+                        <Printer size={14} className="text-[#8E8E93]" />
+                        <span>Generate a Bill</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onOpenExpenseModal ? onOpenExpenseModal() : alert('Receipt upload')}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 active:scale-95 border border-black/10 rounded-full text-[12px] font-semibold text-[#1C1C1E] shadow-xs transition cursor-pointer"
+                      >
+                        <Camera size={14} className="text-[#8E8E93]" />
+                        <span>Receipt Upload</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onOpenInvoiceModal ? onOpenInvoiceModal() : alert('Generate an invoice')}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#007AFF] hover:bg-[#0062CC] active:scale-95 text-white rounded-full text-[12px] font-semibold shadow-xs transition cursor-pointer"
+                      >
+                        <FileText size={14} />
+                        <span>Create Invoice</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* Manage Settings */}
-                  <div className="pt-1">
-                    <button
-                      onClick={() => alert('Autofill rules & settings opened')}
-                      className="flex items-center gap-1.5 text-xs font-semibold text-[#393a3d] hover:text-[#0077c5] transition cursor-pointer"
-                    >
-                      <Settings size={14} />
-                      <span>Manage settings</span>
-                    </button>
+                  {/* Clean Apple Accomplishment Graphic */}
+                  <div className="w-40 h-40 flex-none flex items-center justify-center relative">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-[#34C759]/20 to-[#30B0C7]/20 flex items-center justify-center shadow-inner">
+                      <div className="w-20 h-20 rounded-full bg-white shadow-md flex items-center justify-center text-[#34C759]">
+                        <CheckCircle2 size={44} />
+                      </div>
+                    </div>
                   </div>
-                </div>
+
+                </section>
               )}
+
             </div>
 
-            {/* ──── WIDGET 2: MESO'S AI AGENTS ──── */}
-            <div className="bg-white border border-[#d4d7dc] rounded-xl p-5 shadow-xs">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-sm text-[#111]">Meso's AI agents</h3>
-                <button
-                  onClick={() => setAgentsWidgetOpen(!agentsWidgetOpen)}
-                  className="text-[#6b6c72] hover:text-[#111] cursor-pointer"
-                >
-                  {agentsWidgetOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
+            {/* ════════════ RIGHT COLUMN: SIDEBAR WIDGETS (Apple iPadOS / macOS Desktop Widget style) ════════════ */}
+            <div className="w-full lg:w-[340px] flex-none space-y-5 lg:sticky lg:top-6">
+              
+              {/* ──── WIDGET 1: AUTOFILL ──── */}
+              <div className="bg-white border border-black/5 rounded-[20px] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                
+                <div className="flex items-center justify-between mb-3.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-[9px] bg-gradient-to-br from-[#007AFF] to-[#5856D6] flex items-center justify-center text-white shadow-xs">
+                      <Upload size={14} />
+                    </div>
+                    <h3 className="font-bold text-[15px] text-[#1C1C1E]">Quick Autofill</h3>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setAutofillWidgetOpen(!autofillWidgetOpen)}
+                    className="w-7 h-7 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                  >
+                    {autofillWidgetOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
+                </div>
+
+                {autofillWidgetOpen && (
+                  <div className="space-y-3.5">
+                    
+                    {/* Document Type Dropdown */}
+                    <div className="relative">
+                      <select
+                        value={autofillDocType}
+                        onChange={(e) => setAutofillDocType(e.target.value)}
+                        className="w-full h-[36px] px-3 pr-8 bg-[#F9F9FB] border border-black/10 rounded-[12px] text-[12px] font-medium text-[#1C1C1E] appearance-none outline-none focus:border-[#007AFF] cursor-pointer"
+                      >
+                        <option value="Bill">Bill document</option>
+                        <option value="Expense">Expense receipt</option>
+                        <option value="Invoice">Customer Invoice</option>
+                      </select>
+                      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#8E8E93]" />
+                    </div>
+
+                    {/* iOS Segmented Toggle (Files / Images) */}
+                    <div className="bg-[#E5E5EA] p-0.5 rounded-[12px] flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => setAutofillTab('files')}
+                        className={`flex-1 py-1 text-[11px] font-semibold rounded-[10px] flex items-center justify-center gap-1 transition ${
+                          autofillTab === 'files'
+                            ? 'bg-white text-[#1C1C1E] shadow-xs'
+                            : 'text-[#636366] hover:text-[#1C1C1E]'
+                        }`}
+                      >
+                        <FileText size={13} />
+                        <span>Files</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAutofillTab('images')}
+                        className={`flex-1 py-1 text-[11px] font-semibold rounded-[10px] flex items-center justify-center gap-1 transition ${
+                          autofillTab === 'images'
+                            ? 'bg-white text-[#1C1C1E] shadow-xs'
+                            : 'text-[#636366] hover:text-[#1C1C1E]'
+                        }`}
+                      >
+                        <ImageIcon size={13} />
+                        <span>Images</span>
+                      </button>
+                    </div>
+
+                    {/* Mini Drag & Drop Area */}
+                    <div
+                      onClick={() => onOpenExpenseModal ? onOpenExpenseModal() : alert('Dropzone clicked')}
+                      className="border border-dashed border-[#C7C7CC] hover:border-[#007AFF] bg-[#F9F9FB] hover:bg-[#F2F2F7] rounded-[14px] p-4 text-center cursor-pointer transition"
+                    >
+                      <p className="text-[12px] font-semibold text-[#007AFF]">
+                        Select or drag files here
+                      </p>
+                      <p className="text-[10px] text-[#8E8E93] mt-0.5">
+                        PDF, JPG, PNG up to 25 MB
+                      </p>
+                    </div>
+
+                    {/* Email Forward Section */}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider mb-1">
+                        Forward bills directly
+                      </label>
+                      <div className="flex items-center justify-between p-2 bg-[#F9F9FB] border border-black/5 rounded-[12px] text-[12px]">
+                        <span className="text-[#1C1C1E] font-medium truncate">bills@assist.meso.in</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy('bills@assist.meso.in', 'widget_bill')}
+                          className="p-1 rounded-full hover:bg-[#E5E5EA] text-[#8E8E93] hover:text-[#1C1C1E] ml-1.5 cursor-pointer"
+                        >
+                          {copiedId === 'widget_bill' ? <Check size={14} className="text-[#34C759]" /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Manage settings */}
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => alert('Autofill rules & settings opened')}
+                        className="flex items-center gap-1.5 text-[12px] font-semibold text-[#8E8E93] hover:text-[#007AFF] transition cursor-pointer"
+                      >
+                        <Settings size={13} />
+                        <span>Autofill preferences</span>
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
               </div>
 
-              <p className="text-xs text-[#6b6c72] mb-4">
-                3 active agents included in your plan.
-              </p>
-
-              {agentsWidgetOpen && (
-                <div className="space-y-4">
-                  
-                  {/* Agent 1: Accounting Agent */}
-                  <div className="flex items-start gap-3 pb-3 border-b border-[#f0f2f4]">
-                    <div className="w-8 h-8 rounded-full bg-[#0a3e42] flex items-center justify-center text-white text-xs font-bold flex-none">
-                      <Activity size={15} className="text-[#2ca01c]" />
+              {/* ──── WIDGET 2: MESO'S AI AGENTS ──── */}
+              <div className="bg-white border border-black/5 rounded-[20px] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-[9px] bg-gradient-to-br from-[#AF52DE] to-[#5856D6] flex items-center justify-center text-white shadow-xs">
+                      <Layers size={14} />
                     </div>
-                    <div className="text-xs">
-                      <h4 className="font-bold text-[#111]">Accounting Agent</h4>
-                      <p className="text-[#6b6c72] mt-0.5 leading-snug">
-                        Automates categorization and expense tracking.{' '}
-                        <button onClick={() => alert('Accounting Agent Details')} className="text-[#0077c5] hover:underline font-semibold cursor-pointer">Learn more</button>
-                      </p>
-                    </div>
+                    <h3 className="font-bold text-[15px] text-[#1C1C1E]">Meso Agents</h3>
                   </div>
 
-                  {/* Agent 2: Payments Agent */}
-                  <div className="flex items-start gap-3 pb-3 border-b border-[#f0f2f4]">
-                    <div className="w-8 h-8 rounded-full bg-[#0a3e42] flex items-center justify-center text-white text-xs font-bold flex-none">
-                      <TrendingUp size={15} className="text-[#00c5cd]" />
-                    </div>
-                    <div className="text-xs">
-                      <h4 className="font-bold text-[#111]">Payments Agent</h4>
-                      <p className="text-[#6b6c72] mt-0.5 leading-snug">
-                        Suggests faster ways to get paid by optimizing your invoicing.{' '}
-                        <button onClick={() => alert('Payments Agent Details')} className="text-[#0077c5] hover:underline font-semibold cursor-pointer">Learn more</button>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Agent 3: Customer Agent BETA */}
-                  <div className="flex items-start gap-3 pb-3 border-b border-[#f0f2f4]">
-                    <div className="w-8 h-8 rounded-full bg-[#0a3e42] flex items-center justify-center text-white text-xs font-bold flex-none">
-                      <Users size={15} className="text-[#2ca01c]" />
-                    </div>
-                    <div className="text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <h4 className="font-bold text-[#111]">Customer Agent</h4>
-                        <span className="bg-[#0d7d72] text-white text-[9px] font-bold px-1 rounded">BETA</span>
-                      </div>
-                      <p className="text-[#6b6c72] mt-0.5 leading-snug">
-                        Identifies leads in your inbox, drafts follow-ups and tracks status.{' '}
-                        <button onClick={() => alert('Customer Agent Details')} className="text-[#0077c5] hover:underline font-semibold cursor-pointer">Learn more</button>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Explore all agents */}
-                  <div className="pt-1">
-                    <button
-                      onClick={() => alert('Opening AI Agent Marketplace')}
-                      className="text-xs font-bold text-[#111] hover:underline cursor-pointer"
-                    >
-                      Explore all agents
-                    </button>
-                  </div>
-
+                  <button
+                    type="button"
+                    onClick={() => setAgentsWidgetOpen(!agentsWidgetOpen)}
+                    className="w-7 h-7 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition cursor-pointer"
+                  >
+                    {agentsWidgetOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  </button>
                 </div>
-              )}
+
+                <p className="text-[12px] text-[#8E8E93] mb-3.5">
+                  3 active smart agents included in your business plan.
+                </p>
+
+                {agentsWidgetOpen && (
+                  <div className="space-y-3">
+                    
+                    {/* Agent 1: Accounting Agent */}
+                    <div className="bg-[#F9F9FB] rounded-[14px] p-3 border border-black/5 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#34C759] to-[#28CD41] flex items-center justify-center text-white flex-none shadow-xs">
+                        <Activity size={15} />
+                      </div>
+                      <div className="text-[12px] min-w-0">
+                        <h4 className="font-bold text-[#1C1C1E]">Accounting Agent</h4>
+                        <p className="text-[#8E8E93] mt-0.5 leading-snug">
+                          Automates transaction categorization and reconciliations.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Agent 2: Payments Agent */}
+                    <div className="bg-[#F9F9FB] rounded-[14px] p-3 border border-black/5 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#007AFF] to-[#5856D6] flex items-center justify-center text-white flex-none shadow-xs">
+                        <TrendingUp size={15} />
+                      </div>
+                      <div className="text-[12px] min-w-0">
+                        <h4 className="font-bold text-[#1C1C1E]">Payments Agent</h4>
+                        <p className="text-[#8E8E93] mt-0.5 leading-snug">
+                          Monitors overdue receivables and suggests invoice terms.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Agent 3: Customer Agent */}
+                    <div className="bg-[#F9F9FB] rounded-[14px] p-3 border border-black/5 flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-[#FF9500] to-[#FF9F0A] flex items-center justify-center text-white flex-none shadow-xs">
+                        <Users size={15} />
+                      </div>
+                      <div className="text-[12px] min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-bold text-[#1C1C1E]">Customer Agent</h4>
+                          <span className="bg-[#FF9500]/15 text-[#FF9500] text-[9px] font-bold px-1.5 py-0.2 rounded-full">BETA</span>
+                        </div>
+                        <p className="text-[#8E8E93] mt-0.5 leading-snug">
+                          Drafts invoice follow-ups and tracks customer communication.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Explore all agents button */}
+                    <div className="pt-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => alert('Opening AI Agent Directory')}
+                        className="w-full py-2 bg-[#F2F2F7] hover:bg-[#E5E5EA] active:scale-95 text-[#1C1C1E] text-[12px] font-semibold rounded-full transition cursor-pointer"
+                      >
+                        Explore all agents
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+
             </div>
 
           </div>
 
         </div>
-
       </div>
 
     </div>
