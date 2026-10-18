@@ -38,6 +38,7 @@ import orderToCashRouter from './routes/orderToCash.js';
 import procureToPayRouter from './routes/procureToPay.js';
 import inventoryProjectsRouter from './routes/inventoryProjects.js';
 import bankingTreasuryRouter from './routes/bankingTreasury.js';
+import aiAutonomousAccountantRouter from './routes/aiAutonomousAccountant.js';
 import { startRecurringRunner } from './jobs/recurringRunner.js';
 
 import { idempotency } from './middleware/integrity.js';
@@ -182,6 +183,7 @@ app.use('/api/procure-to-pay', procureToPayRouter);
 app.use('/api', procureToPayRouter);
 app.use('/api', inventoryProjectsRouter);
 app.use('/api', bankingTreasuryRouter);
+app.use('/api', aiAutonomousAccountantRouter);
 
 // Serve Frontend Static Build if available (SPA Fallback)
 if (fs.existsSync(distPath)) {
