@@ -26,6 +26,7 @@ export default function TopBar({
   searchQuery = "", 
   setSearchQuery, 
   onSearch, 
+  onNavigate,
   onOpenSettings,
   onOpenShortcuts,
   onOpenAssistant,
@@ -173,11 +174,17 @@ export default function TopBar({
 
           {/* Search Dropdown attached directly below input */}
           {isSearchFocused && (
-            <div className="absolute left-0 top-full mt-1.5 w-full z-50">
+            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[720px] max-w-[95vw] z-50">
               <SearchDropdown
                 query={searchQuery}
                 onSelectResult={handleSelectResult}
                 onAdvancedSearch={handleAdvancedSearch}
+                onNavigate={(v, q) => {
+                  setIsSearchFocused(false);
+                  if (onNavigate) onNavigate(v, q);
+                  else if (onSearch) onSearch(v);
+                }}
+                onClose={() => setIsSearchFocused(false)}
               />
             </div>
           )}

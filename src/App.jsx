@@ -661,6 +661,16 @@ export default function App() {
             onNavigate={(v) => navigate(v)}
           />
         );
+      case 'bills':
+      case 'bills_view':
+        return (
+          <ExpensesView
+            initialTab="bills"
+            onOpenExpenseModal={() => handleQuickCreateAction('Expense')}
+            onOpenBillModal={() => setBillModalOpen(true)}
+            onNavigate={(v) => navigate(v)}
+          />
+        );
       case 'customer_hub':
         return <CustomerHubView onNavigate={(v) => navigate(v)} />;
       case 'custom_reports':
@@ -801,6 +811,7 @@ export default function App() {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onSearch={handleSearch}
+          onNavigate={(v, q) => navigate(v, q)}
           onOpenSettings={() => { closeAllOverlays('settings'); setSettingsMenuOpen(prev => !prev); }}
           onOpenShortcuts={() => { closeAllOverlays('additionalInfo'); setAdditionalInfoOpen(true); }}
           onOpenAssistant={() => { closeAllOverlays('assistant'); setAssistantOpen(true); }}

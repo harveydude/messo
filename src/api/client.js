@@ -106,11 +106,25 @@ function getMockFallback(endpoint, options = {}) {
   if (endpoint.includes('/search')) {
     return {
       success: true,
-      ai_summary: 'Showing recent customer invoices and transactions.',
+      type: 'SEARCH',
+      ai_summary: 'Showing recent customer invoices, bills, and accounting transactions.',
       records: [
-        { date: '10/24/2025', type: 'Invoice', ref_no: 'INV-1037', contact_name: 'Sonnenschein Family Store', total_amount: '362.07', status: 'OPEN' },
-        { date: '10/24/2025', type: 'Invoice', ref_no: 'INV-1035', contact_name: 'Mark Cho', total_amount: '314.28', status: 'OPEN' },
-        { date: '10/23/2025', type: 'Invoice', ref_no: 'INV-1036', contact_name: 'Freeman Sporting Goods', total_amount: '477.50', status: 'OPEN' }
+        { date: '10/24/2025', type: 'Invoice', doc_number: '1037', contact_name: 'Sonnenschein Family Store', total_inr: '362.07', status: 'OPEN' },
+        { date: '10/24/2025', type: 'Invoice', doc_number: '1035', contact_name: 'Mark Cho', total_inr: '314.28', status: 'OPEN' },
+        { date: '10/23/2025', type: 'Invoice', doc_number: '1036', contact_name: 'Freeman Sporting Goods', total_inr: '477.50', status: 'OPEN' }
+      ],
+      transactions: [
+        { id: 'inv_1037', title: 'Invoice #1037', subtitle: '₹362.07 - OPEN (Sonnenschein Family Store)', total_inr: '362.07', type: 'Invoice', date: '2025-10-24' },
+        { id: 'inv_1035', title: 'Invoice #1035', subtitle: '₹314.28 - OPEN (Mark Cho)', total_inr: '314.28', type: 'Invoice', date: '2025-10-24' },
+        { id: 'inv_1036', title: 'Invoice #1036', subtitle: '₹477.50 - OPEN (Freeman Sporting Goods)', total_inr: '477.50', type: 'Invoice', date: '2025-10-23' }
+      ],
+      contacts: [
+        { id: 'c_1', title: 'Sonnenschein Family Store', subtitle: 'Customer • Retail & Wholesale', type: 'CUSTOMER' },
+        { id: 'c_2', title: 'Mark Cho', subtitle: 'Customer • Regular Client', type: 'CUSTOMER' }
+      ],
+      reports: [
+        { id: 'report_profit_loss', title: 'Profit and Loss', subtitle: 'Revenue, expenses & net profit statement', route: 'report_profit_loss' },
+        { id: 'balance_sheet', title: 'Balance Sheet', subtitle: 'Assets, liabilities & equity statement', route: 'balance_sheet' }
       ]
     };
   }

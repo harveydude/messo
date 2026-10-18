@@ -236,6 +236,10 @@ export async function smartSearchAndQA(query = '') {
   const isInvoiceSearch = q.includes('invoice');
   const isReportSearch = q.includes('report');
 
+  // Strip generic prefix words to get the core search token (e.g. "invoice 1037" -> "1037")
+  const strippedQ = q.replace(/^(invoice|invoices|customer|customers|vendor|vendors|bill|bills|report|reports)\s*/gi, '').replace(/^#/, '').trim();
+  const searchPattern = `%${strippedQ || q}%`;
+
   const contacts = await db.query(`
     SELECT id, display_name, type, email
     FROM contacts
@@ -243,8 +247,8 @@ export async function smartSearchAndQA(query = '') {
        OR LOWER(email) LIKE $1
        OR ($2 = true AND type = 'CUSTOMER')
        OR ($3 = true AND type = 'VENDOR')
-    LIMIT 10
-  `, [`%${q}%`, isCustomerSearch, isVendorSearch]);
+    LIMIT 15
+  `, [searchPattern, isCustomerSearch && !strippedQ, isVendorSearch && !strippedQ]);
 
   const invoices = await db.query(`
     SELECT i.id, i.invoice_number, i.total_paise, i.balance_due_paise, i.status, i.issue_date, i.due_date,
@@ -253,10 +257,10 @@ export async function smartSearchAndQA(query = '') {
     LEFT JOIN contacts c ON i.customer_id = c.id
     WHERE LOWER(i.invoice_number) LIKE $1 
        OR LOWER(c.display_name) LIKE $1
-       OR $2 = true
+       OR ($2 = true)
     ORDER BY i.created_at DESC
-    LIMIT 10
-  `, [`%${q}%`, isInvoiceSearch]);
+    LIMIT 15
+  `, [searchPattern, isInvoiceSearch && !strippedQ]);
 
   const accounts = await db.query(`
     SELECT id, code, name, account_type
