@@ -21,29 +21,26 @@ export const ROUTES = [
   { id: 'onboarding', slug: '/onboarding', label: 'Setup wizard', aliases: ['/setup', '/wizard'] },
   { id: 'bookmarks', slug: '/bookmarks', label: 'Bookmarks' },
 
-  { id: 'bank_transactions', slug: '/banking', label: 'Bank transactions' },
+  { id: 'bank_transactions', slug: '/banking', label: 'Bank transactions', aliases: ['/accounting', '/bank', '/bank-transactions', '/ledger'] },
   { id: 'all_lists', slug: '/lists', label: 'All lists' },
-  { id: 'chart_of_accounts', slug: '/chart-of-accounts', label: 'Chart of accounts' },
+  { id: 'chart_of_accounts', slug: '/chart-of-accounts', label: 'Chart of accounts', aliases: ['/accounts', '/coa', '/chartofaccounts'] },
   { id: 'rules', slug: '/rules', label: 'Rules' },
   { id: 'products_services', slug: '/products-and-services', label: 'Products and services' },
   { id: 'recurring_transactions', slug: '/recurring', label: 'Recurring transactions' },
 
   { id: 'sales_transactions', slug: '/sales', label: 'Sales' },
-  { id: 'invoices', slug: '/invoices', label: 'Invoices', aliases: ['/invoices/list'] },
+  { id: 'invoices', slug: '/invoices', label: 'Invoices', aliases: ['/invoices/list', '/sales/invoices', '/sales-invoices'] },
   { id: 'invoice_editor', slug: '/invoices/new', label: 'New Invoice', aliases: ['/invoice-editor', '/invoices/create'] },
   { id: 'expense_transactions', slug: '/expenses', label: 'Expenses',
     // The dashboard cards used to navigate to 'expenses', which no branch
     // matched, so three links produced a completely blank screen.
     aliases: ['/expenses-to-review', '/categorize'] },
-  { id: 'customers_list', slug: '/customers', label: 'Customers' },
-  // The supplier-side lists. `/vendors` and `/team` were previously claimed by
-  // other routes (the Time screen aliased `/team`), so they were unreachable:
-  // the address a person would guess from the menu led somewhere else entirely.
-  { id: 'vendors', slug: '/vendors', label: 'Vendors' },
-  { id: 'team', slug: '/team', label: 'Team' },
-  { id: 'payroll', slug: '/payroll', label: 'Payroll' },
+  { id: 'customers_list', slug: '/customers', label: 'Customers', aliases: ['/clients', '/debtors'] },
+  { id: 'vendors', slug: '/vendors', label: 'Vendors', aliases: ['/suppliers', '/vendors/list'] },
+  { id: 'team', slug: '/team', label: 'Team', aliases: ['/staff', '/employees'] },
+  { id: 'payroll', slug: '/payroll', label: 'Payroll', aliases: ['/pay', '/salary'] },
 
-  { id: 'standard_reports', slug: '/reports', label: 'Reports', aliases: ['/standard-reports'] },
+  { id: 'standard_reports', slug: '/reports', label: 'Reports', aliases: ['/standard-reports', '/report-center', '/pnl', '/profit-loss'] },
   { id: 'reports', slug: '/reports', label: 'Reports' },
   { id: 'balance_sheet', slug: '/reports/balance-sheet', label: 'Balance sheet' },
   { id: 'management_reports', slug: '/reports/management', label: 'Management reports' },
@@ -54,16 +51,13 @@ export const ROUTES = [
   // India-first statutory screens. `sales_tax` is the GST screen -- CGST, SGST,
   // IGST, HSN/SAC and the GSTR return calendar -- not a US sales-tax form with
   // the wording changed. Aliases cover the spellings these have been reached by.
-  { id: 'sales_tax', slug: '/sales-tax', label: 'Sales tax', aliases: ['/gst', '/tax'] },
-  { id: 'business_tax', slug: '/business-tax', label: 'Business tax', aliases: ['/tds'] },
+  { id: 'sales_tax', slug: '/sales-tax', label: 'Sales tax', aliases: ['/gst', '/tax', '/gst/returns', '/gst-returns', '/gstr1', '/gstr3b'] },
+  { id: 'business_tax', slug: '/business-tax', label: 'Business tax', aliases: ['/tds', '/direct-tax', '/tds-tax', '/tds/returns'] },
   { id: 'lending', slug: '/lending', label: 'Lending', aliases: ['/loans'] },
 
   { id: 'feed', slug: '/feed', label: 'Business feed' },
   { id: 'mileage', slug: '/mileage', label: 'Mileage' },
-  // `/team` used to be an alias for this. It is now the Team screen's own address
-// -- the alias meant the name people expected to reach the staff list opened
-// the timesheet instead, which is why the Team screen had no way in.
-{ id: 'time_entries', slug: '/time', label: 'Time' },
+  { id: 'time_entries', slug: '/time', label: 'Time', aliases: ['/timesheet', '/time/entries'] },
   { id: 'budgets', slug: '/budgets', label: 'Budgets' },
   { id: 'pricing', slug: '/pricing', label: 'Plans' },
   { id: 'apps', slug: '/apps', label: 'Integrations' },
@@ -91,7 +85,7 @@ export const ROUTES = [
   { id: 'orders', slug: '/orders', label: 'Sales orders' },
   { id: 'purchase_orders', slug: '/purchase-orders', label: 'Purchase orders' },
   { id: 'credit_memos', slug: '/credit-memos', label: 'Credit memos' },
-  { id: 'bills', slug: '/bills', label: 'Bills' },
+  { id: 'bills', slug: '/bills', label: 'Bills', aliases: ['/pay-bills', '/bills-pay', '/bills/pay', '/vendor-bills'] },
 
   // Gear-menu utility screens.
   { id: 'import_data', slug: '/import', label: 'Import data' },

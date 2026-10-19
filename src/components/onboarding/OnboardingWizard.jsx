@@ -39,6 +39,7 @@ import {
   onFullscreenChange, 
   registerAutoFullscreenGate 
 } from '../../utils/fullscreen';
+import { parseGstinAI } from '../../utils/gstinHelper';
 
 // Comprehensive Indian Industries Catalog (NIC Classifications)
 const INDIAN_INDUSTRIES = [
@@ -298,7 +299,16 @@ export default function OnboardingWizard({ onComplete, onExit }) {
               Get started
             </div>
 
-            <div className="w-[60px] flex justify-end">
+            <div className="flex items-center space-x-3">
+              <button
+                type="button"
+                onClick={onExit}
+                className="text-[12.5px] text-[#007755] hover:underline font-medium cursor-pointer"
+                title="Exit to Dashboard"
+              >
+                Exit to Dashboard
+              </button>
+
               <button
                 type="button"
                 onClick={toggleFullscreen}
@@ -329,6 +339,7 @@ export default function OnboardingWizard({ onComplete, onExit }) {
               requestAppFullscreen();
               setCurrentStep(1);
             }} 
+            onExit={onExit}
           />
         )}
 
@@ -337,7 +348,22 @@ export default function OnboardingWizard({ onComplete, onExit }) {
             businessName={formData.businessName}
             gstin={formData.gstin}
             onChangeName={(val) => updateField('businessName', val)}
-            onChangeGstin={(val) => updateField('gstin', val.toUpperCase())}
+            onChangeGstin={(val) => {
+              const upper = val.toUpperCase();
+              updateField('gstin', upper);
+              const ai = parseGstinAI(upper);
+              if (ai && ai.suggestedTaxType && !formData.taxType) {
+                updateField('taxType', ai.suggestedTaxType);
+              }
+            }}
+            onApplyAiProfile={(profile) => {
+              if (profile.businessName && !formData.businessName) {
+                updateField('businessName', profile.businessName);
+              }
+              if (profile.taxType) {
+                updateField('taxType', profile.taxType);
+              }
+            }}
             stepError={stepError}
             onBack={handleBack}
             onNext={() => validateAndProceed()}
@@ -507,78 +533,253 @@ export default function OnboardingWizard({ onComplete, onExit }) {
 }
 
 // =========================================================================
-// SCREEN 0: WELCOME & SYMMETRICAL HONEYCOMB CLOUD (FRAME 000)
+// SCREEN 0: WELCOME & CATEGORIZED 14-MODULE SETUP GRID (FRAME 000)
 // =========================================================================
-function Screen0Welcome({ onStart }) {
-  const modules = [
-    { label: 'Accounting', iconUrl: '/app-icons/accounting.png' },
-    { label: 'Expenses & Pay Bills', iconUrl: '/app-icons/expenses.png' },
-    { label: 'Sales & Get Paid', iconUrl: '/app-icons/sales.png' },
-    { label: 'GST Returns', iconUrl: '/app-icons/gst.png' },
-    { label: 'TDS & Direct Tax', iconUrl: '/app-icons/tds.png' },
-    { label: 'Bills & MSME Pays', iconUrl: '/app-icons/bills.png' },
-    { label: 'Customers', iconUrl: '/app-icons/customers.png' },
-    { label: 'Reports', iconUrl: '/app-icons/reports.png' },
-    { label: 'Customer Hub', iconUrl: '/app-icons/customer_hub.png' },
-    { label: 'Team', iconUrl: '/app-icons/team.png' },
-    { label: 'Time Tracking', iconUrl: '/app-icons/time.png' },
-    { label: 'Payroll', iconUrl: '/app-icons/payroll.png' },
-  ];
+const MODULE_CATEGORIES = [
+  { id: 'all', label: 'All Modules (14)' },
+  { id: 'core', label: 'Core Operations (4)' },
+  { id: 'tax', label: 'Tax & Compliance (3)' },
+  { id: 'people', label: 'People & Payroll (3)' },
+  { id: 'treasury', label: 'CFO & Treasury (4)' },
+];
+
+const ALL_MODULES = [
+  // Core Operations (4)
+  {
+    category: 'core',
+    label: 'Accounting',
+    subtitle: 'Ledger & Bank Feeds',
+    iconUrl: '/app-icons/accounting.png',
+    badge: 'Core',
+  },
+  {
+    category: 'core',
+    label: 'Sales & Get Paid',
+    subtitle: 'GST Invoices & E-Way',
+    iconUrl: '/app-icons/sales.png',
+    badge: 'Core',
+  },
+  {
+    category: 'core',
+    label: 'Expenses & Pay Bills',
+    subtitle: 'OCR Scan & Payees',
+    iconUrl: '/app-icons/expenses.png',
+    badge: 'Core',
+  },
+  {
+    category: 'core',
+    label: 'Bills & MSME Pays',
+    subtitle: 'Sec 43B(h) 45-Day Rule',
+    iconUrl: '/app-icons/bills.png',
+    badge: 'MSME',
+  },
+
+  // Indian Tax & Compliance (3)
+  {
+    category: 'tax',
+    label: 'GST Returns',
+    subtitle: 'GSTR-1, 3B, 9 & 2B Match',
+    iconUrl: '/app-icons/gst.png',
+    badge: 'Statutory',
+  },
+  {
+    category: 'tax',
+    label: 'TDS & Direct Tax',
+    subtitle: '26Q, 27Q & Challans',
+    iconUrl: '/app-icons/tds.png',
+    badge: 'Statutory',
+  },
+  {
+    category: 'tax',
+    label: 'Audit & Compliance',
+    subtitle: 'MCA Digital Audit Trail',
+    iconUrl: '/app-icons/reports.png',
+    badge: 'Compliance',
+  },
+
+  // People & Payroll (3)
+  {
+    category: 'people',
+    label: 'Payroll',
+    subtitle: 'Form 16 & PF/ESIC',
+    iconUrl: '/app-icons/payroll.png',
+    badge: 'People',
+  },
+  {
+    category: 'people',
+    label: 'Team Management',
+    subtitle: 'Granular Role Access',
+    iconUrl: '/app-icons/team.png',
+    badge: 'People',
+  },
+  {
+    category: 'people',
+    label: 'Time Tracking',
+    subtitle: 'Billable Timesheets',
+    iconUrl: '/app-icons/time.png',
+    badge: 'People',
+  },
+
+  // Treasury & CFO Intelligence (4)
+  {
+    category: 'treasury',
+    label: 'Financial Reports',
+    subtitle: 'P&L, Balance Sheet, Cash Flow',
+    iconUrl: '/app-icons/reports.png',
+    badge: 'CFO',
+  },
+  {
+    category: 'treasury',
+    label: 'Customer Hub',
+    subtitle: 'CRM & Debtor Aging',
+    iconUrl: '/app-icons/customer_hub.png',
+    badge: 'CRM',
+  },
+  {
+    category: 'treasury',
+    label: 'Customers & Debtors',
+    subtitle: '360° Directory & Balances',
+    iconUrl: '/app-icons/customers.png',
+    badge: 'Directory',
+  },
+  {
+    category: 'treasury',
+    label: 'Marketing ROI',
+    subtitle: 'Campaign Performance',
+    iconUrl: '/app-icons/tag_marketing.png',
+    badge: 'Growth',
+  },
+];
+
+function Screen0Welcome({ onStart, onExit }) {
+  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  const filteredModules = selectedCategory === 'all'
+    ? ALL_MODULES
+    : ALL_MODULES.filter((m) => m.category === selectedCategory);
 
   return (
     <div className="w-full max-w-[1240px] min-h-[520px] flex flex-col lg:flex-row items-center justify-between px-6 sm:px-12 py-8 relative gap-10">
-      {/* Left Column: Brand, Headline & Action */}
-      <div className="max-w-[500px] flex flex-col items-start z-10 shrink-0">
+      {/* Left Column: Brand, Headline, AI Highlights & Action */}
+      <div className="max-w-[520px] flex flex-col items-start z-10 shrink-0">
         {/* Official MESSO Logo */}
-        <div className="flex items-center space-x-2.5 mb-8">
+        <div className="flex items-center space-x-2.5 mb-6">
           <div className="w-[28px] h-[28px] rounded bg-black flex items-center justify-center p-0.5 border border-cyan-500/30 shadow-xs">
             <img src="/logo.png" alt="MESSO Logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-[20px] font-bold tracking-tight text-[#1f2937] uppercase">
             MESSO
           </span>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+            India Edition
+          </span>
         </div>
 
-        <h1 className="text-[38px] sm:text-[42px] font-bold text-[#1f2937] leading-[1.18] tracking-tight mb-5">
+        <h1 className="text-[36px] sm:text-[42px] font-bold text-[#1f2937] leading-[1.18] tracking-tight mb-4">
           Get set up fast with AI and expert guidance
         </h1>
 
-        <p className="text-[15px] text-[#595959] mb-8 leading-relaxed">
+        <p className="text-[14.5px] text-[#595959] mb-5 leading-relaxed">
           Streamline your accounting, GST compliance, invoices, and expenses with India's intelligent ERP platform.
         </p>
 
-        <button
-          onClick={() => {
-            requestAppFullscreen();
-            onStart();
-          }}
-          className="h-[44px] px-8 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14.5px] rounded-[6px] shadow-sm cursor-pointer transition transform active:scale-[0.98] flex items-center space-x-2"
-        >
-          <span>Let's get started</span>
-        </button>
+        {/* AI Capabilities highlights */}
+        <div className="flex flex-wrap gap-2 mb-7">
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11.5px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs">
+            <Sparkles size={12} className="text-emerald-600" />
+            <span>Instant AI GSTIN Auto-Enrichment</span>
+          </span>
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11.5px] font-medium bg-blue-50 text-blue-800 border border-blue-200/80 shadow-2xs">
+            <ShieldCheck size={12} className="text-blue-600" />
+            <span>Automated GSTR-1 &amp; 3B Reconciliation</span>
+          </span>
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11.5px] font-medium bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs">
+            <span>MSME Sec 43B(h) 45-Day Tracker</span>
+          </span>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+          <button
+            onClick={() => {
+              requestAppFullscreen();
+              onStart();
+            }}
+            className="h-[44px] px-8 bg-[#007755] hover:bg-[#005f43] text-white font-semibold text-[14.5px] rounded-[6px] shadow-sm cursor-pointer transition transform active:scale-[0.98] flex items-center justify-center space-x-2"
+          >
+            <span>Let's get started</span>
+            <ArrowRight size={16} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              requestAppFullscreen();
+              onExit?.();
+            }}
+            className="h-[44px] px-5 bg-white hover:bg-gray-50 text-[#007755] border border-[#007755] font-semibold text-[14px] rounded-[6px] shadow-2xs cursor-pointer transition flex items-center justify-center space-x-1.5"
+            title="Bypass setup wizard and open live demo ERP directly"
+          >
+            <span>Explore Live Demo ERP</span>
+          </button>
+        </div>
       </div>
 
-      {/* Right Column: All 12 HD Circular App Tokens arranged in a sleek modern grid */}
-      <div className="w-full lg:max-w-[540px] p-5 sm:p-6 bg-gradient-to-br from-white/90 to-gray-50/90 backdrop-blur-md rounded-3xl border border-gray-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.06)] select-none">
-        <div className="text-[11px] font-bold tracking-wider text-gray-500 uppercase mb-3 px-1">
-          Connected MESSO Modules
+      {/* Right Column: Grouped 14 Modules in 4 Clean Responsive Categories */}
+      <div className="w-full lg:max-w-[560px] p-5 sm:p-6 bg-gradient-to-br from-white/95 to-gray-50/95 backdrop-blur-md rounded-3xl border border-gray-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.06)] select-none">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="text-[11px] font-bold tracking-wider text-gray-500 uppercase">
+            Connected MESSO Modules ({ALL_MODULES.length})
+          </div>
+          <span className="text-[10.5px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            Active Indian ERP Suite
+          </span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
-          {modules.map((mod, idx) => (
+
+        {/* Category Pills Switcher */}
+        <div className="flex items-center space-x-1.5 overflow-x-auto pb-2 mb-3.5 scrollbar-none">
+          {MODULE_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition whitespace-nowrap cursor-pointer ${
+                selectedCategory === cat.id
+                  ? 'bg-[#007755] text-white shadow-xs'
+                  : 'bg-white hover:bg-gray-100 text-gray-600 border border-gray-200'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Module Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+          {filteredModules.map((mod, idx) => (
             <div 
               key={idx}
-              className="flex items-center space-x-2.5 p-2 rounded-xl bg-white border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-gray-300 hover:scale-[1.02] transition-all duration-200 cursor-default select-none group"
+              className="flex items-center space-x-2.5 p-2 rounded-xl bg-white border border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-default select-none group"
             >
-              <div className="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 flex items-center justify-center">
+              <div className="w-[36px] h-[36px] rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-gray-50 border border-gray-100">
                 <img 
                   src={mod.iconUrl} 
                   alt={mod.label} 
                   className="w-full h-full object-contain block group-hover:scale-105 transition-transform" 
                 />
               </div>
-              <span className="text-[12px] font-semibold text-gray-800 truncate leading-tight">
-                {mod.label}
-              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] font-bold text-gray-800 truncate">
+                    {mod.label}
+                  </span>
+                  <span className="text-[9.5px] px-1.5 py-0.2 rounded font-medium bg-gray-100 text-gray-600 shrink-0 ml-1">
+                    {mod.badge}
+                  </span>
+                </div>
+                <span className="text-[10px] text-gray-500 block truncate leading-tight mt-0.5">
+                  {mod.subtitle}
+                </span>
+              </div>
             </div>
           ))}
         </div>
@@ -588,15 +789,17 @@ function Screen0Welcome({ onStart }) {
 }
 
 // =========================================================================
-// SCREEN 1: BUSINESS NAME & GSTIN (NO "i" BUTTON, EMPTY DEFAULTS)
+// SCREEN 1: BUSINESS NAME & INSTANT GSTIN AI AUTO-ENRICHMENT
 // =========================================================================
-function Screen1BusinessName({ businessName, gstin, onChangeName, onChangeGstin, stepError, onBack, onNext }) {
+function Screen1BusinessName({ businessName, gstin, onChangeName, onChangeGstin, onApplyAiProfile, stepError, onBack, onNext }) {
+  const aiData = parseGstinAI(gstin);
+
   return (
     <div className="w-full max-w-[700px] flex flex-col pt-6">
       <h2 className="text-[32px] font-bold text-[#1f2937] leading-tight mb-2">
         For starters, what's your business called?
       </h2>
-      <p className="text-[14.5px] text-[#595959] mb-8">
+      <p className="text-[14.5px] text-[#595959] mb-6">
         With this, we'll make sure your legal business name shows up in the right places.
       </p>
 
@@ -617,22 +820,107 @@ function Screen1BusinessName({ businessName, gstin, onChangeName, onChangeGstin,
         />
       </div>
 
-      {/* Field 2: GSTIN (Goods and Services Tax Identification Number) */}
+      {/* Field 2: GSTIN with Real-time AI Auto-Enrichment */}
       <div className="mb-6">
-        <label className="block text-[12.5px] text-[#595959] mb-1.5 font-normal">
-          GSTIN (GST Identification Number) <span className="text-gray-400">(optional)</span>
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-[12.5px] text-[#595959] font-normal">
+            GSTIN (GST Identification Number) <span className="text-gray-400">(optional)</span>
+          </label>
+          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center space-x-1">
+            <Sparkles size={11} className="text-emerald-600" />
+            <span>AI Auto-Enrichment Active</span>
+          </span>
+        </div>
         <input
           type="text"
           value={gstin}
           maxLength={15}
           onChange={(e) => onChangeGstin(e.target.value)}
-          placeholder="e.g. 27AAPFU0939F1ZV (15-character GSTIN)"
+          placeholder="e.g. 27AAPFU0931F1ZV (15-character GSTIN)"
           className="w-full h-[44px] px-3.5 text-[14.5px] text-[#1f2937] border border-[#c7d1d9] rounded-[4px] outline-none focus:border-[#007755] focus:ring-1 focus:ring-[#007755] transition font-mono uppercase"
         />
         <span className="block text-[11.5px] text-[#6b7280] mt-1">
-          Indian 15-digit GSTIN used for tax invoices and statutory GSTR reporting.
+          Indian 15-digit GSTIN used for tax invoices, ITC reconciliation, and statutory GSTR reporting.
         </span>
+
+        {/* Interactive AI Instant Auto-Enrichment Card */}
+        {aiData && (
+          <div className="mt-3 p-4 bg-gradient-to-br from-emerald-50/80 via-white to-blue-50/50 border border-emerald-200/90 rounded-xl shadow-xs transition-all animate-fadeIn">
+            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-emerald-100">
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                  <Sparkles size={12} />
+                </div>
+                <span className="text-[12.5px] font-semibold text-emerald-950">
+                  MESSO AI Tax &amp; Entity Detection
+                </span>
+              </div>
+              {aiData.isValidFormat ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <CheckCircle2 size={11} className="mr-1 text-emerald-600" />
+                  Verified Indian GSTIN
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                  <Sparkles size={11} className="mr-1 text-blue-600" />
+                  {gstin.length < 15 ? `Extracting (${gstin.length}/15 chars)...` : 'Analyzing format'}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 my-2">
+              <div className="p-2.5 bg-white rounded-lg border border-gray-100 shadow-2xs">
+                <span className="text-[10px] text-gray-500 uppercase font-semibold block">State Jurisdiction</span>
+                <span className="text-[12.5px] font-bold text-gray-800 mt-0.5 block truncate">
+                  {aiData.stateName || 'Detecting...'}
+                </span>
+                <span className="text-[10px] text-emerald-700 font-mono">Code {aiData.stateCode}</span>
+              </div>
+
+              <div className="p-2.5 bg-white rounded-lg border border-gray-100 shadow-2xs">
+                <span className="text-[10px] text-gray-500 uppercase font-semibold block">Extracted PAN</span>
+                <span className="text-[12.5px] font-bold text-gray-800 font-mono mt-0.5 block truncate">
+                  {aiData.pan || (gstin.length >= 7 ? `${gstin.slice(2)}...` : 'Enter full PAN')}
+                </span>
+                <span className="text-[10px] text-gray-500">10-Digit Master PAN</span>
+              </div>
+
+              <div className="p-2.5 bg-white rounded-lg border border-gray-100 shadow-2xs">
+                <span className="text-[10px] text-gray-500 uppercase font-semibold block">Entity Classification</span>
+                <span className="text-[12.5px] font-bold text-gray-800 mt-0.5 block truncate">
+                  {aiData.entityType || 'Commercial Entity'}
+                </span>
+                <span className="text-[10px] text-blue-700">From PAN letter '{aiData.panFourthChar || '?'}'</span>
+              </div>
+            </div>
+
+            <div className="mt-2.5 pt-2 border-t border-emerald-100/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11.5px] text-gray-600">
+              <div className="flex items-center space-x-1.5">
+                <ShieldCheck size={14} className="text-emerald-600 shrink-0" />
+                <span><strong>Recommended Tax Scheme:</strong> {aiData.filingSchedule}</span>
+              </div>
+              {!businessName && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const suggested = aiData.entityType?.includes('LLP') 
+                      ? 'Sample Company LLP' 
+                      : aiData.entityType?.includes('Company') 
+                      ? 'Sample Technologies Pvt Ltd' 
+                      : 'Sample Enterprises';
+                    onChangeName(suggested);
+                    if (aiData.suggestedTaxType && onApplyAiProfile) {
+                      onApplyAiProfile({ businessName: suggested, taxType: aiData.suggestedTaxType });
+                    }
+                  }}
+                  className="text-emerald-700 hover:text-emerald-800 font-semibold underline text-[11px] shrink-0 cursor-pointer"
+                >
+                  Auto-fill sample company name
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {stepError && (

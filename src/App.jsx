@@ -311,14 +311,6 @@ export default function App() {
     return () => window.removeEventListener('qbo:version-conflict', handleConflict);
   }, []);
 
-  // Always prioritize onboarding wizard on initial visit until completed
-  useEffect(() => {
-    const isCompleted = localStorage.getItem('meso_onboarding_completed') === 'true';
-    if (!isCompleted && viewId === 'dashboard') {
-      navigate('onboarding');
-    }
-  }, [viewId, navigate]);
-
   // Auto fullscreen on landing & first interaction so page fits full screen automatically
   useEffect(() => {
     // Attempt on mount if permitted by browser context
@@ -501,7 +493,10 @@ export default function App() {
               localStorage.setItem('meso_onboarding_completed', 'true');
               navigate('dashboard');
             }}
-            onExit={() => navigate('dashboard')}
+            onExit={() => {
+              localStorage.setItem('meso_onboarding_completed', 'true');
+              navigate('dashboard');
+            }}
           />
         );
 
