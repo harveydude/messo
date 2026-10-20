@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { getDb } from '../db/db.js';
 import { logAudit } from '../services/ledgerService.js';
 import { randomUUID } from 'crypto';
@@ -17,7 +18,7 @@ router.get('/current', async (req, res) => {
     }
     res.json({ success: true, company: result.rows[0], id: result.rows[0].id });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -28,7 +29,7 @@ router.get('/settings', async (req, res) => {
     const result = await db.query('SELECT * FROM companies LIMIT 1');
     res.json({ success: true, settings: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -102,7 +103,7 @@ router.get('/users', async (req, res) => {
     const result = await db.query('SELECT * FROM users ORDER BY created_at ASC');
     res.json({ success: true, users: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -120,7 +121,7 @@ router.post('/users', async (req, res) => {
 
     res.json({ success: true, user: { id: uid, name, email, role } });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

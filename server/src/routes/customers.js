@@ -1,21 +1,24 @@
 import express from 'express';
 import { getDb } from '../db/db.js';
+import { handleApiError } from '../utils/errorHelper.js';
 import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
-// GET all customers
+// GET all customers with tenant isolation
 router.get('/', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const result = await db.query(`
       SELECT c.*,
         COALESCE(SUM(i.balance_due_paise), 0) as open_balance_paise
       FROM customers c
-      LEFT JOIN invoices i ON c.id = i.customer_id AND i.status != 'PAID'
+      LEFT JOIN invoices i ON c.id = i.customer_id AND i.status != 'PAID' AND i.company_id = $1
+      WHERE c.company_id = $1
       GROUP BY c.id
       ORDER BY c.display_name ASC
-    `);
+    `, [companyId]);
 
     const formatted = result.rows.map(c => ({
       ...c,
@@ -24,7 +27,7 @@ router.get('/', async (req, res) => {
 
     res.json({ success: true, customers: formatted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to fetch customers.');
   }
 });
 
@@ -32,13 +35,14 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const db = await getDb();
-    const result = await db.query('SELECT * FROM customers WHERE id = $1', [req.params.id]);
+    const companyId = req.companyId || 'comp_1';
+    const result = await db.query('SELECT * FROM customers WHERE id = $1 AND company_id = $2', [req.params.id, companyId]);
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Customer not found' });
     }
     res.json({ success: true, customer: result.rows[0] });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to fetch customer.');
   }
 });
 
@@ -46,6 +50,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const {
       displayName,
       firstName = '',
@@ -66,9 +71,9 @@ router.post('/', async (req, res) => {
     const customerId = `cust_${randomUUID()}`;
 
     await db.query(
-      `INSERT INTO customers (id, display_name, first_name, last_name, company_name, email, phone, billing_address, gstin, pan, terms)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-      [customerId, displayName, firstName, lastName, companyName, email, phone, billingAddress, gstin, pan, terms]
+      `INSERT INTO customers (id, company_id, display_name, first_name, last_name, company_name, email, phone, billing_address, gstin, pan, terms)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [customerId, companyId, displayName, firstName, lastName, companyName, email, phone, billingAddress, gstin, pan, terms]
     );
 
     res.json({
@@ -77,7 +82,7 @@ router.post('/', async (req, res) => {
       customer: { id: customerId, display_name: displayName, email, phone }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to create customer.');
   }
 });
 

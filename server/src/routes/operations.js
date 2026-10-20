@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { getDb } from '../db/db.js';
 import { toInr, postJournalEntry, logAudit } from '../services/ledgerService.js';
 import { randomUUID } from 'crypto';
@@ -16,7 +17,7 @@ router.get('/mileage', async (req, res) => {
     }));
     res.json({ success: true, trips: formatted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -35,7 +36,7 @@ router.post('/mileage', async (req, res) => {
 
     res.json({ success: true, tripId, deductionInr: (deductionPaise / 100).toFixed(2) });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -51,7 +52,7 @@ router.get('/projects', async (req, res) => {
     `);
     res.json({ success: true, projects: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -67,7 +68,7 @@ router.get('/timesheets', async (req, res) => {
     `);
     res.json({ success: true, timeEntries: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -116,7 +117,7 @@ router.post('/payroll/run', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -142,7 +143,7 @@ router.get('/taxes/summary', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -176,7 +177,7 @@ router.get('/audit-logs', async (req, res) => {
     const result = await db.query('SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT $1', [limit]);
     res.json({ success: true, logs: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -193,7 +194,7 @@ router.get('/user/preferences', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -208,7 +209,7 @@ router.patch('/user/preferences', async (req, res) => {
     `, [JSON.stringify(prefs)]);
     res.json({ success: true, preferences: prefs });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

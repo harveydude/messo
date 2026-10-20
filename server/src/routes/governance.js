@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { multiTenantContext, requirePermission, ROLES } from '../middleware/rbac.js';
 import { getCompanyPolicy, updateCompanyPolicy, checkBooksLock, getEffectiveTaxSchedule } from '../services/policyService.js';
 import { verifyAuditChain, recordAuditLog } from '../services/auditService.js';
@@ -17,7 +18,7 @@ router.get('/policies', async (req, res) => {
     const policy = await getCompanyPolicy(req.companyId);
     res.json({ success: true, policy });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -26,7 +27,7 @@ router.put('/policies', requirePermission('MANAGE_POLICIES'), async (req, res) =
     const updated = await updateCompanyPolicy(req.companyId, req.body, req.user);
     res.json({ success: true, policy: updated });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -42,7 +43,7 @@ router.post('/check-lock', async (req, res) => {
     }
     res.json({ success: true, ...lockCheck });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -63,7 +64,7 @@ router.get('/audit-trail', async (req, res) => {
     );
     res.json({ success: true, count: result.rows.length, audit_logs: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -72,7 +73,7 @@ router.post('/audit-trail/verify', async (req, res) => {
     const verification = await verifyAuditChain(req.companyId);
     res.json({ success: true, verification });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -91,7 +92,7 @@ router.post('/void', requirePermission('SOFT_DELETE_OR_VOID'), async (req, res) 
     });
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -106,7 +107,7 @@ router.post('/attachments/void', requirePermission('SOFT_DELETE_OR_VOID'), async
     });
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -122,7 +123,7 @@ router.get('/tax-schedules', async (req, res) => {
     );
     res.json({ success: true, count: result.rows.length, schedules: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -161,7 +162,7 @@ router.post('/tax-schedules', requirePermission('MANAGE_POLICIES'), async (req, 
 
     res.json({ success: true, schedule: created });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -171,7 +172,7 @@ router.get('/effective-tax', async (req, res) => {
     const schedule = await getEffectiveTaxSchedule(req.companyId, code, kind, date);
     res.json({ success: true, schedule });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

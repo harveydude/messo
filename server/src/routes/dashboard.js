@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { getDb } from '../db/db.js';
 import { logAudit } from '../services/ledgerService.js';
 
@@ -301,7 +302,7 @@ router.get(['/', '/metrics', '/business-at-a-glance'], async (req, res) => {
 
     res.json(data);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -317,7 +318,7 @@ router.post('/feedback/layout-customization', async (req, res) => {
     });
     res.json({ success: true, message: 'Feedback recorded' });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

@@ -2,8 +2,58 @@ import { getDb } from '../db/db.js';
 import { randomUUID } from 'crypto';
 export { bumpVersion, updateVersioned, conflict } from './versioned.js';
 
-// Format helper
-export const toInr = (paise) => (Math.abs(Number(paise || 0)) / 100).toFixed(2);
+// Format helper - preserves exact paise arithmetic and negative sign
+export const toInr = (paise) => {
+  if (paise === null || paise === undefined || paise === '') return '0.00';
+  const big = typeof paise === 'bigint' ? paise : BigInt(Math.round(Number(paise)));
+  const isNeg = big < 0n;
+  const abs = isNeg ? -big : big;
+  const inrWhole = abs / 100n;
+  const inrPaise = abs % 100n;
+  const paddedPaise = inrPaise.toString().padStart(2, '0');
+  return `${isNeg ? '-' : ''}${inrWhole.toString()}.${paddedPaise}`;
+};
+
+export const ASSET_TYPES = [
+  'ASSET',
+  'CURRENT_ASSET',
+  'OTHER_CURRENT_ASSET',
+  'NON_CURRENT_ASSET',
+  'BANK',
+  'ACCOUNTS_RECEIVABLE',
+  'INVENTORY',
+  'FIXED_ASSET'
+];
+
+export const LIABILITY_TYPES = [
+  'LIABILITY',
+  'CURRENT_LIABILITY',
+  'OTHER_CURRENT_LIABILITY',
+  'LONG_TERM_LIABILITY',
+  'ACCOUNTS_PAYABLE',
+  'CREDIT_CARD',
+  'TAX_PAYABLE'
+];
+
+export const EQUITY_TYPES = [
+  'EQUITY',
+  'OWNERS_EQUITY',
+  'RETAINED_EARNINGS',
+  'SHARE_CAPITAL'
+];
+
+export const INCOME_TYPES = [
+  'INCOME',
+  'REVENUE',
+  'OTHER_INCOME'
+];
+
+export const EXPENSE_TYPES = [
+  'EXPENSE',
+  'COGS',
+  'COST_OF_GOODS_SOLD',
+  'OTHER_EXPENSE'
+];
 
 /**
  * Immutable Audit Log Service (Rule 5)
@@ -94,15 +144,18 @@ export async function postJournalEntry({
       );
 
       // Update Chart of Accounts & Legacy Accounts Balance
-      const accRes = await db.query('SELECT account_type, cached_balance_paise FROM chart_of_accounts WHERE id = $1', [line.accountId]);
+      const accRes = await db.query(
+        'SELECT account_type, cached_balance_paise FROM chart_of_accounts WHERE id = $1 AND (company_id = $2 OR company_id IS NULL)',
+        [line.accountId, companyId]
+      );
       if (accRes.rows.length > 0) {
         const type = accRes.rows[0].account_type;
         const current = BigInt(accRes.rows[0].cached_balance_paise || 0);
 
         // Normal Balances:
-        // ASSET, EXPENSE, BANK, COGS: Debit increases (+), Credit decreases (-)
-        // LIABILITY, EQUITY, INCOME, TAX_PAYABLE, AP, CREDIT_CARD: Credit increases (+), Debit decreases (-)
-        let isDebitNormal = ['ASSET', 'EXPENSE', 'BANK', 'COGS', 'ACCOUNTS_RECEIVABLE', 'INVENTORY', 'FIXED_ASSET'].includes(type);
+        // ASSETS, EXPENSES, COGS: Debit increases (+), Credit decreases (-)
+        // LIABILITIES, EQUITY, INCOME: Credit increases (+), Debit decreases (-)
+        let isDebitNormal = [...ASSET_TYPES, ...EXPENSE_TYPES].includes(type);
         let delta = isDebitNormal ? (debit - credit) : (credit - debit);
         let updated = current + delta;
 
@@ -140,29 +193,78 @@ export async function postJournalEntry({
 /**
  * Balance Sheet Generator (Pipeline 4)
  * Assets = Liabilities + Equity (Balanced to the penny)
+ * Directly derives account balances from journal_entry_lines for 100% audit integrity.
  */
-export async function generateBalanceSheet({ asOfDate = new Date().toISOString().split('T')[0], accountingMethod = 'ACCRUAL' }) {
+export async function generateBalanceSheet({
+  companyId = 'comp_1',
+  asOfDate = new Date().toISOString().split('T')[0],
+  accountingMethod = 'ACCRUAL'
+}) {
   const db = await getDb();
 
-  // Query accounts grouped by classification
+  // Query accounts grouped by classification with journal line aggregation
   const accountsRes = await db.query(`
-    SELECT id, code, name, account_type, sub_type, cached_balance_paise
-    FROM chart_of_accounts
-    WHERE statement_group = 'BALANCE_SHEET'
-    ORDER BY code ASC
-  `);
+    SELECT
+      coa.id,
+      coa.code,
+      coa.name,
+      coa.account_type,
+      coa.sub_type,
+      coa.statement_group,
+      COALESCE(coa.cached_balance_paise, 0) as cached_balance_paise,
+      COALESCE(SUM(jl.debit_paise), 0) as total_debit,
+      COALESCE(SUM(jl.credit_paise), 0) as total_credit,
+      COUNT(jl.id) as line_count
+    FROM chart_of_accounts coa
+    LEFT JOIN journal_entry_lines jl ON coa.id = jl.account_id
+    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+      AND (je.company_id = $1 OR je.company_id IS NULL)
+      AND je.status = 'POSTED'
+      AND je.entry_date <= $2
+    WHERE coa.statement_group = 'BALANCE_SHEET'
+      AND (coa.company_id = $1 OR coa.company_id IS NULL)
+      AND coa.is_active = TRUE
+    GROUP BY coa.id, coa.code, coa.name, coa.account_type, coa.sub_type, coa.statement_group, coa.cached_balance_paise
+    ORDER BY coa.code ASC
+  `, [companyId, asOfDate]);
 
-  // Compute live Net Income (Retained Earnings delta) from P&L accounts
+  // Compute live Net Income (Retained Earnings delta) from P&L accounts up to asOfDate
   const pnlRes = await db.query(`
     SELECT
-      COALESCE(SUM(CASE WHEN account_type = 'INCOME' THEN cached_balance_paise ELSE 0 END), 0) as total_income,
-      COALESCE(SUM(CASE WHEN account_type IN ('EXPENSE', 'COGS') THEN cached_balance_paise ELSE 0 END), 0) as total_expense
-    FROM chart_of_accounts
-    WHERE statement_group = 'PROFIT_AND_LOSS'
-  `);
+      coa.account_type,
+      COALESCE(coa.cached_balance_paise, 0) as cached_balance_paise,
+      COALESCE(SUM(jl.debit_paise), 0) as total_debit,
+      COALESCE(SUM(jl.credit_paise), 0) as total_credit,
+      COUNT(jl.id) as line_count
+    FROM chart_of_accounts coa
+    LEFT JOIN journal_entry_lines jl ON coa.id = jl.account_id
+    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+      AND (je.company_id = $1 OR je.company_id IS NULL)
+      AND je.status = 'POSTED'
+      AND je.entry_date <= $2
+    WHERE coa.statement_group = 'PROFIT_AND_LOSS'
+      AND (coa.company_id = $1 OR coa.company_id IS NULL)
+      AND coa.is_active = TRUE
+    GROUP BY coa.id, coa.account_type, coa.cached_balance_paise
+  `, [companyId, asOfDate]);
 
-  const totalIncomePaise = BigInt(pnlRes.rows[0]?.total_income || 0);
-  const totalExpensePaise = BigInt(pnlRes.rows[0]?.total_expense || 0);
+  let totalIncomePaise = 0n;
+  let totalExpensePaise = 0n;
+
+  for (const row of pnlRes.rows) {
+    const hasLines = Number(row.line_count) > 0;
+    const debit = BigInt(row.total_debit || 0);
+    const credit = BigInt(row.total_credit || 0);
+
+    if (INCOME_TYPES.includes(row.account_type)) {
+      const bal = hasLines ? (credit - debit) : BigInt(row.cached_balance_paise || 0);
+      totalIncomePaise += bal;
+    } else if (EXPENSE_TYPES.includes(row.account_type)) {
+      const bal = hasLines ? (debit - credit) : BigInt(row.cached_balance_paise || 0);
+      totalExpensePaise += bal;
+    }
+  }
+
   const netIncomePaise = totalIncomePaise - totalExpensePaise;
 
   const assets = [];
@@ -174,7 +276,15 @@ export async function generateBalanceSheet({ asOfDate = new Date().toISOString()
   let totalEquityPaise = 0n;
 
   for (const acc of accountsRes.rows) {
-    const bal = BigInt(acc.cached_balance_paise || 0);
+    const hasLines = Number(acc.line_count) > 0;
+    const debit = BigInt(acc.total_debit || 0);
+    const credit = BigInt(acc.total_credit || 0);
+    const isDebitNormal = [...ASSET_TYPES, ...EXPENSE_TYPES].includes(acc.account_type);
+
+    const bal = hasLines
+      ? (isDebitNormal ? (debit - credit) : (credit - debit))
+      : BigInt(acc.cached_balance_paise || 0);
+
     const item = {
       id: acc.id,
       code: acc.code,
@@ -185,13 +295,13 @@ export async function generateBalanceSheet({ asOfDate = new Date().toISOString()
       amountPaise: bal.toString()
     };
 
-    if (['ASSET', 'BANK', 'ACCOUNTS_RECEIVABLE', 'INVENTORY', 'FIXED_ASSET'].includes(acc.account_type)) {
+    if (ASSET_TYPES.includes(acc.account_type)) {
       assets.push(item);
       totalAssetsPaise += bal;
-    } else if (['LIABILITY', 'ACCOUNTS_PAYABLE', 'CREDIT_CARD', 'TAX_PAYABLE'].includes(acc.account_type)) {
+    } else if (LIABILITY_TYPES.includes(acc.account_type)) {
       liabilities.push(item);
       totalLiabilitiesPaise += bal;
-    } else if (acc.account_type === 'EQUITY') {
+    } else if (EQUITY_TYPES.includes(acc.account_type)) {
       equity.push(item);
       totalEquityPaise += bal;
     }
@@ -208,6 +318,8 @@ export async function generateBalanceSheet({ asOfDate = new Date().toISOString()
     amountPaise: netIncomePaise.toString()
   });
   totalEquityPaise += netIncomePaise;
+
+  const totalLiabilitiesAndEquityPaise = totalLiabilitiesPaise + totalEquityPaise;
 
   return {
     reportName: 'Balance Sheet',
@@ -229,12 +341,12 @@ export async function generateBalanceSheet({ asOfDate = new Date().toISOString()
       total: toInr(totalEquityPaise),
       totalPaise: totalEquityPaise.toString()
     },
-    totalLiabilitiesAndEquity: toInr(totalLiabilitiesPaise + totalEquityPaise),
-    isBalanced: totalAssetsPaise === (totalLiabilitiesPaise + totalEquityPaise),
+    totalLiabilitiesAndEquity: toInr(totalLiabilitiesAndEquityPaise),
+    isBalanced: totalAssetsPaise === totalLiabilitiesAndEquityPaise,
     ai_insights: [
       `Liquidity health is strong: Current checking balance stands at ₹${toInr(12010000)}.`,
-      `Debt-to-equity ratio remains at a conservative 0.16.`,
-      `Total Net Income YTD is ₹${toInr(netIncomePaise)} with 78% gross margin.`
+      `Debt-to-equity ratio remains at a conservative ${(Number(totalLiabilitiesPaise) / (Number(totalEquityPaise) || 1)).toFixed(2)}.`,
+      `Total Net Income YTD is ₹${toInr(netIncomePaise)}.`
     ]
   };
 }
@@ -243,6 +355,7 @@ export async function generateBalanceSheet({ asOfDate = new Date().toISOString()
  * Profit & Loss Generator (Pipeline 4)
  */
 export async function generateProfitAndLoss({
+  companyId = 'comp_1',
   startDate = '2025-01-01',
   endDate = new Date().toISOString().split('T')[0],
   accountingMethod = 'ACCRUAL'
@@ -250,11 +363,29 @@ export async function generateProfitAndLoss({
   const db = await getDb();
 
   const accountsRes = await db.query(`
-    SELECT id, code, name, account_type, sub_type, cached_balance_paise
-    FROM chart_of_accounts
-    WHERE statement_group = 'PROFIT_AND_LOSS'
-    ORDER BY code ASC
-  `);
+    SELECT
+      coa.id,
+      coa.code,
+      coa.name,
+      coa.account_type,
+      coa.sub_type,
+      COALESCE(coa.cached_balance_paise, 0) as cached_balance_paise,
+      COALESCE(SUM(jl.debit_paise), 0) as total_debit,
+      COALESCE(SUM(jl.credit_paise), 0) as total_credit,
+      COUNT(jl.id) as line_count
+    FROM chart_of_accounts coa
+    LEFT JOIN journal_entry_lines jl ON coa.id = jl.account_id
+    LEFT JOIN journal_entries je ON jl.journal_entry_id = je.id
+      AND (je.company_id = $1 OR je.company_id IS NULL)
+      AND je.status = 'POSTED'
+      AND je.entry_date >= $2
+      AND je.entry_date <= $3
+    WHERE coa.statement_group = 'PROFIT_AND_LOSS'
+      AND (coa.company_id = $1 OR coa.company_id IS NULL)
+      AND coa.is_active = TRUE
+    GROUP BY coa.id, coa.code, coa.name, coa.account_type, coa.sub_type, coa.cached_balance_paise
+    ORDER BY coa.code ASC
+  `, [companyId, startDate, endDate]);
 
   let totalIncome = 0n;
   let totalCogs = 0n;
@@ -265,23 +396,40 @@ export async function generateProfitAndLoss({
   const expenseItems = [];
 
   for (const acc of accountsRes.rows) {
-    const bal = BigInt(acc.cached_balance_paise || 0);
-    const item = {
-      id: acc.id,
-      code: acc.code,
-      name: acc.name,
-      amount: toInr(bal),
-      amountPaise: bal.toString()
-    };
+    const hasLines = Number(acc.line_count) > 0;
+    const debit = BigInt(acc.total_debit || 0);
+    const credit = BigInt(acc.total_credit || 0);
 
-    if (acc.account_type === 'INCOME') {
-      incomeItems.push(item);
+    let bal = 0n;
+    if (INCOME_TYPES.includes(acc.account_type)) {
+      bal = hasLines ? (credit - debit) : BigInt(acc.cached_balance_paise || 0);
+      incomeItems.push({
+        id: acc.id,
+        code: acc.code,
+        name: acc.name,
+        amount: toInr(bal),
+        amountPaise: bal.toString()
+      });
       totalIncome += bal;
-    } else if (acc.account_type === 'COGS') {
-      cogsItems.push(item);
+    } else if (acc.account_type === 'COGS' || acc.account_type === 'COST_OF_GOODS_SOLD') {
+      bal = hasLines ? (debit - credit) : BigInt(acc.cached_balance_paise || 0);
+      cogsItems.push({
+        id: acc.id,
+        code: acc.code,
+        name: acc.name,
+        amount: toInr(bal),
+        amountPaise: bal.toString()
+      });
       totalCogs += bal;
-    } else if (acc.account_type === 'EXPENSE') {
-      expenseItems.push(item);
+    } else if (EXPENSE_TYPES.includes(acc.account_type)) {
+      bal = hasLines ? (debit - credit) : BigInt(acc.cached_balance_paise || 0);
+      expenseItems.push({
+        id: acc.id,
+        code: acc.code,
+        name: acc.name,
+        amount: toInr(bal),
+        amountPaise: bal.toString()
+      });
       totalExpenses += bal;
     }
   }
@@ -308,10 +456,11 @@ export async function generateProfitAndLoss({
  * Cash Flow Statement Generator (Pipeline 4)
  */
 export async function generateCashFlowStatement({
+  companyId = 'comp_1',
   startDate = '2025-01-01',
   endDate = new Date().toISOString().split('T')[0]
 }) {
-  const pnl = await generateProfitAndLoss({ startDate, endDate });
+  const pnl = await generateProfitAndLoss({ companyId, startDate, endDate });
   const db = await getDb();
 
   // Net Cash from operations
@@ -323,7 +472,8 @@ export async function generateCashFlowStatement({
       COALESCE(SUM(received_paise), 0) as total_inflows,
       COALESCE(SUM(spent_paise), 0) as total_outflows
     FROM bank_transactions
-  `);
+    WHERE (company_id = $1 OR company_id IS NULL)
+  `, [companyId]);
 
   const inflows = Number(bankRes.rows[0]?.total_inflows || 0);
   const outflows = Number(bankRes.rows[0]?.total_outflows || 0);

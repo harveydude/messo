@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS chart_of_accounts (
 -- Backwards compatibility alias view for accounts
 CREATE TABLE IF NOT EXISTS accounts (
     id TEXT PRIMARY KEY,
+    company_id TEXT DEFAULT 'comp_1',
     code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     type TEXT NOT NULL,
@@ -130,6 +131,7 @@ CREATE TABLE IF NOT EXISTS contacts (
 
 CREATE TABLE IF NOT EXISTS customers (
     id TEXT PRIMARY KEY,
+    company_id TEXT DEFAULT 'comp_1',
     display_name TEXT NOT NULL,
     first_name TEXT,
     last_name TEXT,
@@ -146,6 +148,7 @@ CREATE TABLE IF NOT EXISTS customers (
 
 CREATE TABLE IF NOT EXISTS vendors (
     id TEXT PRIMARY KEY,
+    company_id TEXT DEFAULT 'comp_1',
     display_name TEXT NOT NULL,
     company_name TEXT,
     email TEXT,
@@ -432,6 +435,7 @@ CREATE TABLE IF NOT EXISTS ai_business_feed_items (
 
 CREATE TABLE IF NOT EXISTS user_bookmarks (
     id TEXT PRIMARY KEY,
+    company_id TEXT DEFAULT 'comp_1',
     page_id TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL,
     enabled BOOLEAN DEFAULT FALSE NOT NULL,

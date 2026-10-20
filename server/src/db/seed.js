@@ -55,11 +55,16 @@ export async function seedInitialData(force = false) {
   const coa = [
     // Assets
     { id: 'acc_1000', code: '1000', name: 'Cash on Hand', group: 'BALANCE_SHEET', type: 'ASSET', sub: 'cash', balance: 5000000 },
-    { id: 'acc_1010', code: '1010', name: 'Checking Account (HDFC)', group: 'BALANCE_SHEET', type: 'BANK', sub: 'bank', balance: 12010000 },
+    { id: 'acc_1010', code: '1010', name: 'Checking Account (HDFC)', group: 'BALANCE_SHEET', type: 'BANK', sub: 'bank', balance: 129378000 },
     { id: 'acc_1015', code: '1015', name: 'Savings Reserve (SBI)', group: 'BALANCE_SHEET', type: 'BANK', sub: 'bank', balance: 50000000 },
     { id: 'acc_1020', code: '1020', name: 'Mastercard Credit Account', group: 'BALANCE_SHEET', type: 'CREDIT_CARD', sub: 'credit_card', balance: 1577200 },
+    { id: 'acc_1050', code: '1050', name: 'Undeposited Funds (Cash Clearing)', group: 'BALANCE_SHEET', type: 'CURRENT_ASSET', sub: 'cash', balance: 0 },
     { id: 'acc_1100', code: '1100', name: 'Accounts Receivable', group: 'BALANCE_SHEET', type: 'ACCOUNTS_RECEIVABLE', sub: 'receivable', balance: 28500000 },
+    { id: 'acc_accounts_receivable', code: '1105', name: 'Accounts Receivable (Sub-ledger)', group: 'BALANCE_SHEET', type: 'ACCOUNTS_RECEIVABLE', sub: 'receivable', balance: 0 },
     { id: 'acc_1200', code: '1200', name: 'Inventory Asset', group: 'BALANCE_SHEET', type: 'INVENTORY', sub: 'inventory', balance: 5000000 },
+    { id: 'acc_inventory_asset', code: '1205', name: 'Inventory Asset Valuation', group: 'BALANCE_SHEET', type: 'INVENTORY', sub: 'inventory', balance: 0 },
+    { id: 'acc_finished_goods_inventory', code: '1210', name: 'Finished Goods Inventory', group: 'BALANCE_SHEET', type: 'INVENTORY', sub: 'inventory', balance: 0 },
+    { id: 'acc_raw_materials_inventory', code: '1220', name: 'Raw Materials Inventory', group: 'BALANCE_SHEET', type: 'INVENTORY', sub: 'inventory', balance: 0 },
     { id: 'acc_1500', code: '1500', name: 'Machinery & Equipment', group: 'BALANCE_SHEET', type: 'FIXED_ASSET', sub: 'fixed_asset', balance: 134950000 },
     { id: 'acc_2110', code: '2110', name: 'GST Input Tax Credit (ITC)', group: 'BALANCE_SHEET', type: 'ASSET', sub: 'tax', balance: 120000 },
 
@@ -70,35 +75,112 @@ export async function seedInitialData(force = false) {
 
     // Equity
     { id: 'acc_3000', code: '3000', name: "Owner's Equity", group: 'BALANCE_SHEET', type: 'EQUITY', sub: 'equity', balance: 100000000 },
-    { id: 'acc_3900', code: '3900', name: 'Retained Earnings', group: 'BALANCE_SHEET', type: 'EQUITY', sub: 'equity', balance: 54933000 },
+    { id: 'acc_3900', code: '3900', name: 'Retained Earnings', group: 'BALANCE_SHEET', type: 'EQUITY', sub: 'equity', balance: 115026100 },
 
     // Income
     { id: 'acc_4000', code: '4000', name: 'Sales Revenue', group: 'PROFIT_AND_LOSS', type: 'INCOME', sub: 'revenue', balance: 83470000 },
     { id: 'acc_4010', code: '4010', name: 'Design Services Income', group: 'PROFIT_AND_LOSS', type: 'INCOME', sub: 'revenue', balance: 35000000 },
     { id: 'acc_4020', code: '4020', name: 'Installation & Maintenance Services', group: 'PROFIT_AND_LOSS', type: 'INCOME', sub: 'revenue', balance: 25000000 },
+    { id: 'acc_8000', code: '8000', name: 'Foreign Exchange Gain / Loss', group: 'PROFIT_AND_LOSS', type: 'INCOME', sub: 'revenue', balance: 0 },
 
     // Expenses & COGS
     { id: 'acc_5000', code: '5000', name: 'Cost of Goods Sold (Job Materials)', group: 'PROFIT_AND_LOSS', type: 'COGS', sub: 'cogs', balance: 11170000 },
+    { id: 'acc_inventory_shrinkage', code: '5200', name: 'Inventory Shrinkage Write-down', group: 'PROFIT_AND_LOSS', type: 'EXPENSE', sub: 'cogs', balance: 0 },
     { id: 'acc_6000', code: '6000', name: 'Automobile & Fuel Expenses', group: 'PROFIT_AND_LOSS', type: 'EXPENSE', sub: 'expense', balance: 700000 },
     { id: 'acc_6010', code: '6010', name: 'Legal & Professional Fees', group: 'PROFIT_AND_LOSS', type: 'EXPENSE', sub: 'expense', balance: 900000 },
     { id: 'acc_6020', code: '6020', name: 'Office Supplies & Software', group: 'PROFIT_AND_LOSS', type: 'EXPENSE', sub: 'expense', balance: 482000 },
     { id: 'acc_6030', code: '6030', name: 'Advertising & Marketing', group: 'PROFIT_AND_LOSS', type: 'EXPENSE', sub: 'expense', balance: 350000 },
     { id: 'acc_6040', code: '6040', name: 'Payroll Expense (Gross Wages)', group: 'PROFIT_AND_LOSS', type: 'EXPENSE', sub: 'expense', balance: 12500000 },
+    { id: 'acc_6050', code: '6055', name: 'Employer Payroll Taxes', group: 'PROFIT_AND_LOSS', type: 'EXPENSE', sub: 'expense', balance: 0 },
   ];
 
   for (const a of coa) {
     await db.query(`
-      INSERT INTO chart_of_accounts (id, code, name, statement_group, account_type, sub_type, cached_balance_paise)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, cached_balance_paise = EXCLUDED.cached_balance_paise
+      INSERT INTO chart_of_accounts (id, company_id, code, name, statement_group, account_type, sub_type, cached_balance_paise)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7)
+      ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, statement_group = EXCLUDED.statement_group, account_type = EXCLUDED.account_type
     `, [a.id, a.code, a.name, a.group, a.type, a.sub, a.balance]);
 
     // Backwards compatibility sync with accounts table
     await db.query(`
-      INSERT INTO accounts (id, code, name, type, sub_type, balance_paise)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, balance_paise = EXCLUDED.balance_paise
+      INSERT INTO accounts (id, company_id, code, name, type, sub_type, balance_paise)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6)
+      ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
     `, [a.id, a.code, a.name, a.type.toLowerCase(), a.sub, a.balance]);
+  }
+
+  // 3b. Genuine Double-Entry Journal Entries
+  await db.query('BEGIN');
+  try {
+    await db.query("set local app.allow_journal_mutation = 'on'");
+
+    // A. Opening Balance Journal Entry (Debits === Credits === 235580000 paise)
+    const openingEntryId = 'je_opening_001';
+    await db.query(`
+      INSERT INTO journal_entries (id, company_id, entry_number, entry_date, memo, source_type, doc_type, status, created_by)
+      VALUES ($1, 'comp_1', 'JE-OPENING-001', '2025-01-01', 'Opening Balances Migration', 'OPENING_BALANCE', 'OPENING_BALANCE', 'POSTED', 'System Admin')
+      ON CONFLICT (id) DO NOTHING
+    `, [openingEntryId]);
+
+    const openingLines = [
+      { acc: 'acc_1000', debit: 5000000, credit: 0, desc: 'Opening Balance - Cash on Hand' },
+      { acc: 'acc_1010', debit: 12010000, credit: 0, desc: 'Opening Balance - HDFC Checking' },
+      { acc: 'acc_1015', debit: 50000000, credit: 0, desc: 'Opening Balance - SBI Reserve' },
+      { acc: 'acc_1100', debit: 28500000, credit: 0, desc: 'Opening Balance - Accounts Receivable' },
+      { acc: 'acc_1200', debit: 5000000, credit: 0, desc: 'Opening Balance - Inventory Asset' },
+      { acc: 'acc_1500', debit: 134950000, credit: 0, desc: 'Opening Balance - Machinery & Equipment' },
+      { acc: 'acc_2110', debit: 120000, credit: 0, desc: 'Opening Balance - GST ITC' },
+      { acc: 'acc_1020', debit: 0, credit: 1577200, desc: 'Opening Balance - Mastercard' },
+      { acc: 'acc_2000', debit: 0, credit: 16026700, desc: 'Opening Balance - Accounts Payable' },
+      { acc: 'acc_2100', debit: 0, credit: 450000, desc: 'Opening Balance - GST Output Payable' },
+      { acc: 'acc_2200', debit: 0, credit: 2500000, desc: 'Opening Balance - Payroll Liabilities' },
+      { acc: 'acc_3000', debit: 0, credit: 100000000, desc: "Opening Balance - Owner's Equity" },
+      { acc: 'acc_3900', debit: 0, credit: 115026100, desc: 'Opening Balance - Retained Earnings' }
+    ];
+
+    for (let i = 0; i < openingLines.length; i++) {
+      const l = openingLines[i];
+      await db.query(`
+        INSERT INTO journal_entry_lines (id, journal_entry_id, account_id, description, debit_paise, credit_paise)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO NOTHING
+      `, [`jl_open_${i + 1}`, openingEntryId, l.acc, l.desc, l.debit, l.credit]);
+    }
+
+    // B. Operating Activity Journal Entry (Debits === Credits === 143470000 paise)
+    const opsEntryId = 'je_ops_2025';
+    await db.query(`
+      INSERT INTO journal_entries (id, company_id, entry_number, entry_date, memo, source_type, doc_type, status, created_by)
+      VALUES ($1, 'comp_1', 'JE-OPS-2025', '2025-06-30', 'FY25 Operating Activity', 'OPERATING', 'JOURNAL_ENTRY', 'POSTED', 'System Admin')
+      ON CONFLICT (id) DO NOTHING
+    `, [opsEntryId]);
+
+    const opsLines = [
+      { acc: 'acc_5000', debit: 11170000, credit: 0, desc: 'Cost of Goods Sold' },
+      { acc: 'acc_6000', debit: 700000, credit: 0, desc: 'Automobile & Fuel' },
+      { acc: 'acc_6010', debit: 900000, credit: 0, desc: 'Legal & Professional' },
+      { acc: 'acc_6020', debit: 482000, credit: 0, desc: 'Office Supplies' },
+      { acc: 'acc_6030', debit: 350000, credit: 0, desc: 'Advertising' },
+      { acc: 'acc_6040', debit: 12500000, credit: 0, desc: 'Payroll Expense' },
+      { acc: 'acc_1010', debit: 117368000, credit: 0, desc: 'Operating Revenue Inflow Settlement' },
+      { acc: 'acc_4000', debit: 0, credit: 83470000, desc: 'Sales Revenue' },
+      { acc: 'acc_4010', debit: 0, credit: 35000000, desc: 'Design Services Income' },
+      { acc: 'acc_4020', debit: 0, credit: 25000000, desc: 'Installation Services' }
+    ];
+
+    for (let i = 0; i < opsLines.length; i++) {
+      const l = opsLines[i];
+      await db.query(`
+        INSERT INTO journal_entry_lines (id, journal_entry_id, account_id, description, debit_paise, credit_paise)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO NOTHING
+      `, [`jl_ops_${i + 1}`, opsEntryId, l.acc, l.desc, l.debit, l.credit]);
+    }
+
+    await db.query('COMMIT');
+  } catch (err) {
+    try { await db.query('ROLLBACK'); } catch {}
+    throw err;
   }
 
   // 4. 10 Customers & Leads
@@ -117,15 +199,15 @@ export async function seedInitialData(force = false) {
 
   for (const c of contacts) {
     await db.query(`
-      INSERT INTO contacts (id, type, display_name, first_name, last_name, company_name, email, phone, billing_address, gstin, opening_balance_paise)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      INSERT INTO contacts (id, company_id, type, display_name, first_name, last_name, company_name, email, phone, billing_address, gstin, opening_balance_paise)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, opening_balance_paise = EXCLUDED.opening_balance_paise
     `, [c.id, c.type, c.name, c.first, c.last, c.company, c.email, c.phone, c.address, c.gstin, c.balance]);
 
     // Legacy sync
     await db.query(`
-      INSERT INTO customers (id, display_name, first_name, last_name, company_name, email, phone, billing_address, gstin)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO customers (id, company_id, display_name, first_name, last_name, company_name, email, phone, billing_address, gstin)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name
     `, [c.id, c.name, c.first, c.last, c.company, c.email, c.phone, c.address, c.gstin]);
   }
@@ -144,15 +226,15 @@ export async function seedInitialData(force = false) {
 
   for (const v of vendors) {
     await db.query(`
-      INSERT INTO contacts (id, type, display_name, company_name, email, phone, billing_address, gstin, opening_balance_paise)
-      VALUES ($1, 'VENDOR', $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO contacts (id, company_id, type, display_name, company_name, email, phone, billing_address, gstin, opening_balance_paise)
+      VALUES ($1, 'comp_1', 'VENDOR', $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, opening_balance_paise = EXCLUDED.opening_balance_paise
     `, [v.id, v.name, v.company, v.email, v.phone, v.address, v.gstin, v.balance]);
 
     // Legacy sync
     await db.query(`
-      INSERT INTO vendors (id, display_name, company_name, email, phone, address, gstin, open_balance_paise)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO vendors (id, company_id, display_name, company_name, email, phone, address, gstin, open_balance_paise)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (id) DO UPDATE SET display_name = EXCLUDED.display_name, open_balance_paise = EXCLUDED.open_balance_paise
     `, [v.id, v.name, v.company, v.email, v.phone, v.address, v.gstin, v.balance]);
   }
@@ -169,8 +251,8 @@ export async function seedInitialData(force = false) {
 
   for (const p of products) {
     await db.query(`
-      INSERT INTO products_and_services (id, name, sku, type, sales_price_paise, purchase_cost_paise, quantity_on_hand, income_account_id, expense_or_cogs_account_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO products_and_services (id, company_id, name, sku, type, sales_price_paise, purchase_cost_paise, quantity_on_hand, income_account_id, expense_or_cogs_account_id)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (id) DO NOTHING
     `, [p.id, p.name, p.sku, p.type, p.price, p.cost, p.qty || 0, p.incomeAcc, p.cogsAcc]);
   }
@@ -188,8 +270,8 @@ export async function seedInitialData(force = false) {
 
   for (const inv of sampleInvoices) {
     await db.query(`
-      INSERT INTO invoices (id, invoice_number, customer_id, issue_date, due_date, status, subtotal_paise, tax_paise, total_paise, balance_due_paise)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO invoices (id, company_id, invoice_number, customer_id, issue_date, due_date, status, subtotal_paise, tax_paise, total_paise, balance_due_paise)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7, $8, $9, $10)
       ON CONFLICT (invoice_number) DO UPDATE SET status = EXCLUDED.status, balance_due_paise = EXCLUDED.balance_due_paise
     `, [inv.id, inv.num, inv.custId, inv.date, inv.due, inv.status, inv.subtotal, inv.tax, inv.total, inv.dueBal]);
   }
@@ -204,19 +286,19 @@ export async function seedInitialData(force = false) {
 
   for (const b of sampleBills) {
     await db.query(`
-      INSERT INTO bills (id, bill_number, vendor_id, bill_date, due_date, status, amount_paise, open_balance_paise)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO bills (id, company_id, bill_number, vendor_id, bill_date, due_date, status, amount_paise, open_balance_paise)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (id) DO NOTHING
     `, [b.id, b.num, b.vendId, b.date, b.due, b.status, b.amount, b.status === 'PAID' ? 0 : b.amount]);
   }
 
   // 9. Bank Connections & Feeds
   await db.query(`
-    INSERT INTO bank_connections (id, chart_of_account_id, institution_name, masked_account_number, account_type, bank_balance_paise, in_books_balance_paise)
+    INSERT INTO bank_connections (id, company_id, chart_of_account_id, institution_name, masked_account_number, account_type, bank_balance_paise, in_books_balance_paise)
     VALUES
-      ('bc_hdfc', 'acc_1010', 'HDFC Bank Corporate', '•••• 4021', 'CHECKING', 12010000, 12010000),
-      ('bc_sbi', 'acc_1015', 'SBI Treasury Savings', '•••• 9182', 'SAVINGS', 50000000, 50000000),
-      ('bc_mc', 'acc_1020', 'Mastercard Business Credit', '•••• 7712', 'CREDIT_CARD', 1577200, 1577200)
+      ('bc_hdfc', 'comp_1', 'acc_1010', 'HDFC Bank Corporate', '•••• 4021', 'CHECKING', 12010000, 12010000),
+      ('bc_sbi', 'comp_1', 'acc_1015', 'SBI Treasury Savings', '•••• 9182', 'SAVINGS', 50000000, 50000000),
+      ('bc_mc', 'comp_1', 'acc_1020', 'Mastercard Business Credit', '•••• 7712', 'CREDIT_CARD', 1577200, 1577200)
     ON CONFLICT (id) DO NOTHING
   `);
 
@@ -230,8 +312,8 @@ export async function seedInitialData(force = false) {
 
   for (const bf of sampleBankFeed) {
     await db.query(`
-      INSERT INTO bank_transactions (id, account_code, date, description, payee, spent_paise, received_paise, status, action, match_detail)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      INSERT INTO bank_transactions (id, company_id, account_code, date, description, payee, spent_paise, received_paise, status, action, match_detail)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7, $8, $9, $10)
       ON CONFLICT (id) DO NOTHING
     `, [bf.id, bf.account, bf.date, bf.desc, bf.payee, bf.spent, bf.received, bf.status, bf.action, bf.matchDetail]);
   }
@@ -266,43 +348,43 @@ export async function seedInitialData(force = false) {
 
   for (const fi of feedItems) {
     await db.query(`
-      INSERT INTO ai_business_feed_items (id, category, title, summary_text, action_label, action_payload_json)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO ai_business_feed_items (id, company_id, category, title, summary_text, action_label, action_payload_json)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6)
       ON CONFLICT (id) DO NOTHING
     `, [fi.id, fi.category, fi.title, fi.summary, fi.actionLabel, JSON.stringify(fi.payload)]);
   }
 
   // 11. Mileage, Projects, Time Entries & Employees
   await db.query(`
-    INSERT INTO mileage_logs (id, trip_date, start_location, end_location, distance_km, rate_per_km_paise, calculated_deduction_paise, purpose, vehicle_name)
+    INSERT INTO mileage_logs (id, company_id, trip_date, start_location, end_location, distance_km, rate_per_km_paise, calculated_deduction_paise, purpose, vehicle_name)
     VALUES
-      ('trip_1', '2025-10-18', 'Bandra Office', 'Nariman Point Cool Cars Site', 32.5, 1200, 39000, 'Site Survey & Fountain Estimation', 'Utility Truck MH-02'),
-      ('trip_2', '2025-10-21', 'Thane Depot', 'Indiranagar Nursery', 48.0, 1200, 57600, 'Procurement of Rock Sculptures', 'Utility Truck MH-02')
+      ('trip_1', 'comp_1', '2025-10-18', 'Bandra Office', 'Nariman Point Cool Cars Site', 32.5, 1200, 39000, 'Site Survey & Fountain Estimation', 'Utility Truck MH-02'),
+      ('trip_2', 'comp_1', '2025-10-21', 'Thane Depot', 'Indiranagar Nursery', 48.0, 1200, 57600, 'Procurement of Rock Sculptures', 'Utility Truck MH-02')
     ON CONFLICT (id) DO NOTHING
   `);
 
   await db.query(`
-    INSERT INTO projects (id, customer_id, name, status, budget_paise)
+    INSERT INTO projects (id, company_id, customer_id, name, status, budget_paise)
     VALUES
-      ('proj_1', 'cust_1', 'Commercial Courtyard Fountains', 'IN_PROGRESS', 50000000),
-      ('proj_2', 'cust_2', 'Aviary Natural Waterfall Installation', 'IN_PROGRESS', 35000000)
+      ('proj_1', 'comp_1', 'cust_1', 'Commercial Courtyard Fountains', 'IN_PROGRESS', 50000000),
+      ('proj_2', 'comp_1', 'cust_2', 'Aviary Natural Waterfall Installation', 'IN_PROGRESS', 35000000)
     ON CONFLICT (id) DO NOTHING
   `);
 
   await db.query(`
-    INSERT INTO time_entries (id, project_id, user_id, work_date, hours, hourly_rate_paise, billable, invoiced, notes)
+    INSERT INTO time_entries (id, company_id, project_id, user_id, work_date, hours, hourly_rate_paise, billable, invoiced, notes)
     VALUES
-      ('te_1', 'proj_1', 'usr_3', '2025-10-22', 7.5, 250000, true, false, 'Hydraulic pump fittings & electrical conduit piping'),
-      ('te_2', 'proj_1', 'usr_5', '2025-10-23', 5.0, 400000, true, false, 'Site design review and civil landscaping supervision')
+      ('te_1', 'comp_1', 'proj_1', 'usr_3', '2025-10-22', 7.5, 250000, true, false, 'Hydraulic pump fittings & electrical conduit piping'),
+      ('te_2', 'comp_1', 'proj_1', 'usr_5', '2025-10-23', 5.0, 400000, true, false, 'Site design review and civil landscaping supervision')
     ON CONFLICT (id) DO NOTHING
   `);
 
   await db.query(`
-    INSERT INTO employees (id, name, email, role, compensation_type, pay_rate_paise)
+    INSERT INTO employees (id, company_id, name, email, role, compensation_type, pay_rate_paise)
     VALUES
-      ('emp_1', 'John Johnson', 'john@samplecompany.in', 'Field Crew Lead', 'HOURLY', 250000),
-      ('emp_2', 'Marcus Bell', 'marcus@samplecompany.in', 'Estimator & Architect', 'SALARY', 6500000),
-      ('emp_3', 'Emily Platt', 'emily@samplecompany.in', 'Head Bookkeeper', 'SALARY', 7500000)
+      ('emp_1', 'comp_1', 'John Johnson', 'john@samplecompany.in', 'Field Crew Lead', 'HOURLY', 250000),
+      ('emp_2', 'comp_1', 'Marcus Bell', 'marcus@samplecompany.in', 'Estimator & Architect', 'SALARY', 6500000),
+      ('emp_3', 'comp_1', 'Emily Platt', 'emily@samplecompany.in', 'Head Bookkeeper', 'SALARY', 7500000)
     ON CONFLICT (id) DO NOTHING
   `);
 
@@ -366,24 +448,24 @@ export async function seedInitialData(force = false) {
   // 13. Populate products_services and transactions tables from Section 4
   for (const p of products) {
     await db.query(`
-      INSERT INTO products_services (id, item_type, name, sku, sales_price, purchase_cost, qty_on_hand)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO products_services (id, company_id, item_type, name, sku, sales_price, purchase_cost, qty_on_hand)
+      VALUES ($1, 'comp_1', $2, $3, $4, $5, $6, $7)
       ON CONFLICT (id) DO NOTHING
     `, [p.id, p.type, p.name, p.sku, p.price / 100, p.cost / 100, p.qty || 0]);
   }
 
   for (const inv of sampleInvoices) {
     await db.query(`
-      INSERT INTO transactions (id, txn_type, doc_number, txn_date, due_date, contact_id, is_posting, subtotal, tax_amount, total_amount, balance_due, status)
-      VALUES ($1, 'INVOICE', $2, $3, $4, $5, true, $6, $7, $8, $9, $10)
+      INSERT INTO transactions (id, company_id, txn_type, doc_number, txn_date, due_date, contact_id, is_posting, subtotal, tax_amount, total_amount, balance_due, status)
+      VALUES ($1, 'comp_1', 'INVOICE', $2, $3, $4, $5, true, $6, $7, $8, $9, $10)
       ON CONFLICT (id) DO NOTHING
     `, [inv.id, inv.num, inv.date, inv.due, inv.custId, inv.subtotal / 100, inv.tax / 100, inv.total / 100, inv.dueBal / 100, inv.status]);
   }
 
   for (const b of sampleBills) {
     await db.query(`
-      INSERT INTO transactions (id, txn_type, doc_number, txn_date, due_date, contact_id, is_posting, subtotal, total_amount, balance_due, status)
-      VALUES ($1, 'BILL', $2, $3, $4, $5, true, $6, $6, $7, $8)
+      INSERT INTO transactions (id, company_id, txn_type, doc_number, txn_date, due_date, contact_id, is_posting, subtotal, total_amount, balance_due, status)
+      VALUES ($1, 'comp_1', 'BILL', $2, $3, $4, $5, true, $6, $6, $7, $8)
       ON CONFLICT (id) DO NOTHING
     `, [b.id, b.num, b.date, b.due, b.vendId, b.amount / 100, b.status === 'PAID' ? 0 : b.amount / 100, b.status]);
   }
@@ -394,8 +476,8 @@ export async function seedInitialData(force = false) {
     const isSpent = i % 2 === 0;
     const amt = isSpent ? -((i * 450 + 250) / 10) : ((i * 800 + 500) / 10);
     await db.query(`
-      INSERT INTO bank_feed_transactions (id, bank_account_id, posted_date, description, payee_name, amount, status, match_type)
-      VALUES ($1, 'acc_1010', '2025-10-20', $2, $3, $4, 'FOR_REVIEW', $5)
+      INSERT INTO bank_feed_transactions (id, company_id, bank_account_id, posted_date, description, payee_name, amount, status, match_type)
+      VALUES ($1, 'comp_1', 'acc_1010', '2025-10-20', $2, $3, $4, 'FOR_REVIEW', $5)
       ON CONFLICT (id) DO NOTHING
     `, [
       `bft_chk_${i}`,
@@ -408,10 +490,35 @@ export async function seedInitialData(force = false) {
 
   for (let i = 1; i <= 5; i++) {
     await db.query(`
-      INSERT INTO bank_feed_transactions (id, bank_account_id, posted_date, description, payee_name, amount, status)
-      VALUES ($1, 'acc_1020', '2025-10-21', $2, 'Office Supplies Co', $3, 'FOR_REVIEW')
+      INSERT INTO bank_feed_transactions (id, company_id, bank_account_id, posted_date, description, payee_name, amount, status)
+      VALUES ($1, 'comp_1', 'acc_1020', '2025-10-21', $2, 'Office Supplies Co', $3, 'FOR_REVIEW')
       ON CONFLICT (id) DO NOTHING
     `, [`bft_mc_${i}`, `Mastercard Purchase #${i}`, -(i * 65.50)]);
+  }
+
+  // Final Synchronization: Ensure cached balances match journal lines ground truth for all accounts
+  const balanceCheck = await db.query(`
+    SELECT
+      coa.id,
+      coa.account_type,
+      COALESCE(SUM(jl.debit_paise), 0) as total_debit,
+      COALESCE(SUM(jl.credit_paise), 0) as total_credit,
+      COUNT(jl.id) as line_count
+    FROM chart_of_accounts coa
+    LEFT JOIN journal_entry_lines jl ON coa.id = jl.account_id
+    GROUP BY coa.id, coa.account_type
+  `);
+
+  for (const row of balanceCheck.rows) {
+    if (Number(row.line_count) > 0) {
+      const isDebitNormal = ['ASSET', 'CURRENT_ASSET', 'BANK', 'ACCOUNTS_RECEIVABLE', 'INVENTORY', 'FIXED_ASSET', 'EXPENSE', 'COGS'].includes(row.account_type);
+      const debit = BigInt(row.total_debit || 0);
+      const credit = BigInt(row.total_credit || 0);
+      const balance = isDebitNormal ? (debit - credit) : (credit - debit);
+
+      await db.query(`UPDATE chart_of_accounts SET cached_balance_paise = $1 WHERE id = $2`, [balance.toString(), row.id]);
+      await db.query(`UPDATE accounts SET balance_paise = $1 WHERE id = $2`, [balance.toString(), row.id]);
+    }
   }
 
   try {
@@ -432,4 +539,3 @@ if (process.argv[1] && process.argv[1].includes('seed.js')) {
     process.exit(1);
   });
 }
-

@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import {
   ingestBankStatement,
   extractUtrNumber,
@@ -36,7 +37,7 @@ router.post('/banking/ingest-statement', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -51,7 +52,7 @@ router.post('/banking/rules', async (req, res) => {
     });
     res.json({ success: true, rule });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -60,7 +61,7 @@ router.post('/banking/rules/evaluate', async (req, res) => {
     const match = await evaluateBankRules(req.companyId, req.body.transaction);
     res.json({ success: true, match });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -72,7 +73,7 @@ router.post('/banking/split-match', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -87,7 +88,7 @@ router.post('/banking/deposits', async (req, res) => {
     });
     res.json({ success: true, deposit });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -99,7 +100,7 @@ router.post('/banking/contra-transfers', async (req, res) => {
     });
     res.json({ success: true, transfer });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -111,7 +112,7 @@ router.post('/banking/credit-card-paydowns', async (req, res) => {
     });
     res.json({ success: true, paydown });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -126,7 +127,7 @@ router.post('/banking/reconciliations/initiate', async (req, res) => {
     });
     res.json({ success: true, reconciliation });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -138,7 +139,7 @@ router.post('/banking/reconciliations/complete', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -147,7 +148,7 @@ router.get('/banking/check-unlocked/:journalEntryId', async (req, res) => {
     const result = await assertTransactionUnlocked(req.companyId, req.params.journalEntryId);
     res.json({ success: true, ...result });
   } catch (err) {
-    res.status(403).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -159,7 +160,7 @@ router.get('/treasury/cash-flow-forecast', async (req, res) => {
     const forecast = await generate12MonthCashFlowForecast(req.companyId, req.query);
     res.json({ success: true, forecast });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

@@ -4,40 +4,43 @@ import {
   generateProfitAndLoss,
   generateCashFlowStatement
 } from '../services/ledgerService.js';
-import { getDb } from '../db/db.js';
+import { handleApiError } from '../utils/errorHelper.js';
 
 const router = express.Router();
 
 // GET Balance Sheet
 router.get('/balance-sheet', async (req, res) => {
   try {
+    const companyId = req.companyId || 'comp_1';
     const { asOfDate, accountingMethod = 'ACCRUAL' } = req.query;
-    const report = await generateBalanceSheet({ asOfDate, accountingMethod });
+    const report = await generateBalanceSheet({ companyId, asOfDate, accountingMethod });
     res.json({ success: true, report });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to generate balance sheet.');
   }
 });
 
 // GET Profit & Loss
 router.get(['/profit-loss', '/profit-and-loss'], async (req, res) => {
   try {
+    const companyId = req.companyId || 'comp_1';
     const { startDate, endDate, accountingMethod = 'ACCRUAL' } = req.query;
-    const report = await generateProfitAndLoss({ startDate, endDate, accountingMethod });
+    const report = await generateProfitAndLoss({ companyId, startDate, endDate, accountingMethod });
     res.json({ success: true, report });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to generate profit and loss statement.');
   }
 });
 
 // GET Cash Flow Statement
 router.get('/cash-flow', async (req, res) => {
   try {
+    const companyId = req.companyId || 'comp_1';
     const { startDate, endDate } = req.query;
-    const report = await generateCashFlowStatement({ startDate, endDate });
+    const report = await generateCashFlowStatement({ companyId, startDate, endDate });
     res.json({ success: true, report });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to generate cash flow statement.');
   }
 });
 

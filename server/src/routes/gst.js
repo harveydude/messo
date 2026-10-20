@@ -3,6 +3,7 @@
  */
 
 import { Router } from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { extractUserCompany, requireRole } from '../middleware/rbac.js';
 import { determineTaxScheme, calculateGstSplits, registerGstRate, getGstRateForHsn } from '../services/gstTaxEngine.js';
 import { recordItcEntry, getElectronicCreditLedgerSummary } from '../services/itcService.js';
@@ -34,7 +35,7 @@ router.post('/determine-tax', (req, res) => {
 
     res.json({ success: true, scheme, calculation });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -48,7 +49,7 @@ router.get('/rates', async (req, res) => {
     });
     res.json({ success: true, rate });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -60,7 +61,7 @@ router.post('/rates', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FINANCE_MAN
     });
     res.status(201).json({ success: true, rate: registered });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -73,7 +74,7 @@ router.post('/itc/claim', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FINANCE
     });
     res.status(201).json({ success: true, itcEntry: entry });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -85,7 +86,7 @@ router.get('/itc/summary', async (req, res) => {
     });
     res.json({ success: true, summary });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -99,7 +100,7 @@ router.post('/einvoice/generate', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 
     });
     res.status(201).json({ success: true, eInvoice: eInv });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -112,7 +113,7 @@ router.post('/einvoice/cancel', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT']), 
     });
     res.json({ success: true, eInvoice: cancelled });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -124,7 +125,7 @@ router.post('/ewaybill/generate', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 
     });
     res.status(201).json({ success: true, ewayBill: bill });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -137,7 +138,7 @@ router.get('/returns/gstr-1', async (req, res) => {
     });
     res.json({ success: true, gstr1: data });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -149,7 +150,7 @@ router.get('/returns/gstr-3b', async (req, res) => {
     });
     res.json({ success: true, gstr3b: data });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -162,7 +163,7 @@ router.post('/returns/file', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT']), asy
     });
     res.status(201).json({ success: true, filing });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 

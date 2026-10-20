@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { multiTenantContext, requirePermission } from '../middleware/rbac.js';
 import { parseRawImportFile } from '../services/ingestionParser.js';
 import { autoDiscoverSchemaMapping, transformRowWithMapping, saveSchemaMappingTemplate } from '../services/schemaMapper.js';
@@ -61,7 +62,7 @@ router.post('/upload', async (req, res) => {
       totalRows: parsed.totalRows
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -78,7 +79,7 @@ router.post('/analyze-schema', (req, res) => {
     });
     res.json({ success: true, discovery });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -143,7 +144,7 @@ router.post('/stage', async (req, res) => {
       status: 'VALIDATED'
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -160,7 +161,7 @@ router.post('/promote', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -177,7 +178,7 @@ router.post('/rollback', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -193,7 +194,7 @@ router.get('/batches', async (req, res) => {
     );
     res.json({ success: true, count: result.rows.length, batches: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

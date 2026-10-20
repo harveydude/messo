@@ -1,18 +1,21 @@
 import express from 'express';
 import { getDb } from '../db/db.js';
 import { postJournalEntry, toInr, logAudit } from '../services/ledgerService.js';
+import { handleApiError } from '../utils/errorHelper.js';
 import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
-// GET all bank transactions (supports /feed and /transactions)
+// GET all bank transactions (supports /feed and /transactions) with tenant isolation
 const getFeedHandler = async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const result = await db.query(`
       SELECT * FROM bank_transactions
+      WHERE (company_id = $1 OR company_id IS NULL)
       ORDER BY date DESC, created_at DESC
-    `);
+    `, [companyId]);
 
     const formatted = result.rows.map(tx => ({
       ...tx,
@@ -22,7 +25,7 @@ const getFeedHandler = async (req, res) => {
 
     res.json({ success: true, feed: formatted, transactions: formatted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to fetch bank transactions.');
   }
 };
 
@@ -33,7 +36,8 @@ router.get('/transactions', getFeedHandler);
 router.get('/connections', async (req, res) => {
   try {
     const db = await getDb();
-    const result = await db.query('SELECT * FROM bank_connections');
+    const companyId = req.companyId || 'comp_1';
+    const result = await db.query('SELECT * FROM bank_connections WHERE (company_id = $1 OR company_id IS NULL)', [companyId]);
     const formatted = result.rows.map(b => ({
       ...b,
       bank_balance_inr: toInr(b.bank_balance_paise),
@@ -41,7 +45,7 @@ router.get('/connections', async (req, res) => {
     }));
     res.json({ success: true, connections: formatted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to fetch bank connections.');
   }
 });
 
@@ -49,6 +53,7 @@ router.get('/connections', async (req, res) => {
 router.post('/link-account', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const { institutionName, accountType = 'CHECKING', initialBalanceInr = 100000 } = req.body;
     const connId = `bc_${randomUUID()}`;
     const chartId = `acc_${randomUUID().slice(0, 6)}`;
@@ -56,33 +61,39 @@ router.post('/link-account', async (req, res) => {
 
     // Create chart of account entry
     await db.query(`
-      INSERT INTO chart_of_accounts (id, code, name, statement_group, account_type, sub_type, cached_balance_paise)
-      VALUES ($1, $2, $3, 'BALANCE_SHEET', 'BANK', 'bank', $4)
-    `, [chartId, `10${Math.floor(10 + Math.random() * 89)}`, `${institutionName} (${accountType})`, balPaise]);
+      INSERT INTO chart_of_accounts (id, company_id, code, name, statement_group, account_type, sub_type, cached_balance_paise)
+      VALUES ($1, $2, $3, $4, 'BALANCE_SHEET', 'BANK', 'bank', $5)
+    `, [chartId, companyId, `10${Math.floor(10 + Math.random() * 89)}`, `${institutionName} (${accountType})`, balPaise]);
 
     await db.query(`
-      INSERT INTO bank_connections (id, chart_of_account_id, institution_name, masked_account_number, account_type, bank_balance_paise, in_books_balance_paise)
-      VALUES ($1, $2, $3, '•••• 8821', $4, $5, $5)
-    `, [connId, chartId, institutionName, accountType, balPaise]);
+      INSERT INTO bank_connections (id, company_id, chart_of_account_id, institution_name, masked_account_number, account_type, bank_balance_paise, in_books_balance_paise)
+      VALUES ($1, $2, $3, $4, '•••• 8821', $5, $6, $6)
+    `, [connId, companyId, chartId, institutionName, accountType, balPaise]);
 
     res.json({ success: true, message: 'Bank account connected to Meso live feed', connectionId: connId });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to link bank account.');
   }
 });
 
-// MATCH Transaction (Pipeline 1: Links feed row to existing journal entry & clears queue)
+// MATCH Transaction
 const matchHandler = async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const { id } = req.params;
 
-    await db.query(
-      `UPDATE bank_transactions SET status = 'MATCHED', action = 'Match' WHERE id = $1`,
-      [id]
+    const result = await db.query(
+      `UPDATE bank_transactions SET status = 'MATCHED', action = 'Match' WHERE id = $1 AND (company_id = $2 OR company_id IS NULL) RETURNING id`,
+      [id, companyId]
     );
 
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Transaction not found' });
+    }
+
     await logAudit({
+      companyId,
       action: 'UPDATE',
       entityType: 'BANK_TRANSACTION',
       entityId: id,
@@ -91,7 +102,7 @@ const matchHandler = async (req, res) => {
 
     res.json({ success: true, message: 'Bank feed transaction matched to ledger record' });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to match bank transaction.');
   }
 };
 
@@ -102,14 +113,15 @@ router.post('/match', (req, res) => {
   return matchHandler(req, res);
 });
 
-// CATEGORIZE Transaction (Pipeline 1: Creates expense/deposit & posts balanced double-entry)
+// CATEGORIZE Transaction
 const categorizeHandler = async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const { id } = req.params;
     const { categoryAccountId = 'acc_6020' } = req.body;
 
-    const txRes = await db.query('SELECT * FROM bank_transactions WHERE id = $1', [id]);
+    const txRes = await db.query('SELECT * FROM bank_transactions WHERE id = $1 AND (company_id = $2 OR company_id IS NULL)', [id, companyId]);
     if (txRes.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Transaction not found' });
     }
@@ -118,11 +130,9 @@ const categorizeHandler = async (req, res) => {
     const isSpent = Number(tx.spent_paise || 0) > 0;
     const amount = isSpent ? BigInt(tx.spent_paise) : BigInt(tx.received_paise);
 
-    // Post double-entry journal entry:
-    // If spent: Debit Expense Account, Credit Bank
-    // If received: Debit Bank, Credit Income Account
     if (isSpent) {
       await postJournalEntry({
+        companyId,
         entryNumber: `JE-TX-${tx.id.slice(-6)}`,
         entryDate: tx.date,
         sourceType: 'BANK_FEED',
@@ -135,6 +145,7 @@ const categorizeHandler = async (req, res) => {
       });
     } else {
       await postJournalEntry({
+        companyId,
         entryNumber: `JE-TX-${tx.id.slice(-6)}`,
         entryDate: tx.date,
         sourceType: 'BANK_FEED',
@@ -147,11 +158,11 @@ const categorizeHandler = async (req, res) => {
       });
     }
 
-    await db.query(`UPDATE bank_transactions SET status = 'CATEGORIZED', action = 'View' WHERE id = $1`, [id]);
+    await db.query(`UPDATE bank_transactions SET status = 'CATEGORIZED', action = 'View' WHERE id = $1 AND (company_id = $2 OR company_id IS NULL)`, [id, companyId]);
 
     res.json({ success: true, message: 'Bank feed transaction categorized and posted to General Ledger' });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to categorize bank transaction.');
   }
 };
 

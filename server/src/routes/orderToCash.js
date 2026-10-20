@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { getDb } from '../db/db.js';
 import {
   createEstimate,
@@ -59,7 +60,7 @@ router.get('/estimates', async (req, res) => {
     );
     res.json({ success: true, estimates: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -74,7 +75,7 @@ router.post('/estimates', async (req, res) => {
     });
     res.json({ success: true, estimate });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -88,7 +89,7 @@ router.get('/estimates/:id', async (req, res) => {
     }
     res.json({ success: true, estimate });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -103,7 +104,7 @@ router.post('/estimates/:id/convert-to-order', async (req, res) => {
     });
     res.json({ success: true, salesOrder });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -122,7 +123,7 @@ router.get('/sales-orders', async (req, res) => {
     );
     res.json({ success: true, salesOrders: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -137,7 +138,7 @@ router.post('/sales-orders', async (req, res) => {
     });
     res.json({ success: true, salesOrder });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -152,7 +153,7 @@ router.post('/sales-orders/:id/convert-to-invoice', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -170,7 +171,7 @@ router.post('/templates', async (req, res) => {
     });
     res.json({ success: true, template });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -181,7 +182,7 @@ router.get('/templates', async (req, res) => {
     const template = await getTemplateForCompany(companyId, req.query.type);
     res.json({ success: true, template });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -196,7 +197,7 @@ router.get('/invoices/:id/render', async (req, res) => {
     });
     res.json({ success: true, document: doc });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -215,7 +216,7 @@ router.post('/revenue/contracts', async (req, res) => {
     });
     res.json({ success: true, contract });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -229,7 +230,7 @@ router.get('/revenue/contracts/:id', async (req, res) => {
     }
     res.json({ success: true, contract: summary });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -246,7 +247,7 @@ router.post('/revenue/contracts/:id/recognize', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -269,7 +270,7 @@ router.get('/receipts', async (req, res) => {
     );
     res.json({ success: true, receipts: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -284,7 +285,7 @@ router.post('/receipts', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -299,7 +300,7 @@ router.post('/receipts/advance-gst', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -322,7 +323,7 @@ router.get('/credit-notes', async (req, res) => {
     );
     res.json({ success: true, creditNotes: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -337,7 +338,7 @@ router.post('/credit-notes', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -347,7 +348,7 @@ router.post('/dunning/classify', (req, res) => {
     const classification = classifyDunningNotice(req.body);
     res.json({ success: true, classification });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -361,7 +362,7 @@ router.post('/dunning/run', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

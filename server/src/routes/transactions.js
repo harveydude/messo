@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { getDb } from '../db/db.js';
 import { postJournalEntry, logAudit, toInr } from '../services/ledgerService.js';
 import { calculateGST } from '../services/gstService.js';
@@ -485,7 +486,7 @@ router.post('/', async (req, res) => {
     const result = await processTransaction(req.body);
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -495,7 +496,7 @@ router.post('/customers/invoices', async (req, res) => {
     const result = await processTransaction(req.body, 'INVOICE');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -504,7 +505,7 @@ router.post('/customers/receive-payment', async (req, res) => {
     const result = await processTransaction(req.body, 'RECEIVE_PAYMENT');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -513,7 +514,7 @@ router.post('/customers/statements', async (req, res) => {
     const result = await processTransaction(req.body, 'STATEMENT');
     res.json({ ...result, pdfUrl: '/downloads/statement_sample.pdf' });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -522,7 +523,7 @@ router.post('/customers/estimates', async (req, res) => {
     const result = await processTransaction(req.body, 'ESTIMATE');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -531,7 +532,7 @@ router.post('/customers/sales-orders', async (req, res) => {
     const result = await processTransaction(req.body, 'SALES_ORDER');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -540,7 +541,7 @@ router.post('/customers/credit-memos', async (req, res) => {
     const result = await processTransaction(req.body, 'CREDIT_MEMO');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -549,7 +550,7 @@ router.post('/customers/sales-receipts', async (req, res) => {
     const result = await processTransaction(req.body, 'SALES_RECEIPT');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -558,7 +559,7 @@ router.post('/customers/refund-receipts', async (req, res) => {
     const result = await processTransaction(req.body, 'REFUND_RECEIPT');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -567,7 +568,7 @@ router.post('/customers/delayed-credits', async (req, res) => {
     const result = await processTransaction(req.body, 'DELAYED_CREDIT');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -576,7 +577,7 @@ router.post('/customers/delayed-charges', async (req, res) => {
     const result = await processTransaction(req.body, 'DELAYED_CHARGE');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -586,7 +587,7 @@ router.post('/vendors/expenses', async (req, res) => {
     const result = await processTransaction(req.body, 'EXPENSE');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -595,7 +596,7 @@ router.post('/vendors/checks', async (req, res) => {
     const result = await processTransaction(req.body, 'CHECK');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -604,7 +605,7 @@ router.post('/vendors/bills', async (req, res) => {
     const result = await processTransaction(req.body, 'BILL');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -613,7 +614,7 @@ router.post('/vendors/pay-bills', async (req, res) => {
     const result = await processTransaction(req.body, 'PAY_BILLS');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -622,7 +623,7 @@ router.post('/vendors/purchase-orders', async (req, res) => {
     const result = await processTransaction(req.body, 'PURCHASE_ORDER');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -631,7 +632,7 @@ router.post('/vendors/vendor-credits', async (req, res) => {
     const result = await processTransaction(req.body, 'VENDOR_CREDIT');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -640,7 +641,7 @@ router.post('/vendors/credit-card-credits', async (req, res) => {
     const result = await processTransaction(req.body, 'CREDIT_CARD_CREDIT');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -650,7 +651,7 @@ router.get('/vendors/print-checks', async (req, res) => {
     const result = await db.query(`SELECT * FROM transactions WHERE txn_type = 'CHECK' AND print_status = 'TO_PRINT'`);
     res.json({ success: true, checksToPrint: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -665,7 +666,7 @@ router.post('/vendors/print-checks', async (req, res) => {
     }
     res.json({ success: true, message: `Assigned check numbers up to ${nextNo - 1} and marked PRINTED` });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -675,7 +676,7 @@ router.post('/team/payroll-runs', async (req, res) => {
     const result = await processTransaction(req.body, 'PAYROLL_RUN');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -685,7 +686,7 @@ router.post('/other/tasks', async (req, res) => {
     const result = await processTransaction(req.body, 'TASK');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -694,7 +695,7 @@ router.post('/other/bank-deposits', async (req, res) => {
     const result = await processTransaction(req.body, 'BANK_DEPOSIT');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -703,7 +704,7 @@ router.post('/other/transfers', async (req, res) => {
     const result = await processTransaction(req.body, 'TRANSFER');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -712,7 +713,7 @@ router.post('/other/journal-entries', async (req, res) => {
     const result = await processTransaction(req.body, 'JOURNAL_ENTRY');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -721,7 +722,7 @@ router.post('/other/inventory-adjustments', async (req, res) => {
     const result = await processTransaction(req.body, 'INVENTORY_ADJUSTMENT');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -730,7 +731,7 @@ router.post('/other/pay-down-credit-card', async (req, res) => {
     const result = await processTransaction(req.body, 'PAY_DOWN_CREDIT_CARD');
     res.json(result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

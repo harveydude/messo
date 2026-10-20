@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { validatePanStructure, validateAadhaarStructure, registerLowerDeductionCert } from '../services/tdsPanValidator.js';
 import { processTdsForBillOrAdvance, adjustAdvancePaymentTds, calculateTcs } from '../services/tdsCalculationEngine.js';
 import { calculateTdsLateInterest, recordChallanItns281, compileForm26Q } from '../services/tdsComplianceService.js';
@@ -21,7 +22,7 @@ router.post('/pan/validate', (req, res) => {
     if (aadhaar) aadhaarResult = validateAadhaarStructure(aadhaar);
     res.json({ success: true, pan: panResult, aadhaar: aadhaarResult });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -34,7 +35,7 @@ router.post('/lower-cert', async (req, res) => {
     });
     res.json({ success: true, cert });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -47,7 +48,7 @@ router.post('/tds/process', async (req, res) => {
     });
     res.json({ success: true, result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -60,7 +61,7 @@ router.post('/tds/adjust-advance', async (req, res) => {
     });
     res.json({ success: true, result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -70,7 +71,7 @@ router.post('/tcs/calculate', (req, res) => {
     const result = calculateTcs(req.body);
     res.json({ success: true, result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -80,7 +81,7 @@ router.post('/tds/late-interest', (req, res) => {
     const result = calculateTdsLateInterest(req.body);
     res.json({ success: true, result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -93,7 +94,7 @@ router.post('/challans', async (req, res) => {
     });
     res.json({ success: true, challan });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -108,7 +109,7 @@ router.get('/form26q', async (req, res) => {
     });
     res.json({ success: true, form26q });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -118,7 +119,7 @@ router.get('/fixed-assets', async (req, res) => {
     const assets = await listFixedAssets({ companyId: req.user?.company_id || 'comp_1' });
     res.json({ success: true, assets });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -130,7 +131,7 @@ router.post('/fixed-assets', async (req, res) => {
     });
     res.json({ success: true, asset });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -142,7 +143,7 @@ router.post('/fixed-assets/depreciation', async (req, res) => {
     });
     res.json({ success: true, result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err);
   }
 });
 

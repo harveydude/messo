@@ -1,14 +1,17 @@
 import express from 'express';
 import { getDb } from '../db/db.js';
 import { postJournalEntry, toInr, logAudit } from '../services/ledgerService.js';
+import { handleApiError } from '../utils/errorHelper.js';
 import { randomUUID } from 'crypto';
 
 const router = express.Router();
 
-// GET all expenses and bills
+// GET all expenses and bills with tenant isolation
 const getExpensesAndBills = async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
+
     const expRes = await db.query(`
       SELECT
         id,
@@ -21,13 +24,14 @@ const getExpensesAndBills = async (req, res) => {
         'EXPENSE' as record_type,
         'PAID' as status
       FROM expenses
-    `);
+      WHERE company_id = $1
+    `, [companyId]);
 
     const billRes = await db.query(`
       SELECT
         b.id,
         b.bill_number as number,
-        v.display_name as payee,
+        COALESCE(v.display_name, 'Vendor') as payee,
         b.bill_date as date,
         b.due_date,
         b.amount_paise as total_paise,
@@ -36,8 +40,9 @@ const getExpensesAndBills = async (req, res) => {
         'BILL' as record_type,
         b.status
       FROM bills b
-      LEFT JOIN contacts v ON b.vendor_id = v.id
-    `);
+      LEFT JOIN contacts v ON b.vendor_id = v.id AND v.company_id = $1
+      WHERE b.company_id = $1
+    `, [companyId]);
 
     const combined = [
       ...expRes.rows.map(e => ({ ...e, amount_inr: toInr(e.total_paise) })),
@@ -46,7 +51,7 @@ const getExpensesAndBills = async (req, res) => {
 
     res.json({ success: true, items: combined, expenses: combined });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to fetch expenses and bills.');
   }
 };
 
@@ -57,6 +62,7 @@ router.get('/expenses-bills', getExpensesAndBills);
 router.post('/', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const {
       recordType = 'EXPENSE', // 'EXPENSE' or 'BILL'
       payeeName,
@@ -97,12 +103,13 @@ router.post('/', async (req, res) => {
       const due = dueDate || new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
 
       await db.query(`
-        INSERT INTO bills (id, bill_number, vendor_id, bill_date, due_date, status, amount_paise, open_balance_paise, notes)
-        VALUES ($1, $2, $3, $4, $5, 'UNPAID', $6, $7, $8)
-      `, [billId, billNum, vendorId, paymentDate, due, totalPaise, totalPaise, memo]);
+        INSERT INTO bills (id, company_id, bill_number, vendor_id, bill_date, due_date, status, amount_paise, open_balance_paise, notes)
+        VALUES ($1, $2, $3, $4, $5, $6, 'UNPAID', $7, $8, $9)
+      `, [billId, companyId, billNum, vendorId, paymentDate, due, totalPaise, totalPaise, memo]);
 
       // Sub-Ledger Posting: Debit Expense, Credit Accounts Payable (acc_2000)
       await postJournalEntry({
+        companyId,
         entryNumber: `JE-BILL-${billNum}`,
         entryDate: paymentDate,
         sourceType: 'BILL',
@@ -114,7 +121,7 @@ router.post('/', async (req, res) => {
         ]
       });
 
-      await logAudit({ action: 'CREATE', entityType: 'BILL', entityId: billId, after: { billNum, totalInr } });
+      await logAudit({ companyId, action: 'CREATE', entityType: 'BILL', entityId: billId, after: { billNum, totalInr } });
       return res.json({ success: true, message: 'Vendor Bill created and posted to AP', id: billId, billNumber: billNum });
     }
 
@@ -123,12 +130,13 @@ router.post('/', async (req, res) => {
     const expNum = refNo || `EXP-${Date.now().toString().slice(-4)}`;
 
     await db.query(`
-      INSERT INTO expenses (id, expense_number, payee_name, payment_account_id, payment_date, ref_no, memo, total_paise, category)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    `, [expId, expNum, payeeName || 'Vendor', paymentAccountId, paymentDate, refNo, memo, totalPaise, primaryCategory]);
+      INSERT INTO expenses (id, company_id, expense_number, payee_name, payment_account_id, payment_date, ref_no, memo, total_paise, category)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `, [expId, companyId, expNum, payeeName || 'Vendor', paymentAccountId, paymentDate, refNo, memo, totalPaise, primaryCategory]);
 
     // Sub-Ledger Posting: Debit Expense, Credit Bank Checking (acc_1010)
     await postJournalEntry({
+      companyId,
       entryNumber: `JE-EXP-${expNum}`,
       entryDate: paymentDate,
       sourceType: 'EXPENSE',
@@ -140,10 +148,10 @@ router.post('/', async (req, res) => {
       ]
     });
 
-    await logAudit({ action: 'CREATE', entityType: 'EXPENSE', entityId: expId, after: { expNum, totalInr } });
+    await logAudit({ companyId, action: 'CREATE', entityType: 'EXPENSE', entityId: expId, after: { expNum, totalInr } });
     res.json({ success: true, message: 'Expense created and ledger balanced', id: expId, number: expNum });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to create expense or bill.');
   }
 });
 
@@ -151,10 +159,11 @@ router.post('/', async (req, res) => {
 router.post('/bills/:id/pay', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const { id } = req.params;
     const { bankAccountId = 'acc_1010' } = req.body;
 
-    const billRes = await db.query('SELECT * FROM bills WHERE id = $1', [id]);
+    const billRes = await db.query('SELECT * FROM bills WHERE id = $1 AND company_id = $2', [id, companyId]);
     if (billRes.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Bill not found' });
     }
@@ -162,10 +171,11 @@ router.post('/bills/:id/pay', async (req, res) => {
     const bill = billRes.rows[0];
     const amountPaise = BigInt(bill.open_balance_paise || bill.amount_paise);
 
-    await db.query(`UPDATE bills SET status = 'PAID', open_balance_paise = 0 WHERE id = $1`, [id]);
+    await db.query(`UPDATE bills SET status = 'PAID', open_balance_paise = 0 WHERE id = $1 AND company_id = $2`, [id, companyId]);
 
     // Settle AP in General Ledger
     await postJournalEntry({
+      companyId,
       entryNumber: `JE-PAY-${bill.bill_number}`,
       sourceType: 'BILL_PAYMENT',
       narration: `Settle Bill #${bill.bill_number}`,
@@ -176,10 +186,10 @@ router.post('/bills/:id/pay', async (req, res) => {
       ]
     });
 
-    await logAudit({ action: 'UPDATE', entityType: 'BILL', entityId: id, after: { status: 'PAID' } });
+    await logAudit({ companyId, action: 'UPDATE', entityType: 'BILL', entityId: id, after: { status: 'PAID' } });
     res.json({ success: true, message: `Bill #${bill.bill_number} marked as paid and cleared from AP` });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to process bill payment.');
   }
 });
 
@@ -187,13 +197,22 @@ router.post('/bills/:id/pay', async (req, res) => {
 router.post('/bills/:id/schedule-payment', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const { id } = req.params;
     const { scheduledDate = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0] } = req.body;
 
-    await db.query(`UPDATE bills SET status = 'SCHEDULED', scheduled_payment_date = $1 WHERE id = $2`, [scheduledDate, id]);
+    const result = await db.query(
+      `UPDATE bills SET status = 'SCHEDULED', scheduled_payment_date = $1 WHERE id = $2 AND company_id = $3 RETURNING id`,
+      [scheduledDate, id, companyId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Bill not found' });
+    }
+
     res.json({ success: true, message: `Bill payment scheduled for ${scheduledDate}` });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to schedule bill payment.');
   }
 });
 

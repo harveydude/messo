@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { getDb } from '../db/db.js';
 import { parseReceiptOCR, generateInvoiceReminderEmail } from '../services/aiService.js';
 
@@ -15,7 +16,7 @@ router.get('/business-feed', async (req, res) => {
     `);
     res.json({ success: true, items: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -33,7 +34,7 @@ router.post('/business-feed/:id/action', async (req, res) => {
 
     res.json({ success: true, message: `Feed item ${id} marked as ${action}` });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -44,7 +45,7 @@ router.post('/parse-receipt', async (req, res) => {
     const extracted = await parseReceiptOCR({ filename, fileContent });
     res.json({ success: true, extracted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -64,7 +65,7 @@ router.post('/invoice-reminder', async (req, res) => {
 
     res.json({ success: true, message: 'AI reminder generated and sent', reminder });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -85,7 +86,7 @@ router.post('/help-chat', async (req, res) => {
 
     res.json({ success: true, reply });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

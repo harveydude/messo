@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import {
   createEmployee,
   executeMonthlyPayrollRun
@@ -28,7 +29,7 @@ router.post('/payroll/employees', async (req, res) => {
     const employee = await createEmployee(req.companyId, req.body);
     res.json({ success: true, employee });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -40,7 +41,7 @@ router.post('/payroll/run', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -52,7 +53,7 @@ router.get('/reports/mca-schedule-iii/balance-sheet', async (req, res) => {
     const bs = await generateScheduleIIIBalanceSheet(req.companyId, req.query.asOfDate);
     res.json({ success: true, balanceSheet: bs });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -61,7 +62,7 @@ router.get('/reports/mca-schedule-iii/pnl', async (req, res) => {
     const pnl = await generateScheduleIIIPnL(req.companyId, req.query.fromDate, req.query.toDate);
     res.json({ success: true, profitAndLoss: pnl });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -70,7 +71,7 @@ router.get('/reports/mca-schedule-iii/trial-balance', async (req, res) => {
     const tb = await generateTrialBalance(req.companyId, req.query.asOfDate);
     res.json({ success: true, trialBalance: tb });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -79,7 +80,7 @@ router.get('/reports/mca-schedule-iii/ar-ap-aging', async (req, res) => {
     const aging = await generateArApAging(req.companyId);
     res.json({ success: true, ...aging });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -88,7 +89,7 @@ router.post('/reports/mca-schedule-iii/ca-export-pack', async (req, res) => {
     const pack = await generateCaAuditExportPack(req.companyId, req.body.financialYear, req.body.asOfDate);
     res.json({ success: true, pack });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -100,7 +101,7 @@ router.post('/meso-assist/scan', async (req, res) => {
     const scan = await runMesoAssistScan(req.companyId);
     res.json({ success: true, ...scan });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -109,7 +110,7 @@ router.post('/meso-assist/resolve', async (req, res) => {
     const result = await resolveAnomaly(req.companyId, req.body.anomalyId);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -121,7 +122,7 @@ router.post('/conversational-cfo/query', async (req, res) => {
     const result = await executeConversationalCfoQuery(req.companyId, req.body.query);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

@@ -2,6 +2,7 @@ import express from 'express';
 import { getDb } from '../db/db.js';
 import { calculateGST } from '../services/gstService.js';
 import { postJournalEntry, logAudit } from '../services/ledgerService.js';
+import { handleApiError } from '../utils/errorHelper.js';
 import { randomUUID } from 'crypto';
 
 const router = express.Router();
@@ -10,12 +11,14 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const result = await db.query(`
       SELECT i.*, c.display_name as customer_name, c.email as customer_email, c.billing_address
       FROM invoices i
       LEFT JOIN contacts c ON i.customer_id = c.id
+      WHERE i.company_id = $1
       ORDER BY i.created_at DESC
-    `);
+    `, [companyId]);
 
     // Format amounts in rupees for easy frontend display
     const formatted = result.rows.map(inv => ({
@@ -27,7 +30,7 @@ router.get('/', async (req, res) => {
 
     res.json({ success: true, invoices: formatted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to fetch invoices.');
   }
 });
 
@@ -35,6 +38,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const {
       customerId = 'cust_1',
       invoiceNumber,
@@ -54,11 +58,11 @@ router.post('/', async (req, res) => {
     const totalPaise = subtotalPaise + gst.totalTaxPaise - Number(discountPaise);
     const due = dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // 1. Insert Invoice
+    // 1. Insert Invoice with strict tenant isolation
     await db.query(
-      `INSERT INTO invoices (id, invoice_number, customer_id, issue_date, due_date, status, subtotal_paise, tax_paise, discount_paise, total_paise, balance_due_paise, notes)
-       VALUES ($1, $2, $3, $4, $5, 'SENT', $6, $7, $8, $9, $10, $11)`,
-      [invId, invNum, customerId, issueDate, due, subtotalPaise, gst.totalTaxPaise, discountPaise, totalPaise, totalPaise, notes]
+      `INSERT INTO invoices (id, company_id, invoice_number, customer_id, issue_date, due_date, status, subtotal_paise, tax_paise, discount_paise, total_paise, balance_due_paise, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, 'SENT', $7, $8, $9, $10, $11, $12)`,
+      [invId, companyId, invNum, customerId, issueDate, due, subtotalPaise, gst.totalTaxPaise, discountPaise, totalPaise, totalPaise, notes]
     );
 
     // 2. Insert Line Items
@@ -75,6 +79,7 @@ router.post('/', async (req, res) => {
     // 3. Auto-Post Balanced Double-Entry Journal to Ledger:
     // Debit Accounts Receivable (₹Total), Credit Sales Revenue (₹Subtotal), Credit GST Output (₹Tax)
     await postJournalEntry({
+      companyId,
       entryNumber: `JE-INV-${invNum}`,
       entryDate: issueDate,
       sourceType: 'INVOICE',
@@ -88,6 +93,7 @@ router.post('/', async (req, res) => {
     });
 
     await logAudit({
+      companyId,
       action: 'CREATE',
       entityType: 'INVOICE',
       entityId: invId,
@@ -105,7 +111,7 @@ router.post('/', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to create invoice.');
   }
 });
 
@@ -114,14 +120,16 @@ router.post('/:id/send', async (req, res) => {
   try {
     const db = await getDb();
     const { id } = req.params;
-    const invRes = await db.query('SELECT * FROM invoices WHERE id = $1', [id]);
+    const companyId = req.companyId || 'comp_1';
+    const invRes = await db.query('SELECT * FROM invoices WHERE id = $1 AND company_id = $2', [id, companyId]);
     if (invRes.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Invoice not found' });
     }
 
-    await db.query(`UPDATE invoices SET status = 'SENT', last_reminder_sent_at = CURRENT_TIMESTAMP, version = version + 1 WHERE id = $1`, [id]);
+    await db.query(`UPDATE invoices SET status = 'SENT', last_reminder_sent_at = CURRENT_TIMESTAMP, version = version + 1 WHERE id = $1 AND company_id = $2`, [id, companyId]);
 
     await logAudit({
+      companyId,
       action: 'UPDATE',
       entityType: 'INVOICE',
       entityId: id,
@@ -134,7 +142,7 @@ router.post('/:id/send', async (req, res) => {
       pdfUrl: `/api/invoices/${id}/pdf`
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to send invoice.');
   }
 });
 
@@ -143,9 +151,10 @@ router.post('/:id/payment', async (req, res) => {
   try {
     const db = await getDb();
     const { id } = req.params;
+    const companyId = req.companyId || 'comp_1';
     const { amountInr, paymentMethod = 'Bank Transfer', bankAccountId = 'acc_1010' } = req.body;
 
-    const invRes = await db.query('SELECT * FROM invoices WHERE id = $1', [id]);
+    const invRes = await db.query('SELECT * FROM invoices WHERE id = $1 AND company_id = $2', [id, companyId]);
     if (invRes.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Invoice not found' });
     }
@@ -157,13 +166,14 @@ router.post('/:id/payment', async (req, res) => {
 
     // 1. Update Invoice balance & status
     await db.query(
-      `UPDATE invoices SET balance_due_paise = $1, amount_paid_paise = amount_paid_paise + $2, status = $3, version = version + 1 WHERE id = $4`,
-      [newBalance.toString(), paymentPaise.toString(), newStatus, id]
+      `UPDATE invoices SET balance_due_paise = $1, amount_paid_paise = amount_paid_paise + $2, status = $3, version = version + 1 WHERE id = $4 AND company_id = $5`,
+      [newBalance.toString(), paymentPaise.toString(), newStatus, id, companyId]
     );
 
     // 2. Post balanced Double-Entry Journal Entry:
     // Debit Bank Account, Credit Accounts Receivable
     await postJournalEntry({
+      companyId,
       entryNumber: `JE-RCPT-${inv.invoice_number}`,
       sourceType: 'PAYMENT',
       narration: `Payment received for Invoice #${inv.invoice_number}`,
@@ -175,6 +185,7 @@ router.post('/:id/payment', async (req, res) => {
     });
 
     await logAudit({
+      companyId,
       action: 'CREATE',
       entityType: 'PAYMENT',
       entityId: id,
@@ -188,7 +199,7 @@ router.post('/:id/payment', async (req, res) => {
       balanceDueInr: (Number(newBalance)/100).toFixed(2)
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to record invoice payment.');
   }
 });
 
@@ -197,7 +208,8 @@ router.post('/:id/reminder', async (req, res) => {
   try {
     const db = await getDb();
     const { id } = req.params;
-    const invRes = await db.query('SELECT * FROM invoices WHERE id = $1', [id]);
+    const companyId = req.companyId || 'comp_1';
+    const invRes = await db.query('SELECT * FROM invoices WHERE id = $1 AND company_id = $2', [id, companyId]);
     if (invRes.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Invoice not found' });
     }
@@ -207,7 +219,7 @@ router.post('/:id/reminder', async (req, res) => {
       message: `Invoice reminder successfully sent for #${invRes.rows[0].invoice_number}`
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to send invoice reminder.');
   }
 });
 

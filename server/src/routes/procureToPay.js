@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { getDb } from '../db/db.js';
 import {
   createPurchaseOrder,
@@ -58,7 +59,7 @@ router.get('/procurement/purchase-orders', async (req, res) => {
     );
     res.json({ success: true, purchaseOrders: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -73,7 +74,7 @@ router.post('/procurement/purchase-orders', async (req, res) => {
     });
     res.json({ success: true, purchaseOrder: po });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -85,7 +86,7 @@ router.get('/procurement/purchase-orders/:id', async (req, res) => {
     if (!po) return res.status(404).json({ success: false, error: 'Purchase order not found' });
     res.json({ success: true, purchaseOrder: po });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -100,7 +101,7 @@ router.post('/procurement/goods-receipts', async (req, res) => {
     });
     res.json({ success: true, goodsReceipt: grn });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -115,7 +116,7 @@ router.post('/procurement/three-way-match', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -134,7 +135,7 @@ router.post('/ocr/scan', async (req, res) => {
     });
     res.json({ success: true, scan });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -144,7 +145,7 @@ router.post('/ocr/parse-preview', (req, res) => {
     const extracted = parseIndianInvoiceText(req.body.rawText);
     res.json({ success: true, extracted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -159,7 +160,7 @@ router.post('/ocr/convert-to-bill', async (req, res) => {
     });
     res.json({ success: true, bill });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -178,7 +179,7 @@ router.post('/bills/:id/submit-approval', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -194,7 +195,7 @@ router.post('/bills/:id/approve', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -210,7 +211,7 @@ router.post('/bills/:id/reject', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -225,7 +226,7 @@ router.post('/bills/recurring-templates', async (req, res) => {
     });
     res.json({ success: true, template });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -239,7 +240,7 @@ router.post('/bills/recurring-templates/process', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -253,7 +254,7 @@ router.post('/msme/validate-udyam', (req, res) => {
     const result = validateUdyamNumber(req.body.udyamNumber);
     res.json({ success: true, ...result });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -267,7 +268,7 @@ router.post('/msme/evaluate', async (req, res) => {
     });
     res.json(report);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -286,7 +287,7 @@ router.post('/debit-notes', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -305,7 +306,7 @@ router.get('/debit-notes', async (req, res) => {
     );
     res.json({ success: true, debitNotes: result.rows });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -320,7 +321,7 @@ router.post('/payouts/batch', async (req, res) => {
     });
     res.json(result);
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

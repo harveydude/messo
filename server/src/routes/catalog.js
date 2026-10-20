@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { getDb } from '../db/db.js';
 import { toInr, logAudit } from '../services/ledgerService.js';
 import { randomUUID } from 'crypto';
@@ -23,7 +24,7 @@ router.get('/products-services', async (req, res) => {
 
     res.json({ success: true, items: formatted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -65,7 +66,7 @@ router.post('/products-services', async (req, res) => {
 
     res.json({ success: true, message: 'Item created in catalog', product: { id: prodId, name, type } });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import { smartSearchAndQA } from '../services/aiService.js';
 
 const router = express.Router();
@@ -9,7 +10,7 @@ router.post('/smart', async (req, res) => {
     const results = await smartSearchAndQA(query);
     res.json({ success: true, ...results });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

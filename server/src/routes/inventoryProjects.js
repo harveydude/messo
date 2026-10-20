@@ -1,4 +1,5 @@
 import express from 'express';
+import { handleApiError } from '../utils/errorHelper.js';
 import {
   recordInventoryReceipt,
   recordInventoryIssue,
@@ -43,7 +44,7 @@ router.get('/inventory/valuation/:productId', async (req, res) => {
     const summary = await getInventoryValuationSummary(req.companyId, req.params.productId);
     res.json({ success: true, summary });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -53,7 +54,7 @@ router.post('/inventory/recalculate', async (req, res) => {
     const result = await recalculateValuationFromDate(req.companyId, productId, fromDate);
     res.json({ success: true, result });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -65,7 +66,7 @@ router.post('/inventory/batches', async (req, res) => {
     const batch = await createBatch({ companyId: req.companyId, ...req.body });
     res.json({ success: true, batch });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -74,7 +75,7 @@ router.get('/inventory/reorder-alerts', async (req, res) => {
     const alerts = await checkReorderAlerts(req.companyId);
     res.json({ success: true, alerts });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -83,7 +84,7 @@ router.get('/inventory/expiring-batches', async (req, res) => {
     const batches = await checkExpiringBatches(req.companyId, req.query.days || 30);
     res.json({ success: true, batches });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -92,7 +93,7 @@ router.post('/inventory/adjustments', async (req, res) => {
     const adjustment = await performStockAdjustment({ companyId: req.companyId, ...req.body });
     res.json({ success: true, adjustment });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -104,7 +105,7 @@ router.post('/inventory/bom', async (req, res) => {
     const bom = await createBillOfMaterials({ companyId: req.companyId, ...req.body });
     res.json({ success: true, bom });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -113,7 +114,7 @@ router.post('/inventory/assemblies/build', async (req, res) => {
     const build = await executeAssemblyBuild({ companyId: req.companyId, ...req.body });
     res.json({ success: true, build });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -122,7 +123,7 @@ router.post('/inventory/job-work/challans', async (req, res) => {
     const challan = await issueJobWorkChallan({ companyId: req.companyId, ...req.body });
     res.json({ success: true, challan });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -131,7 +132,7 @@ router.post('/inventory/job-work/returns', async (req, res) => {
     const result = await recordJobWorkReturn({ companyId: req.companyId, ...req.body });
     res.json({ success: true, result });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -140,7 +141,7 @@ router.get('/inventory/job-work/overdue', async (req, res) => {
     const overdue = await checkOverdueJobWorkChallans(req.companyId);
     res.json({ success: true, overdue });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -152,7 +153,7 @@ router.post('/projects/timesheets', async (req, res) => {
     const entry = await createTimesheetEntry({ companyId: req.companyId, ...req.body });
     res.json({ success: true, entry });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -161,7 +162,7 @@ router.post('/projects/timesheets/approve', async (req, res) => {
     const approved = await approveTimesheetEntries(req.companyId, req.body.entryIds);
     res.json({ success: true, approved });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -170,7 +171,7 @@ router.post('/projects/billable-expenses', async (req, res) => {
     const expense = await recordBillableExpense({ companyId: req.companyId, ...req.body });
     res.json({ success: true, expense });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -179,7 +180,7 @@ router.post('/projects/convert-unbilled-to-invoice', async (req, res) => {
     const invoiceData = await convertUnbilledToInvoiceItems({ companyId: req.companyId, ...req.body });
     res.json({ success: true, invoiceData });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -191,7 +192,7 @@ router.post('/projects', async (req, res) => {
     const project = await createProject({ companyId: req.companyId, ...req.body });
     res.json({ success: true, project });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -200,7 +201,7 @@ router.get('/projects/:projectId/profitability', async (req, res) => {
     const profitability = await calculateProjectProfitability(req.companyId, req.params.projectId, req.query.overhead || 10);
     res.json({ success: true, profitability });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 
@@ -209,7 +210,7 @@ router.get('/reports/customer-profitability', async (req, res) => {
     const matrix = await getCustomerProfitabilityMatrix(req.companyId);
     res.json({ success: true, matrix });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err);
   }
 });
 

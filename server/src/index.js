@@ -42,6 +42,8 @@ import aiAutonomousAccountantRouter from './routes/aiAutonomousAccountant.js';
 import { startRecurringRunner } from './jobs/recurringRunner.js';
 
 import { idempotency } from './middleware/integrity.js';
+import { multiTenantContext, requirePermission } from './middleware/rbac.js';
+import { handleApiError } from './utils/errorHelper.js';
 
 dotenv.config();
 
@@ -84,11 +86,9 @@ app.use(cors({
 
 app.use(express.json());
 
-// Adaptive company scope & Idempotency guard (write-integrity trio)
-app.use((req, res, next) => {
-  req.companyId = req.companyId || req.header('x-company-id') || req.user?.company_id || 'comp_1';
-  next();
-});
+// Universal Multi-Tenant Isolation & RBAC Protection Guard
+app.use(multiTenantContext);
+app.use(requirePermission());
 app.use(idempotency);
 
 // Health check endpoints
@@ -112,6 +112,9 @@ app.get('/api/health', (req, res) => {
 
 // Test query bridge for testing against local embedded database
 app.post('/api/test/query', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ success: false, error: 'Test queries disabled in production' });
+  }
   try {
     const { getDb } = await import('./db/db.js');
     const db = await getDb();
@@ -119,11 +122,14 @@ app.post('/api/test/query', async (req, res) => {
     const result = await db.query(text, params);
     res.json({ success: true, rows: result.rows, rowCount: result.rowCount });
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message, code: err.code });
+    handleApiError(res, err, 'Test query execution failed.');
   }
 });
 
 app.post('/api/test/tx', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ success: false, error: 'Test transactions disabled in production' });
+  }
   try {
     const { getDb } = await import('./db/db.js');
     const db = await getDb();
@@ -139,10 +145,10 @@ app.post('/api/test/tx', async (req, res) => {
       res.json({ success: true, results });
     } catch (err) {
       try { await db.query('ROLLBACK'); } catch {}
-      res.status(400).json({ success: false, error: err.message, code: err.code });
+      handleApiError(res, err, 'Transaction query execution failed.');
     }
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Transaction setup failed.');
   }
 });
 
@@ -221,8 +227,7 @@ if (fs.existsSync(distPath)) {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('Unhandled server error:', err);
-  res.status(500).json({ success: false, error: err.message || 'Internal server error' });
+  handleApiError(res, err);
 });
 
 // Start Server

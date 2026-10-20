@@ -1,6 +1,7 @@
 import express from 'express';
 import { getDb } from '../db/db.js';
 import { postJournalEntry } from '../services/ledgerService.js';
+import { handleApiError } from '../utils/errorHelper.js';
 import { randomUUID } from 'crypto';
 
 const router = express.Router();
@@ -9,12 +10,14 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const result = await db.query(`
       SELECT b.*, v.display_name as vendor_name, v.company_name, v.email as vendor_email
       FROM bills b
       JOIN vendors v ON b.vendor_id = v.id
+      WHERE b.company_id = $1
       ORDER BY b.due_date ASC
-    `);
+    `, [companyId]);
 
     const formatted = result.rows.map(b => ({
       ...b,
@@ -24,7 +27,7 @@ router.get('/', async (req, res) => {
 
     res.json({ success: true, bills: formatted });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to fetch bills.');
   }
 });
 
@@ -32,6 +35,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const db = await getDb();
+    const companyId = req.companyId || 'comp_1';
     const {
       vendorId,
       billNumber,
@@ -51,22 +55,23 @@ router.post('/', async (req, res) => {
     const amountPaise = Math.round(Number(amountInr) * 100);
     const due = dueDate || billDate;
 
-    // 1. Insert Bill
+    // 1. Insert Bill with strict company isolation
     await db.query(
-      `INSERT INTO bills (id, bill_number, vendor_id, bill_date, due_date, status, amount_paise, open_balance_paise, notes)
-       VALUES ($1, $2, $3, $4, $5, 'UNPAID', $6, $7, $8)`,
-      [billId, billNum, vendorId, billDate, due, amountPaise, amountPaise, notes]
+      `INSERT INTO bills (id, company_id, bill_number, vendor_id, bill_date, due_date, status, amount_paise, open_balance_paise, notes)
+       VALUES ($1, $2, $3, $4, $5, $6, 'UNPAID', $7, $8, $9)`,
+      [billId, companyId, billNum, vendorId, billDate, due, amountPaise, amountPaise, notes]
     );
 
     // 2. Update Vendor Open Balance
     await db.query(
-      'UPDATE vendors SET open_balance_paise = open_balance_paise + $1 WHERE id = $2',
-      [amountPaise, vendorId]
+      'UPDATE vendors SET open_balance_paise = open_balance_paise + $1 WHERE id = $2 AND company_id = $3',
+      [amountPaise, vendorId, companyId]
     );
 
     // 3. Auto-Post Journal Entry:
     // Debit Expense / Materials (categoryAccountId), Credit Accounts Payable (acc_2000)
     await postJournalEntry({
+      companyId,
       entryNumber: `JE-BILL-${billNum}`,
       entryDate: billDate,
       docType: 'bill',
@@ -88,7 +93,7 @@ router.post('/', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to create bill.');
   }
 });
 
@@ -97,9 +102,10 @@ router.post('/:id/pay', async (req, res) => {
   try {
     const db = await getDb();
     const { id } = req.params;
+    const companyId = req.companyId || 'comp_1';
     const { bankAccountId = 'acc_1010' } = req.body;
 
-    const billRes = await db.query('SELECT * FROM bills WHERE id = $1', [id]);
+    const billRes = await db.query('SELECT * FROM bills WHERE id = $1 AND company_id = $2', [id, companyId]);
     if (billRes.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Bill not found' });
     }
@@ -113,19 +119,20 @@ router.post('/:id/pay', async (req, res) => {
 
     // 1. Mark Bill as Paid
     await db.query(
-      `UPDATE bills SET status = 'PAID', open_balance_paise = 0, version = version + 1 WHERE id = $1`,
-      [id]
+      `UPDATE bills SET status = 'PAID', open_balance_paise = 0, version = version + 1 WHERE id = $1 AND company_id = $2`,
+      [id, companyId]
     );
 
     // 2. Reduce Vendor Balance
     await db.query(
-      'UPDATE vendors SET open_balance_paise = GREATEST(0, open_balance_paise - $1) WHERE id = $2',
-      [amountPaise.toString(), bill.vendor_id]
+      'UPDATE vendors SET open_balance_paise = GREATEST(0, open_balance_paise - $1) WHERE id = $2 AND company_id = $3',
+      [amountPaise.toString(), bill.vendor_id, companyId]
     );
 
     // 3. Post Journal:
     // Debit Accounts Payable (acc_2000), Credit Bank (bankAccountId)
     await postJournalEntry({
+      companyId,
       entryNumber: `JE-PAY-${bill.bill_number}`,
       docType: 'payment',
       narration: `Bill payment for #${bill.bill_number}`,
@@ -138,7 +145,7 @@ router.post('/:id/pay', async (req, res) => {
 
     res.json({ success: true, message: `Bill #${bill.bill_number} marked as paid` });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    handleApiError(res, err, 'Failed to pay bill.');
   }
 });
 

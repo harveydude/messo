@@ -9,6 +9,7 @@ import { setExchangeRate, getExchangeRate, convertCurrency, recordForexGainLoss 
 import { checkSubledgerReconciliation, syncSubledgerToGl } from '../services/subledgerReconciliationService.js';
 import { createBranch, listBranches, createCostCenter, listCostCenters } from '../services/branchService.js';
 import { closeFiscalYear, listFiscalYearCloses } from '../services/yearEndService.js';
+import { handleApiError } from '../utils/errorHelper.js';
 
 const router = Router();
 router.use(extractUserCompany);
@@ -25,7 +26,7 @@ router.get('/exchange-rates', async (req, res) => {
     });
     res.json({ success: true, from, to, rate });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err, 'Failed to fetch exchange rates.');
   }
 });
 
@@ -43,7 +44,7 @@ router.post('/exchange-rates', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FI
     });
     res.status(201).json({ success: true, exchangeRate: saved });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err, 'Failed to set exchange rate.');
   }
 });
 
@@ -59,7 +60,7 @@ router.post('/convert', async (req, res) => {
     });
     res.json({ success: true, ...conversion });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err, 'Currency conversion failed.');
   }
 });
 
@@ -72,7 +73,7 @@ router.post('/forex-gain-loss', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'F
     });
     res.status(201).json({ success: true, forexLog: log });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err, 'Failed to record forex gain/loss.');
   }
 });
 
@@ -85,7 +86,7 @@ router.get('/reconciliation/check', async (req, res) => {
     });
     res.json({ success: true, report });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err, 'Failed to check subledger reconciliation.');
   }
 });
 
@@ -94,7 +95,7 @@ router.post('/reconciliation/sync', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT'
     const report = await syncSubledgerToGl({ companyId: req.companyId });
     res.json({ success: true, report });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err, 'Failed to sync subledger to general ledger.');
   }
 });
 
@@ -104,7 +105,7 @@ router.get('/branches', async (req, res) => {
     const branches = await listBranches({ companyId: req.companyId });
     res.json({ success: true, branches });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err, 'Failed to list branches.');
   }
 });
 
@@ -116,7 +117,7 @@ router.post('/branches', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FINANCE_
     });
     res.status(201).json({ success: true, branch });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err, 'Failed to create branch.');
   }
 });
 
@@ -125,7 +126,7 @@ router.get('/cost-centers', async (req, res) => {
     const costCenters = await listCostCenters({ companyId: req.companyId });
     res.json({ success: true, costCenters });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err, 'Failed to list cost centers.');
   }
 });
 
@@ -137,7 +138,7 @@ router.post('/cost-centers', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT', 'FINA
     });
     res.status(201).json({ success: true, costCenter: cc });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err, 'Failed to create cost center.');
   }
 });
 
@@ -151,7 +152,7 @@ router.post('/year-end-close', requireRole(['OWNER', 'CHARTERED_ACCOUNTANT']), a
     });
     res.status(201).json({ success: true, closeRecord: result });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    handleApiError(res, err, 'Failed to execute year-end close.');
   }
 });
 
@@ -160,7 +161,7 @@ router.get('/fiscal-years', async (req, res) => {
     const closes = await listFiscalYearCloses({ companyId: req.companyId });
     res.json({ success: true, fiscalYearCloses: closes });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleApiError(res, err, 'Failed to list fiscal year closes.');
   }
 });
 
